@@ -199,12 +199,3 @@ resource "local_file" "pem_files" {
   content         = tls_private_key.instance_keys[each.key].private_key_pem
   file_permission = "0400"
 }
-<<<<<<< HEAD
-
-variable "source_dest_check" {
-  description = "Enable or disable source/destination check for instances"
-  type        = bool
-  default     = true
-}
-=======
->>>>>>> 8c64fd8ffd8f90bf0c275704a640a4d35b5287fb
