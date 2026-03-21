@@ -112,12 +112,6 @@ variable "vpc_id" {
   type        = string
 }
 
-variable "create_node_group" {
-  description = "Create node group or not"
-  type        = bool
-  default     = true
-}
-
 variable "allow_eks_cidr" {
   description = "allow eks cidr"
   type        = list(string)
@@ -142,24 +136,7 @@ variable "cluster_endpoint_access_cidrs" {
   default     = []
 }
 
-variable "node_groups" {
-  description = "Paramters which are required for creating node group"
-  type = map(object({
-    subnets            = list(string)
-    instance_type      = list(string)
-    disk_size          = number
-    desired_capacity   = number
-    max_capacity       = number
-    min_capacity       = number
-    ssh_key            = string
-    security_group_ids = list(string)
-    tags               = map(string)
-    labels             = map(string)
-    capacity_type      = string
-    ami_type           = string
-    taints             = optional(any, {})
-  }))
-}
+
 
 variable "enabled_cluster_log_types" {
   description = "List of the desired control plane logging to enable"
@@ -175,10 +152,7 @@ variable "eks_addons" {
   }))
 }
 
-variable "launch_template_id" {
-  description = "Launch template ID from remote state"
-  type        = string
-}
+
 
 variable "support_type" {
   description = "Support type for EKS"
