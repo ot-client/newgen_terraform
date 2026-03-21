@@ -7,11 +7,6 @@ locals {
 }
 
 locals {
-  worker_group1_tags            = { "Name" = "worker-group-1" }
-  cluster_endpoint_access_cidrs = ["10.0.2.22/32"]
-}
-
-locals {
   kubeconfig = templatefile("${path.module}/templates/kubeconfig.tpl", {
     kubeconfig_name     = var.kubeconfig_name
     cluster_name        = var.cluster_name

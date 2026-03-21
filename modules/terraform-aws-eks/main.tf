@@ -30,7 +30,7 @@ resource "aws_eks_cluster" "eks_cluster" {
 }
 
 module "node_group" {
-  source            = "git::https://github.com/sahilgupta-opstree/newgen_terraform.git//modules/terraform-aws-node-group?ref=feature"
+  source            = "git::https://github.com/ot-client/newgen_terraform.git//modules/terraform-aws-node-group?ref=main"
   create_node_group = var.create_node_group
   cluster_name      = aws_eks_cluster.eks_cluster.id
   node_role_arn     = aws_iam_role.node_group_role.arn
