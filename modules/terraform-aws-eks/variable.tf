@@ -112,6 +112,12 @@ variable "vpc_id" {
   type        = string
 }
 
+variable "create_node_group" {
+  description = "Create node group or not"
+  type        = bool
+  default     = true
+}
+
 variable "allow_eks_cidr" {
   description = "allow eks cidr"
   type        = list(string)
