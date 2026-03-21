@@ -12,7 +12,6 @@ variable "ec2_instances" {
     encrypted_volume       = bool
     delete_on_termination  = bool
     enable_eip             = bool
-    source_dest_check      = bool
     termination_protection = bool
     iam_instance_profile   = optional(string)
     tags                   = map(string)
