@@ -11,7 +11,6 @@ variable "ec2_instances" {
     throughput             = number
     encrypted_volume       = bool
     delete_on_termination  = bool
-    source_dest_check      = bool
     enable_eip             = bool
     termination_protection = bool
     iam_instance_profile   = optional(string)
@@ -46,6 +45,11 @@ variable "security_group_ports" {
     protocol   = string
     name_regex = string
   }))
+}
+
+variable "source_dest_check" {
+  type = bool
+  
 }
 
 variable "tags" {
