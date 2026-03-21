@@ -29,15 +29,6 @@ resource "aws_eks_cluster" "eks_cluster" {
   
 }
 
-module "node_group" {
-  source            = "git::https://github.com/sahilgupta-opstree/newgen_terraform.git//modules/terraform-aws-node-group?ref=feature"
-  create_node_group = var.create_node_group
-  cluster_name      = aws_eks_cluster.eks_cluster.id
-  node_role_arn     = aws_iam_role.node_group_role.arn
-  node_groups       = var.node_groups
-  launch_template_id = var.launch_template_id  
-}
-
 resource "aws_iam_role" "cluster_role" {
   name = "${var.cluster_name}-cluster-role"
   assume_role_policy = <<POLICY
@@ -169,33 +160,6 @@ resource "aws_eks_addon" "addons" {
   )
   depends_on = [aws_eks_cluster.eks_cluster ]
 }
-
-#provider "kubernetes" {
-#  host                   = aws_eks_cluster.eks_cluster.endpoint
-#  cluster_ca_certificate = base64decode(aws_eks_cluster.eks_cluster.certificate_authority[0].data)
-
-#  exec {
-#    api_version = "client.authentication.k8s.io/v1beta1"
-#    command     = "aws"
-#    args        = ["eks", "get-token", "--cluster-name", var.cluster_name]
-#  }
-#}
-
-#resource "kubernetes_config_map" "aws_auth" {
-#  metadata {
-#    name      = "aws-auth"
-#    namespace = "kube-system"
-#  }
-
-#  data = {
-#    mapRoles = <<YAML
-#- rolearn: ${var.aws_sso_role_arn}
-#  username: admin
-#  groups:
-#    - system:masters
-#YAML
-#  }
-#}
 
 resource "aws_eks_access_entry" "sso_role" {
   for_each      = var.aws_sso_role_arn != null ? { "sso" = var.aws_sso_role_arn } : {}

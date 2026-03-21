@@ -5,6 +5,12 @@ locals {
   # common_tags strips the "Name" key so each resource can set its own Name tag
   common_tags = { for k, v in var.tags : k => v if k != "Name" }
 }
+
+locals {
+  worker_group1_tags            = { "Name" = "worker-group-1" }
+  cluster_endpoint_access_cidrs = ["10.0.2.22/32"]
+}
+
 locals {
   kubeconfig = templatefile("${path.module}/templates/kubeconfig.tpl", {
     kubeconfig_name     = var.kubeconfig_name
