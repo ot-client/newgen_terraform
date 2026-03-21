@@ -29,6 +29,15 @@ resource "aws_eks_cluster" "eks_cluster" {
   
 }
 
+module "node_group" {
+  source            = "git::https://github.com/sahilgupta-opstree/newgen_terraform.git//modules/terraform-aws-node-group?ref=feature"
+  create_node_group = var.create_node_group
+  cluster_name      = aws_eks_cluster.eks_cluster.id
+  node_role_arn     = aws_iam_role.node_group_role.arn
+  node_groups       = var.node_groups
+  launch_template_id = var.launch_template_id  
+}
+
 resource "aws_iam_role" "cluster_role" {
   name = "${var.cluster_name}-cluster-role"
   assume_role_policy = <<POLICY
