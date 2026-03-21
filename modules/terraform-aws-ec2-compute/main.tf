@@ -17,7 +17,7 @@ resource "aws_instance" "ec2" {
   iam_instance_profile        = lookup(each.value, "iam_instance_profile", null)
 
   disable_api_termination = each.value.termination_protection
-  source_dest_check     = var.source_dest_check
+  source_dest_check     = each.value.source_dest_check
 
   root_block_device {
     volume_size           = each.value.volume_size
