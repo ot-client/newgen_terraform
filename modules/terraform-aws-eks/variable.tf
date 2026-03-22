@@ -181,3 +181,36 @@ variable "access_entries" {
   type        = map(string)
   default     = {}
 }
+
+
+variable "create_node_group" {
+  description = "Create node group or not"
+  type        = bool
+  default     = false
+}
+
+variable "node_groups" {
+  description = "Parameters required for creating node groups"
+  type = map(object({
+    subnets            = list(string)
+    instance_type      = list(string)
+    disk_size          = number
+    desired_capacity   = number
+    max_capacity       = number
+    min_capacity       = number
+    ssh_key            = string
+    security_group_ids = list(string)
+    tags               = map(string)
+    labels             = map(string)
+    capacity_type      = string
+    ami_type           = string
+    taints             = optional(any, {})
+  }))
+  default = {}
+}
+
+variable "launch_template_id" {
+  description = "Launch template ID"
+  type        = string
+  default     = null
+}
