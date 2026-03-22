@@ -182,13 +182,6 @@ variable "access_entries" {
   default     = {}
 }
 
-
-variable "create_node_group" {
-  description = "Create node group or not"
-  type        = bool
-  default     = false
-}
-
 variable "node_groups" {
   description = "Parameters required for creating node groups"
   type = map(object({
