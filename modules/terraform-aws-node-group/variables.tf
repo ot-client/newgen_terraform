@@ -9,7 +9,6 @@ variable "node_groups" {
     min_capacity       = number
     ssh_key            = string
     security_group_ids = list(string)
-    tags               = map(string)
     labels             = map(string)
     capacity_type      = string
     ami_type           = string
