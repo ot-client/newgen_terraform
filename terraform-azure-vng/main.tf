@@ -9,7 +9,7 @@ resource "azurerm_virtual_network_gateway" "virtual_network_gateway" {
   edge_zone           = var.edge_zone
 
   active_active                         = var.active_active
-  enable_bgp                            = var.enable_bgp
+  bgp_enabled                           = var.bgp_enabled
   default_local_network_gateway_id      = var.default_local_network_gateway_id
   private_ip_address_enabled            = var.private_ip_address_enabled
   bgp_route_translation_for_nat_enabled = var.bgp_route_translation_for_nat_enabled

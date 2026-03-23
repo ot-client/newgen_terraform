@@ -48,7 +48,7 @@ variable "active_active" {
   default     = false
 }
 
-variable "enable_bgp" {
+variable "bgp_enabled" {
   description = "If true, BGP (Border Gateway Protocol) will be enabled for this Virtual Network Gateway."
   type        = bool
   default     = false
