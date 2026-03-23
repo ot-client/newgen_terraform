@@ -135,7 +135,7 @@ resource "aws_security_group" "sg" {
   )
 }
 
-resource "aws_security_group_rule" "ingress_rules" {
+resource "aws_security_group_rule" "security_rules" {
 
   for_each = {
     for pair in flatten([
@@ -151,11 +151,11 @@ resource "aws_security_group_rule" "ingress_rules" {
     ]) : "${pair.rule_name}-${pair.sg_key}" => pair
   }
 
-  type              = "ingress"
+  type              = each.value.rule.type
   from_port         = each.value.rule.from_port
   to_port           = each.value.rule.to_port
   protocol          = each.value.rule.protocol
-  cidr_blocks       = ["0.0.0.0/0"]
+  cidr_blocks       = each.value.rule.cidr_blocks
   security_group_id = each.value.sg_id
 }
 ###############################
