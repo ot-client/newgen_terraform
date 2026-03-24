@@ -296,26 +296,26 @@ resource "aws_s3_bucket_website_configuration" "website" {
   }
 }
 
-resource "aws_s3_bucket_replication_configuration" "crr" {
-  count = local.create_bucket && var.crr_enabled ? 1 : 0
+# resource "aws_s3_bucket_replication_configuration" "crr" {
+#   count = local.create_bucket && var.crr_enabled ? 1 : 0
 
-  bucket = aws_s3_bucket.main[0].id
-  role   = aws_iam_role.replication[0].arn
+#   bucket = aws_s3_bucket.main[0].id
+#   role   = aws_iam_role.replication[0].arn
 
-  rule {
-    id     = "crr-rule"
-    status = "Enabled"
+#   rule {
+#     id     = "crr-rule"
+#     status = "Enabled"
 
-    filter {
-      prefix = ""
-    }
+#     filter {
+#       prefix = ""
+#     }
 
-    destination {
-      bucket        = var.replication_destination_arn
-      storage_class = "STANDARD"
-    }
-  }
-}
+#     destination {
+#       bucket        = var.replication_destination_arn
+#       storage_class = "STANDARD"
+#     }
+#   }
+# }
 
 # resource "aws_iam_role" "replication" {
 #   count = local.create_bucket && var.crr_enabled ? 1 : 0
