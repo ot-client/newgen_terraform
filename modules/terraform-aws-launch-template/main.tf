@@ -20,7 +20,9 @@ resource "aws_launch_template" "template" {
       throughput            = var.throughput
     }
   }
+  tag_specifications {
+  resource_type = "instance"
 
    tags = var.tags
 }
-
+}
