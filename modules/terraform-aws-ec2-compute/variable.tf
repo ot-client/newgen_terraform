@@ -6,11 +6,22 @@ variable "ec2_instances" {
     security_groups        = list(string)
     public_ip              = bool
     key_name               = string
-    volume_size            = number
-    volume_type            = string
-    throughput             = number
-    encrypted_volume       = bool
-    delete_on_termination  = bool
+    root_block_device      = object({
+      size                  = number
+      type                  = string
+      throughput            = number
+      iops                  = number
+      encrypted             = bool
+      delete_on_termination = bool
+    })
+    additional_volumes     = list(object({
+      device_name = string
+      size        = number
+      type        = string
+      throughput  = number
+      iops        = number
+      encrypted   = bool
+    }))
     enable_eip             = bool
     source_dest_check      = bool
     termination_protection = bool
@@ -18,6 +29,7 @@ variable "ec2_instances" {
     tags                   = map(string)
   }))
 }
+
 
 variable "security_groups" {
   description = "List of security groups to create"
