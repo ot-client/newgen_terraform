@@ -284,7 +284,7 @@ resource "aws_ebs_volume" "additional" {
 resource "aws_volume_attachment" "additional" {
   for_each = aws_ebs_volume.additional
 
-  device_name = each.value.tags_all["device_name"]  # Store device_name in tags for reference
+  device_name = each.value.tags_all["/dev/sdg"]  # Store device_name in tags for reference
   volume_id   = each.value.id
   instance_id = aws_instance.ec2[split("-vol-", each.key)[0]].id
 
