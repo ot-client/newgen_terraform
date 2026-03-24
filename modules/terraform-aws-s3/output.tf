@@ -57,7 +57,7 @@ output "ownership_control" {
 
 output "replication_role_arn" {
   description = "IAM role ARN used for cross-region replication"
-  value       = try(aws_iam_role.replication.arn, null)
+  value       = null
 }
 
 output "elb_identifier" {
