@@ -317,73 +317,73 @@ resource "aws_s3_bucket_replication_configuration" "crr" {
   }
 }
 
-resource "aws_iam_role" "replication" {
-  count = local.create_bucket && var.crr_enabled ? 1 : 0
-  name  = lower("${var.name}-replication-role")
+# resource "aws_iam_role" "replication" {
+#   count = local.create_bucket && var.crr_enabled ? 1 : 0
+#   name = lower("${var.name}-replication-role")
 
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Principal = {
-          Service = "s3.amazonaws.com"
-        }
-        Action = "sts:AssumeRole"
-      }
-    ]
-  })
-  tags = merge(
-    { Name = lower("${var.name}-replication-role") },
-    local.common_tags
-  )
-}
+#   assume_role_policy = jsonencode({
+#     Version = "2012-10-17"
+#     Statement = [
+#       {
+#         Effect = "Allow"
+#         Principal = {
+#           Service = "s3.amazonaws.com"
+#         }
+#         Action = "sts:AssumeRole"
+#       }
+#     ]
+#   })
+#   tags = merge(
+#     { Name = lower("${var.name}-replication-role") },
+#     local.common_tags
+#   )
+# }
 
-resource "aws_iam_role_policy" "replication_policy" {
-  count = local.create_bucket && var.crr_enabled ? 1 : 0
+# resource "aws_iam_role_policy" "replication_policy" {
+#   count = local.create_bucket && var.crr_enabled ? 1 : 0
 
-  name = "${var.name}-replication-policy"
-  role = aws_iam_role.replication[0].id
+#   name = "${var.name}-replication-policy"
+#   role = aws_iam_role.replication[0].id
 
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "s3:GetReplicationConfiguration",
-          "s3:ListBucket"
-        ]
-        Resource = [
-          aws_s3_bucket.main[0].arn
-        ]
-      },
-      {
-        Effect = "Allow"
-        Action = [
-          "s3:GetObjectVersion",
-          "s3:GetObjectVersionAcl",
-          "s3:GetObjectVersionForReplication",
-          "s3:GetObjectLegalHold",
-          "s3:GetObjectRetention",
-          "s3:GetObjectVersionTagging"
-        ]
-        Resource = [
-          "${aws_s3_bucket.main[0].arn}/*"
-        ]
-      },
-      {
-        Effect = "Allow"
-        Action = [
-          "s3:ReplicateObject",
-          "s3:ReplicateDelete",
-          "s3:ReplicateTags"
-        ]
-        Resource = [
-          var.replication_destination_arn,
-          "${var.replication_destination_arn}/*"
-        ]
-      }
-    ]
-  })
-}
+#   policy = jsonencode({
+#     Version = "2012-10-17"
+#     Statement = [
+#       {
+#         Effect = "Allow"
+#         Action = [
+#           "s3:GetReplicationConfiguration",
+#           "s3:ListBucket"
+#         ]
+#         Resource = [
+#           aws_s3_bucket.main[0].arn
+#         ]
+#       },
+#       {
+#         Effect = "Allow"
+#         Action = [
+#           "s3:GetObjectVersion",
+#           "s3:GetObjectVersionAcl",
+#           "s3:GetObjectVersionForReplication",
+#           "s3:GetObjectLegalHold",
+#           "s3:GetObjectRetention",
+#           "s3:GetObjectVersionTagging"
+#         ]
+#         Resource = [
+#           "${aws_s3_bucket.main[0].arn}/*"
+#         ]
+#       },
+#       {
+#         Effect = "Allow"
+#         Action = [
+#           "s3:ReplicateObject",
+#           "s3:ReplicateDelete",
+#           "s3:ReplicateTags"
+#         ]
+#         Resource = [
+#           var.replication_destination_arn,
+#           "${var.replication_destination_arn}/*"
+#         ]
+#       }
+#     ]
+#   })
+# }
