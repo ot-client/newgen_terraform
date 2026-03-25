@@ -14,7 +14,7 @@ resource "azurerm_subnet" "subnets" {
   resource_group_name  = var.resource_group_name
   virtual_network_name = azurerm_virtual_network.vnet.name
   address_prefixes     = [each.value.cidr]
-  
+
   # Add delegation for PostgreSQL Flexible Server if subnet is subnet5
   dynamic "delegation" {
     for_each = each.key == "subnet5" ? [1] : []
@@ -48,9 +48,9 @@ resource "azurerm_route" "default_route" {
 }
 
 resource "azurerm_subnet_route_table_association" "association" {
-#   for_each = azurerm_subnet.subnets
-    for_each = {
-    for k, v in azurerm_subnet.subnets : k => v if k != "gateway"
+  #   for_each = azurerm_subnet.subnets
+  for_each = {
+    for k, v in azurerm_subnet.subnets : k => v if k != "gateway" && !contains(var.exclude_subnets, k)
   }
   subnet_id      = each.value.id
   route_table_id = azurerm_route_table.rt.id

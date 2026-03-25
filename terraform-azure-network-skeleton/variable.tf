@@ -17,3 +17,9 @@ variable "firewall_ip" {}
 variable "tags" {
   type = map(string)
 }
+
+variable "exclude_subnets" {
+  description = "List of subnet keys to exclude from route table association"
+  type        = list(string)
+  default     = []
+}
