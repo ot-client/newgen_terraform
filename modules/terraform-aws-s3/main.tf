@@ -22,32 +22,6 @@ resource "aws_s3_bucket_accelerate_configuration" "acceleration" {
   status = var.enable_transfer_acceleration ? "Enabled" : "Suspended"
 }
 
-resource "aws_s3_bucket_lifecycle_configuration" "lifecycle" {
-  count  = length(var.lifecycle_rules) > 0 ? 1 : 0
-  bucket = aws_s3_bucket.main[0].id
-
-  dynamic "rule" {
-    for_each = var.lifecycle_rules
-    content {
-      id     = rule.value.id
-      status = rule.value.status
-
-      dynamic "transition" {
-        for_each = rule.value.transitions
-        content {
-          days          = transition.value.days
-          storage_class = transition.value.storage_class
-        }
-      }
-
-      expiration {
-        days = try(rule.value.expiration_days, null)
-      }
-    }
-  }
-}
-
-
 resource "aws_s3_bucket_public_access_block" "public_access_block" {
   count                   = local.create_bucket && var.attach_public_policy ? 1 : 0
   bucket                  = aws_s3_bucket.main[0].id

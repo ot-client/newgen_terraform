@@ -176,37 +176,6 @@ variable "versioning" {
   }
 }
 
-variable "lifecycle_rules" {
-  description = "List of lifecycle rules"
-  type = list(object({
-    id              = string
-    status          = string
-    expiration_days = optional(number)
-    transitions = list(object({
-      days          = number
-      storage_class = string
-    }))
-  }))
-  default = [
-    {
-      id     = "log-transition"
-      status = "Enabled"
-
-      transitions = [
-        {
-          days          = 30
-          storage_class = "STANDARD_IA"
-        },
-        {
-          days          = 60
-          storage_class = "GLACIER"
-        }
-      ]
-      expiration_days = 365
-    }
-  ]
-}
-
 variable "metric_configuration" {
   description = "Metric configurations"
   type = list(object({
