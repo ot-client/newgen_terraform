@@ -1,3 +1,7 @@
+locals {
+  azure_service_tags = ["GatewayManager", "Internet", "VirtualNetwork", "AzureLoadBalancer", "AzureCloud", "AzureTrafficManager", "Storage", "Sql"]
+}
+
 resource "azurerm_network_security_group" "nsg" {
   for_each = var.nsg_rules
 
@@ -26,10 +30,10 @@ resource "azurerm_network_security_rule" "nsg_rules" {
           source_port_range            = rule.source_port_range == "*" ? "*" : null
           destination_port_ranges      = rule.destination_port_range == "*" ? null : split(",", rule.destination_port_range)
           destination_port_range       = rule.destination_port_range == "*" ? "*" : null
-          source_address_prefixes      = rule.source_address_prefix == "*" ? null : split(",", rule.source_address_prefix)
-          source_address_prefix        = rule.source_address_prefix == "*" ? "*" : null
-          destination_address_prefixes = rule.destination_address_prefix == "*" ? null : split(",", rule.destination_address_prefix)
-          destination_address_prefix   = rule.destination_address_prefix == "*" ? "*" : null
+          source_address_prefixes      = (rule.source_address_prefix == "*" || contains(local.azure_service_tags, rule.source_address_prefix)) ? null : split(",", rule.source_address_prefix)
+          source_address_prefix        = (rule.source_address_prefix == "*" || contains(local.azure_service_tags, rule.source_address_prefix)) ? rule.source_address_prefix : null
+          destination_address_prefixes = (rule.destination_address_prefix == "*" || contains(local.azure_service_tags, rule.destination_address_prefix)) ? null : split(",", rule.destination_address_prefix)
+          destination_address_prefix   = (rule.destination_address_prefix == "*" || contains(local.azure_service_tags, rule.destination_address_prefix)) ? rule.destination_address_prefix : null
         }
       ]
     ]) : rule.rule_key => rule
