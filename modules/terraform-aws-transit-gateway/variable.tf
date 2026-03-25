@@ -31,13 +31,13 @@ variable "attachment_name" {
   }))
 }
 
-variable "dns_support" {
-  type = string
-}
+# variable "dns_support" {
+#   type = string
+# }
 
-variable "ipv6_support" {
-  type = string
-}
+# variable "ipv6_support" {
+#   type = string
+# }
 
 # variable "associate_with_tgw_route_table" {
 #   type = bool
