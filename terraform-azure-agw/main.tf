@@ -8,6 +8,16 @@ resource "azurerm_public_ip" "pip" {
   tags = var.tags
 }
 
+resource "azurerm_storage_account" "diag" {
+  name                     = var.diag_storage_account_name
+  resource_group_name      = var.resource_group_name
+  location                 = var.location
+  account_tier             = "Standard"
+  account_replication_type = "LRS"
+
+  tags = var.tags
+}
+
 locals {
   backend_address_pool_name      = "${var.agw_name}-beap"
   frontend_port_name             = "${var.agw_name}-feport"
@@ -16,6 +26,8 @@ locals {
   listener_name                  = "${var.agw_name}-httplSTN"
   request_routing_rule_name      = "${var.agw_name}-rqrt"
   probe_name                     = "${var.agw_name}-hp"
+  ssl_cert_name                  = "${var.agw_name}-ssl-cert"
+  trusted_root_cert_name         = "${var.agw_name}-trusted-root"
 }
 
 resource "azurerm_application_gateway" "main" {
@@ -24,8 +36,8 @@ resource "azurerm_application_gateway" "main" {
   location            = var.location
 
   sku {
-    name     = var.sku_name
-    tier     = var.sku_tier
+    name = var.sku_name
+    tier = var.sku_tier
   }
 
   autoscale_configuration {
@@ -34,18 +46,29 @@ resource "azurerm_application_gateway" "main" {
   }
 
   gateway_ip_configuration {
-    name      = "appGatewayIpConfig" # Standard name
+    name      = "appGatewayIpConfig"
     subnet_id = var.subnet_id
   }
 
   frontend_port {
     name = local.frontend_port_name
-    port = 80
+    port = var.frontend_port
   }
 
   frontend_ip_configuration {
     name                 = local.frontend_ip_configuration_name
     public_ip_address_id = azurerm_public_ip.pip.id
+  }
+
+  ssl_certificate {
+    name     = local.ssl_cert_name
+    data     = var.ssl_certificate_data
+    password = var.ssl_certificate_password
+  }
+
+  trusted_root_certificate {
+    name = local.trusted_root_cert_name
+    data = var.trusted_root_certificate_data
   }
 
   backend_address_pool {
@@ -54,22 +77,22 @@ resource "azurerm_application_gateway" "main" {
   }
 
   backend_http_settings {
-    name                  = local.http_setting_name
-    cookie_based_affinity = "Disabled"
-    port                  = 80
-    protocol              = "Http"
-    request_timeout       = 60
-    probe_name            = local.probe_name
-    
-    # Best practice for production backends
+    name                                = local.http_setting_name
+    cookie_based_affinity               = "Disabled"
+    port                                = var.backend_port
+    protocol                            = var.backend_protocol
+    request_timeout                     = var.backend_request_timeout
+    probe_name                          = local.probe_name
     pick_host_name_from_backend_address = true
+    trusted_root_certificate_names      = [local.trusted_root_cert_name]
   }
 
   http_listener {
     name                           = local.listener_name
     frontend_ip_configuration_name = local.frontend_ip_configuration_name
     frontend_port_name             = local.frontend_port_name
-    protocol                       = "Http"
+    protocol                       = var.listener_protocol
+    ssl_certificate_name           = local.ssl_cert_name
   }
 
   request_routing_rule {
@@ -83,14 +106,36 @@ resource "azurerm_application_gateway" "main" {
 
   probe {
     name                                      = local.probe_name
-    protocol                                  = "Http"
-    path                                      = "/"
-    interval                                  = 30
-    timeout                                   = 30
-    unhealthy_threshold                       = 3
+    protocol                                  = var.backend_protocol
+    path                                      = var.probe_path
+    interval                                  = var.probe_interval
+    timeout                                   = var.probe_timeout
+    unhealthy_threshold                       = var.probe_unhealthy_threshold
     pick_host_name_from_backend_http_settings = true
+    port                                      = var.backend_port
+
+    match {
+      status_code = var.probe_status_codes
+    }
   }
 
-  # Tags
   tags = var.tags
+}
+
+resource "azurerm_monitor_diagnostic_setting" "agw" {
+  name                       = "${var.agw_name}-diag"
+  target_resource_id         = azurerm_application_gateway.main.id
+  log_analytics_workspace_id = var.log_analytics_workspace_id
+  storage_account_id         = azurerm_storage_account.diag.id
+
+  dynamic "enabled_log" {
+    for_each = var.diag_log_categories
+    content {
+      category = enabled_log.value
+    }
+  }
+
+  enabled_metric {
+    category = "AllMetrics"
+  }
 }

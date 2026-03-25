@@ -12,3 +12,8 @@ output "public_ip_address" {
   description = "The public IP address of the AGW"
   value       = azurerm_public_ip.pip.ip_address
 }
+
+output "diag_storage_account_id" {
+  description = "The ID of the diagnostics storage account"
+  value       = azurerm_storage_account.diag.id
+}

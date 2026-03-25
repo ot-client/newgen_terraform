@@ -50,7 +50,105 @@ variable "autoscale_max_capacity" {
 variable "backend_ips" {
   description = "List of backend IP addresses"
   type        = list(string)
-  default     = ["10.0.0.1"] # Dummy IP as per requirements
+}
+
+variable "backend_port" {
+  description = "Backend port"
+  type        = number
+  default     = 443
+}
+
+variable "backend_protocol" {
+  description = "Backend protocol - Http or Https"
+  type        = string
+  default     = "Https"
+}
+
+variable "backend_request_timeout" {
+  description = "Backend request timeout in seconds"
+  type        = number
+  default     = 60
+}
+
+variable "frontend_port" {
+  description = "Frontend listener port"
+  type        = number
+  default     = 443
+}
+
+variable "listener_protocol" {
+  description = "Listener protocol - Http or Https"
+  type        = string
+  default     = "Https"
+}
+
+variable "probe_path" {
+  description = "Health probe path"
+  type        = string
+  default     = "/"
+}
+
+variable "probe_interval" {
+  description = "Health probe interval in seconds"
+  type        = number
+  default     = 30
+}
+
+variable "probe_timeout" {
+  description = "Health probe timeout in seconds"
+  type        = number
+  default     = 30
+}
+
+variable "probe_unhealthy_threshold" {
+  description = "Health probe unhealthy threshold count"
+  type        = number
+  default     = 3
+}
+
+variable "probe_status_codes" {
+  description = "Accepted health probe status codes"
+  type        = list(string)
+  default     = ["200-399"]
+}
+
+variable "ssl_certificate_data" {
+  description = "Base64-encoded PFX certificate data"
+  type        = string
+  sensitive   = true
+}
+
+variable "ssl_certificate_password" {
+  description = "Password for the PFX SSL certificate"
+  type        = string
+  sensitive   = true
+}
+
+variable "trusted_root_certificate_data" {
+  description = "Base64-encoded trusted root certificate (.crt) data"
+  type        = string
+}
+
+variable "log_analytics_workspace_id" {
+  description = "Resource ID of the Log Analytics Workspace for diagnostics"
+  type        = string
+}
+
+variable "diag_storage_account_name" {
+  description = "Name of the storage account for AGW diagnostic logs"
+  type        = string
+}
+
+variable "diag_log_categories" {
+  description = "List of diagnostic log categories to enable"
+  type        = list(string)
+  default     = ["ApplicationGatewayAccessLog", "ApplicationGatewayPerformanceLog", "ApplicationGatewayFirewallLog"]
+}
+
+variable "law_retention_days" {
+  description = "Log Analytics Workspace retention in days"
+  type        = number
+  default     = 30
 }
 
 variable "tags" {
