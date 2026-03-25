@@ -7,7 +7,6 @@ variable "node_groups" {
     desired_capacity   = number
     max_capacity       = number
     min_capacity       = number
-    ssh_key            = string
     security_group_ids = list(string)
     labels             = map(string)
     capacity_type      = string
