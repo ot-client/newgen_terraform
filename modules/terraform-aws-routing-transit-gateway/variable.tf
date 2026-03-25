@@ -23,3 +23,15 @@ variable "tags" {
   type    = map(string)
   default = {}
 }
+
+variable "associate_with_tgw_route_table" {
+  description = "Should we associate the route table with the transit gateway route table"
+  type        = bool
+  default     = false
+}
+
+variable "propagate_to_tgw_route_table" {
+  description = "Should we propogate the route table with the transit gateway route table"
+  type        = bool
+  default     = false
+}

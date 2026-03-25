@@ -14,11 +14,6 @@ variable "cluster_identifier" {
   type        = string
 }
 
-variable "db_subnet_group_name" {
-  description = "Subnet group name for RDS"
-  type        = string
-}
-
 variable "vpc_security_group_ids" {
   description = "List of security group IDs attached to the RDS cluster"
   type        = list(string)
@@ -76,12 +71,6 @@ variable "name_sg" {
   description = "Name of the security group"
   type        = string
 }
-
-variable "vpc_id" {
-  description = "VPC ID for the security group"
-  type        = string
-}
-
 
 variable "tags" {
   description = "Additional tags for resources"
