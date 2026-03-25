@@ -55,6 +55,14 @@ variable "instance_class" {
   type        = string
 }
 
+variable "vpc_id" {
+  type = string
+}
+
+variable "db_subnet_group_name" {
+  type = string
+}
+
 variable "cluster_instance_count" {
   description = "Number of RDS instances in the cluster"
   type        = number
