@@ -1,53 +1,41 @@
-output "vnet_details" {
-  description = "Complete Virtual Network details"
-  value = {
-    vnet_name       = azurerm_virtual_network.vnet.name
-    vnet_id         = azurerm_virtual_network.vnet.id
-    location        = azurerm_virtual_network.vnet.location
-    address_space   = azurerm_virtual_network.vnet.address_space
-    resource_group  = azurerm_virtual_network.vnet.resource_group_name
-  }
+output "vnet_id" {
+  description = "ID of the Virtual Network"
+  value       = azurerm_virtual_network.vnet.id
 }
 
-output "subnet_details" {
-  description = "All subnet details"
+output "vnet_name" {
+  description = "Name of the Virtual Network"
+  value       = azurerm_virtual_network.vnet.name
+}
+
+output "subnet_ids" {
+  description = "Map of subnet IDs"
   value = {
     for k, v in azurerm_subnet.subnets :
-    k => {
-      name             = v.name
-      id               = v.id
-      address_prefixes = v.address_prefixes
-    }
+    k => v.id
   }
 }
 
-output "route_table_details" {
-  description = "Route table information"
+output "subnet_names" {
+  description = "Map of subnet names"
   value = {
-    name                = azurerm_route_table.rt.name
-    id                  = azurerm_route_table.rt.id
-    resource_group_name = azurerm_route_table.rt.resource_group_name
-    location            = azurerm_route_table.rt.location
+    for k, v in azurerm_subnet.subnets :
+    k => v.name
   }
 }
 
-output "route_table_routes" {
-  description = "Routes configured in route table"
+output "route_table_ids" {
+  description = "Map of route table IDs per subnet"
   value = {
-    name                   = azurerm_route.default_route.name
-    address_prefix         = azurerm_route.default_route.address_prefix
-    next_hop_type          = azurerm_route.default_route.next_hop_type
-    next_hop_in_ip_address = azurerm_route.default_route.next_hop_in_ip_address
+    for k, v in azurerm_route_table.rt :
+    k => v.id
   }
 }
 
-output "subnet_route_table_associations" {
-  description = "Which subnet is associated with route table"
+output "route_table_names" {
+  description = "Map of route table names per subnet"
   value = {
-    for k, v in azurerm_subnet_route_table_association.association :
-    k => {
-      subnet_id      = v.subnet_id
-      route_table_id = v.route_table_id
-    }
+    for k, v in azurerm_route_table.rt :
+    k => v.name
   }
 }
