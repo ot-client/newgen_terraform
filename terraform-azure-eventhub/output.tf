@@ -1,9 +1,19 @@
 output "namespace_id" {
-  value = azurerm_eventhub_namespace.evh_ns.id
+  description = "The ID of the EventHub Namespace"
+  value       = azurerm_eventhub_namespace.evh_ns.id
 }
+
 output "namespace_name" {
-  value = azurerm_eventhub_namespace.evh_ns.name
+  description = "The name of the EventHub Namespace"
+  value       = azurerm_eventhub_namespace.evh_ns.name
 }
+
 output "eventhub_id" {
-  value = azurerm_eventhub.evh.id
+  description = "The ID of the EventHub"
+  value       = azurerm_eventhub.evh.id
+}
+
+output "private_endpoint_id" {
+  description = "The ID of the private endpoint"
+  value       = length(azurerm_private_endpoint.evh_pe) > 0 ? azurerm_private_endpoint.evh_pe[0].id : null
 }
