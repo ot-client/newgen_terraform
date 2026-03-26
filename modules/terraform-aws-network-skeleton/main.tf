@@ -46,8 +46,8 @@ resource "aws_internet_gateway" "igw" {
 }
 
 resource "aws_route" "public_igw" {
-  route_table_id         = aws_route_table.rt["172263_RTB1-DEV_S1"].id
-  destination_cidr_block = "0.0.0.0/0"
+  route_table_id         = aws_route_table.rt[var.igw_rt].id
+  destination_cidr_block = var.destination_cidr_block
   gateway_id             = aws_internet_gateway.igw.id
 }
 

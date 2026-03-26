@@ -14,6 +14,14 @@ variable "internet_gateway_name" {
   default     = ""
 }
 
+variable "igw_rt" {
+  type = string
+}
+
+variable "destination_cidr_block" {
+  type = string
+}
+
 variable "vpc_cidr" {
   type        = string
   description = "CIDR block for the VPC"
