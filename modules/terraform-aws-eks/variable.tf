@@ -205,3 +205,20 @@ variable "launch_template_id" {
   type        = string
   default     = null
 }
+
+
+variable "node_group_managed_policies" {
+  description = "List of AWS managed policy ARNs to attach to node group role"
+  type        = list(string)
+  default = [
+    "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy",
+    "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy",
+    "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
+  ]
+}
+
+variable "node_group_inline_policies" {
+  description = "Map of inline policy names to policy JSON documents for node group role"
+  type        = map(string)
+  default     = {}
+}
