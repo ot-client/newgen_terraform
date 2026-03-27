@@ -5,6 +5,7 @@ resource "aws_rds_cluster" "rds" {
   master_username        = var.master_username
   master_password        = var.master_password
   port                   = var.port
+  db_subnet_group_name   = var.db_subnet_group_name
   vpc_security_group_ids = var.vpc_security_group_ids
   storage_encrypted      = var.storage_encrypted
   deletion_protection    = var.deletion_protection
