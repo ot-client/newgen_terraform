@@ -152,3 +152,7 @@ variable "auto_minor_version_upgrade" {
   type        = bool
   description = "Auto apply minor Redis version upgrades"
 }
+variable "subnet_names" {
+  type        = list(string)
+  description = "Names of the subnets to use for Redis (at least 2 for Multi-AZ)"
+}
