@@ -14,10 +14,6 @@ resource "azurerm_storage_account" "this" {
     bypass         = ["AzureServices"]
   }
 
-  blob_properties {
-    versioning_enabled = var.blob_versioning_enabled
-  }
-
   share_properties {
     retention_policy {
       days = var.share_retention_days

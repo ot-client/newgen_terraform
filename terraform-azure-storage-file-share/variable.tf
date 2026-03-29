@@ -16,46 +16,34 @@ variable "location" {
 variable "account_tier" {
   description = "Performance tier: Standard or Premium."
   type        = string
-  default     = "Standard"
 }
 
 variable "account_replication_type" {
   description = "Redundancy: LRS for non-prod, GRS for prod."
   type        = string
-  default     = "LRS"
 }
 
 variable "access_tier" {
-  description = "Account-level access tier: Hot or Cool."
+  description = "Access tier: Hot or Cool."
   type        = string
-  default     = "Hot"
 }
 
 variable "public_network_access_enabled" {
-  description = "Disable public network access."
+  description = "Whether public network access is enabled."
   type        = bool
-  default     = false
-}
-
-variable "blob_versioning_enabled" {
-  description = "Enable versioning for blobs."
-  type        = bool
-  default     = true
 }
 
 variable "share_retention_days" {
   description = "Soft-delete retention days for file shares."
   type        = number
-  default     = 7
 }
 
 variable "file_shares" {
-  description = "Map of file shares to create: name => { quota_gb, access_tier }"
+  description = "Map of file shares: name => { quota_gb, access_tier }"
   type = map(object({
     quota_gb    = number
     access_tier = string
   }))
-  default = {}
 }
 
 variable "tags" {
