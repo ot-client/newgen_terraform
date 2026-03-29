@@ -1,4 +1,3 @@
-
 resource "aws_eks_cluster" "eks_cluster" {
   name                      = var.cluster_name
   enabled_cluster_log_types = var.enabled_cluster_log_types
@@ -36,7 +35,12 @@ module "node_group" {
   cluster_name      = aws_eks_cluster.eks_cluster.id
   node_role_arn     = aws_iam_role.node_group_role.arn
   node_groups       = var.node_groups
-  launch_template_id = var.launch_template_id  
+  launch_template_id = var.launch_template_id
+
+  depends_on = [
+    aws_iam_role_policy_attachment.node_managed_policies,
+    aws_iam_role_policy.node_inline_policies
+  ]
 }
 
 resource "aws_iam_role" "cluster_role" {
@@ -92,51 +96,23 @@ resource "aws_iam_role" "node_group_role" {
     },
     local.common_tags
   )
-
 }
 
-resource "aws_iam_role_policy" "node_group_s3_policy" {
-  name = "${var.cluster_name}-node-s3-policy"
-  role = aws_iam_role.node_group_role.name
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action   = "s3:List*"
-        Effect   = "Allow"
-        Resource = "*"
-      },
-      {
-        Action = [
-          "s3:PutObject",
-          "s3:GetObject",
-          "s3:ListBucket",
-          "s3:DeleteObject"
-        ]
-        Effect = "Allow"
-        Resource = [
-          "arn:aws:s3:::132084-s3-dev-s1-1a",
-          "arn:aws:s3:::132084-s3-dev-s1-1a/*"
-        ]
-      }
-    ]
-  })
-}
-
-resource "aws_iam_role_policy_attachment" "node-AmazonEKS_CNI_Policy" {
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
+# Attach AWS managed policies to node group role
+resource "aws_iam_role_policy_attachment" "node_managed_policies" {
+  for_each = toset(var.node_group_managed_policies)
+  
+  policy_arn = each.value
   role       = aws_iam_role.node_group_role.name
 }
 
-resource "aws_iam_role_policy_attachment" "node-AmazonEKSWorkerNodePolicy" {
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
-  role       = aws_iam_role.node_group_role.name
-}
-
-resource "aws_iam_role_policy_attachment" "node-AmazonEC2ContainerRegistryReadOnly" {
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
-  role       = aws_iam_role.node_group_role.name
+# Attach custom inline policies to node group role
+resource "aws_iam_role_policy" "node_inline_policies" {
+  for_each = var.node_group_inline_policies
+  
+  name   = each.key
+  role   = aws_iam_role.node_group_role.name
+  policy = each.value
 }
 
 resource "aws_ec2_tag" "add_tags_into_subnet" {
