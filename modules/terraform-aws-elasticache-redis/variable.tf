@@ -78,22 +78,48 @@ variable "create_default_security_group" {
 variable "security_group_name" {
   type        = string
   default     = ""
-  description = "Name for the new security group"
+  description = "Explicit SG name. Leave empty to auto-generate as <cluster-name>-sg"
 }
 variable "existing_security_group_ids" {
   type        = list(string)
   default     = []
   description = "Pre-existing security group IDs to attach"
 }
-variable "allowed_ingress_ports" {
-  type        = list(number)
-  default     = [6379]
-  description = "Ports to allow inbound (used only if create_default_security_group = true)"
-}
-variable "allowed_ingress_cidr_blocks" {
-  type        = list(string)
+
+# Dynamic ingress rules
+# Each object supports:
+#   port          - TCP port to open
+#   cidr_blocks   - list of CIDRs (use [] if using source_sg_id)
+#   source_sg_id  - source SG ID (use "" if using cidr_blocks)
+#   description   - human readable label
+variable "ingress_rules" {
+  type = list(object({
+    port         = number
+    cidr_blocks  = list(string)
+    source_sg_id = string
+    description  = string
+  }))
   default     = []
-  description = "CIDRs to allow inbound (used only if create_default_security_group = true)"
+  description = "Dynamic ingress rules — supports both CIDR and SG source"
+}
+
+# Egress control
+# egress_allow_all = true  → single 0.0.0.0/0 allow-all rule (default)
+# egress_allow_all = false → use egress_rules list below
+variable "egress_allow_all" {
+  type        = bool
+  default     = true
+  description = "true = allow all outbound. false = use egress_rules"
+}
+
+variable "egress_rules" {
+  type = list(object({
+    port        = number
+    cidr_blocks = list(string)
+    description = string
+  }))
+  default     = []
+  description = "Custom egress rules (used only when egress_allow_all = false)"
 }
 
 # ── Parameter Group ──────────────────────────────────────────────
@@ -151,8 +177,4 @@ variable "maintenance_window" {
 variable "auto_minor_version_upgrade" {
   type        = bool
   description = "Auto apply minor Redis version upgrades"
-}
-variable "subnet_names" {
-  type        = list(string)
-  description = "Names of the subnets to use for Redis (at least 2 for Multi-AZ)"
 }
