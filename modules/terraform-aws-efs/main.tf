@@ -11,37 +11,83 @@ resource "aws_security_group" "efs_sg" {
   })
 }
 
-resource "aws_security_group_rule" "nfs_ingress" {
-  count             = var.create_security_group ? 1 : 0
-  description       = "Allow NFS traffic"
+locals {
+  # One entry per (rule, cidr) pair — CIDR-based ingress
+  ingress_cidr_rules = var.create_security_group ? flatten([
+    for rule in var.ingress_rules : [
+      for cidr in rule.cidr_blocks : {
+        port        = rule.port
+        cidr        = cidr
+        description = rule.description
+      }
+    ] if length(rule.cidr_blocks) > 0
+  ]) : []
+
+  # One entry per rule where source_sg_id is set — SG-source ingress
+  ingress_sg_rules = var.create_security_group ? [
+    for rule in var.ingress_rules : {
+      port         = rule.port
+      source_sg_id = rule.source_sg_id
+      description  = rule.description
+    } if rule.source_sg_id != ""
+  ] : []
+
+  # Flattened egress rules — used only when egress_allow_all = false
+  egress_cidr_rules = var.create_security_group && !var.egress_allow_all ? flatten([
+    for rule in var.egress_rules : [
+      for cidr in rule.cidr_blocks : {
+        port        = rule.port
+        cidr        = cidr
+        description = rule.description
+      }
+    ]
+  ]) : []
+}
+
+# Ingress: CIDR-based
+resource "aws_security_group_rule" "ingress_cidr" {
+  count             = length(local.ingress_cidr_rules)
   type              = "ingress"
-  from_port         = 2049
-  to_port           = 2049
+  from_port         = local.ingress_cidr_rules[count.index].port
+  to_port           = local.ingress_cidr_rules[count.index].port
   protocol          = "tcp"
-  cidr_blocks       = var.nfs_ingress_cidr_blocks
+  cidr_blocks       = [local.ingress_cidr_rules[count.index].cidr]
+  description       = local.ingress_cidr_rules[count.index].description
   security_group_id = aws_security_group.efs_sg[0].id
 }
 
-# Self-referencing rule — kept from Nikita's module
-resource "aws_security_group_rule" "nfs_ingress_self" {
-  count             = var.create_security_group && var.enable_self_referencing_sg_rule ? 1 : 0
-  description       = "Allow NFS from same SG"
-  type              = "ingress"
-  from_port         = 2049
-  to_port           = 2049
-  protocol          = "tcp"
-  self              = true
-  security_group_id = aws_security_group.efs_sg[0].id
+# Ingress: Source SG-based
+resource "aws_security_group_rule" "ingress_sg" {
+  count                    = length(local.ingress_sg_rules)
+  type                     = "ingress"
+  from_port                = local.ingress_sg_rules[count.index].port
+  to_port                  = local.ingress_sg_rules[count.index].port
+  protocol                 = "tcp"
+  source_security_group_id = local.ingress_sg_rules[count.index].source_sg_id
+  description              = local.ingress_sg_rules[count.index].description
+  security_group_id        = aws_security_group.efs_sg[0].id
 }
 
-resource "aws_security_group_rule" "nfs_egress" {
-  count             = var.create_security_group ? 1 : 0
-  description       = "Allow all egress"
+# Egress: allow-all (default when egress_allow_all = true)
+resource "aws_security_group_rule" "egress_all" {
+  count             = var.create_security_group && var.egress_allow_all ? 1 : 0
   type              = "egress"
   from_port         = 0
   to_port           = 0
   protocol          = "-1"
   cidr_blocks       = ["0.0.0.0/0"]
+  security_group_id = aws_security_group.efs_sg[0].id
+}
+
+# Egress: custom rules (used when egress_allow_all = false)
+resource "aws_security_group_rule" "egress_custom" {
+  count             = length(local.egress_cidr_rules)
+  type              = "egress"
+  from_port         = local.egress_cidr_rules[count.index].port
+  to_port           = local.egress_cidr_rules[count.index].port
+  protocol          = "tcp"
+  cidr_blocks       = [local.egress_cidr_rules[count.index].cidr]
+  description       = local.egress_cidr_rules[count.index].description
   security_group_id = aws_security_group.efs_sg[0].id
 }
 
