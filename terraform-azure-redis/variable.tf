@@ -25,29 +25,37 @@ variable "sku_name" {
   default     = "Basic"
 }
 
-variable "virtual_network_id" {
-  description = "The ID of the virtual network for private endpoint"
-  type        = string
-}
-
-variable "subnet_id" {
-  description = "The ID of the subnet for private endpoint"
-  type        = string
-}
-
-variable "private_dns_zone_name" {
-  description = "Name of private DNS zone"
-  type        = string
-  default     = "privatelink.redis.cache.windows.net"
-}
-
-variable "private_dns_zone_virtual_network_link_name" {
-  description = "Name of private DNS zone virtual network link"
-  type        = string
-}
-
 variable "tags" {
   description = "A map of tags to assign to the resource"
   type        = map(string)
   default     = {}
 }
+
+# Private endpoint managed separately in private-endpoint module
+# variable "virtual_network_id" {
+#   description = "The ID of the virtual network for private endpoint"
+#   type        = string
+# }
+
+# variable "enable_private_endpoint" {
+#   description = "Whether to create a private endpoint for Redis"
+#   type        = bool
+#   default     = false
+# }
+
+# variable "subnet_id" {
+#   description = "The ID of the subnet for private endpoint"
+#   type        = string
+#   default     = null
+# }
+
+# variable "private_dns_zone_name" {
+#   description = "Name of private DNS zone"
+#   type        = string
+#   default     = "privatelink.redis.cache.windows.net"
+# }
+
+# variable "private_dns_zone_virtual_network_link_name" {
+#   description = "Name of private DNS zone virtual network link"
+#   type        = string
+# }
