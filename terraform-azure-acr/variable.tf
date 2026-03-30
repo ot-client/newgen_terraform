@@ -36,27 +36,3 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
-
-variable "zone_redundancy_enabled" {
-  description = "Whether zone redundancy is enabled. Set false for Unsecure domain label scope."
-  type        = bool
-  default     = false
-}
-
-variable "subnet_id" {
-  description = "The ID of the subnet where the Private Endpoint will be created"
-  type        = string
-  default     = null
-}
-
-variable "private_endpoint_name" {
-  description = "The name of the Private Endpoint"
-  type        = string
-  default     = null
-}
-
-variable "private_dns_zone_id" {
-  description = "The ID of the private DNS zone for ACR (privatelink.azurecr.io)"
-  type        = string
-  default     = null
-}
