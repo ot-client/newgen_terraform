@@ -54,16 +54,39 @@ variable "security_group_name" {
   default     = "efs-sg"
 }
 
-variable "nfs_ingress_cidr_blocks" {
-  description = "CIDR blocks allowed to reach NFS port 2049"
-  type        = list(string)
-  default     = ["0.0.0.0/0"]
+# Dynamic ingress rules
+# Each object supports:
+#   port          - TCP port to open
+#   cidr_blocks   - list of CIDRs (use [] if using source_sg_id)
+#   source_sg_id  - source SG ID (use "" if using cidr_blocks)
+#   description   - human readable label
+variable "ingress_rules" {
+  type = list(object({
+    port         = number
+    cidr_blocks  = list(string)
+    source_sg_id = string
+    description  = string
+  }))
+  default     = []
+  description = "Dynamic ingress rules — supports both CIDR and SG source"
 }
 
-variable "enable_self_referencing_sg_rule" {
-  description = "Add a self-referencing ingress rule on port 2049 (Nikita's pattern)"
+# egress_allow_all = true  -> single 0.0.0.0/0 allow-all rule (default)
+# egress_allow_all = false -> use egress_rules list below
+variable "egress_allow_all" {
   type        = bool
-  default     = false
+  default     = true
+  description = "true = allow all outbound. false = use egress_rules"
+}
+
+variable "egress_rules" {
+  type = list(object({
+    port        = number
+    cidr_blocks = list(string)
+    description = string
+  }))
+  default     = []
+  description = "Custom egress rules (used only when egress_allow_all = false)"
 }
 
 # Security group IDs to attach when NOT creating a managed SG
