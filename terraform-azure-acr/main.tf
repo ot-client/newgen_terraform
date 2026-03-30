@@ -5,6 +5,7 @@ resource "azurerm_container_registry" "acr" {
   sku                           = var.sku
   admin_enabled                 = var.admin_enabled
   public_network_access_enabled = var.public_network_access_enabled
+  zone_redundancy_enabled       = var.zone_redundancy_enabled
 
   tags = var.tags
 }
@@ -21,6 +22,11 @@ resource "azurerm_private_endpoint" "acr_private_endpoint" {
     is_manual_connection           = false
     private_connection_resource_id = azurerm_container_registry.acr.id
     subresource_names              = ["registry"]
+  }
+
+  private_dns_zone_group {
+    name                 = "acr-dns-zone-group"
+    private_dns_zone_ids = [var.private_dns_zone_id]
   }
 
   tags = var.tags
