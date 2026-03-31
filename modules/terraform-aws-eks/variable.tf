@@ -130,16 +130,17 @@ variable "force_update_version" {
   default     = false
 }
 
-variable "cluster_endpoint_whitelist" {
-  type        = bool
-  description = "For Wihtelist the cluster endpoint"
-  default     = false
-}
-
-variable "cluster_endpoint_access_cidrs" {
-  type        = list(string)
-  description = "For list of cidr to whitelist"
-  default     = []
+variable "cluster_sg_rules" {
+  description = "Map of security group rules for EKS cluster SG"
+  type = map(object({
+    type         = string
+    from_port    = number
+    to_port      = number
+    protocol     = string
+    cidr_blocks  = optional(list(string))
+    source_sg_id = optional(string)
+  }))
+  default = {}
 }
 
 

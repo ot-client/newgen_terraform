@@ -15,8 +15,9 @@ variable "cluster_identifier" {
 }
 
 variable "vpc_security_group_ids" {
-  description = "List of security group IDs attached to the RDS cluster"
+  description = "Additional security group IDs to attach to the RDS cluster"
   type        = list(string)
+  default     = []
 }
 
 variable "port" {

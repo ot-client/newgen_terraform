@@ -25,6 +25,7 @@ resource "aws_eks_cluster" "eks_cluster" {
     subnet_ids              = var.subnets
     endpoint_private_access = var.endpoint_private
     endpoint_public_access  = var.endpoint_public
+    security_group_ids      = [aws_security_group.eks_sg.id]
   }
   
 }
@@ -122,15 +123,31 @@ resource "aws_ec2_tag" "add_tags_into_subnet" {
   value       = "shared"
 }
 
-resource "aws_security_group_rule" "cluster_private_access" {
-  count       = var.cluster_endpoint_whitelist ? 1 : 0
-  type        = "ingress"
-  from_port   = 443
-  to_port     = 443
-  protocol    = "tcp"
-  cidr_blocks = var.cluster_endpoint_access_cidrs
+resource "aws_security_group" "eks_sg" {
+  name        = "${var.cluster_name}-sg"
+  description = "Security Group for EKS cluster ${var.cluster_name}"
+  vpc_id      = var.vpc_id
 
-  security_group_id = aws_eks_cluster.eks_cluster.vpc_config[0].cluster_security_group_id
+  tags = merge(
+    { Name = "${var.cluster_name}-sg" },
+    local.common_tags
+  )
+
+  lifecycle {
+    ignore_changes = [egress]
+  }
+}
+
+resource "aws_security_group_rule" "cluster_sg_rules" {
+  for_each = var.cluster_sg_rules
+
+  type                     = each.value.type
+  from_port                = each.value.from_port
+  to_port                  = each.value.to_port
+  protocol                 = each.value.protocol
+  cidr_blocks              = each.value.source_sg_id == null ? each.value.cidr_blocks : null
+  source_security_group_id = each.value.source_sg_id
+  security_group_id        = aws_security_group.eks_sg.id
 }
 
 resource "aws_eks_addon" "addons" {
