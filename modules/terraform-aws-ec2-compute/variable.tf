@@ -53,12 +53,13 @@ variable "firewall_instance_key" {
 variable "security_group_ports" {
   description = "Ingress port configuration mapped to SG name patterns"
   type = map(object({
-    from_port   = number
-    to_port     = number
-    protocol    = string
-    name_regex  = string
-    cidr_blocks = list(string)
-    type        = string
+    from_port     = number
+    to_port       = number
+    protocol      = string
+    name_regex    = string
+    cidr_blocks   = optional(list(string))
+    source_sg_id  = optional(string)
+    type          = string
   }))
 }
 

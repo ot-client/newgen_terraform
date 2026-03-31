@@ -143,12 +143,13 @@ resource "aws_security_group_rule" "security_rules" {
     ]) : "${pair.rule_name}-${pair.sg_key}" => pair
   }
 
-  type              = each.value.rule.type
-  from_port         = each.value.rule.from_port
-  to_port           = each.value.rule.to_port
-  protocol          = each.value.rule.protocol
-  cidr_blocks       = each.value.rule.cidr_blocks
-  security_group_id = each.value.sg_id
+  type                     = each.value.rule.type
+  from_port                = each.value.rule.from_port
+  to_port                  = each.value.rule.to_port
+  protocol                 = each.value.rule.protocol
+  cidr_blocks              = each.value.rule.source_sg_id == null ? each.value.rule.cidr_blocks : null
+  source_security_group_id = each.value.rule.source_sg_id
+  security_group_id        = each.value.sg_id
 }
 
 ###############################
