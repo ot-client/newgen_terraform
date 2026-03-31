@@ -25,7 +25,8 @@ resource "aws_eks_cluster" "eks_cluster" {
     subnet_ids              = var.subnets
     endpoint_private_access = var.endpoint_private
     endpoint_public_access  = var.endpoint_public
-    security_group_ids      = [aws_security_group.eks_sg.id]
+    # REMOVED: security_group_ids - this creates an additional SG
+    # We will add rules directly to the default cluster security group created by EKS
   }
   
 }
@@ -123,20 +124,21 @@ resource "aws_ec2_tag" "add_tags_into_subnet" {
   value       = "shared"
 }
 
-resource "aws_security_group" "eks_sg" {
-  name        = "${var.cluster_name}-sg"
-  description = "Security Group for EKS cluster ${var.cluster_name}"
-  vpc_id      = var.vpc_id
-
-  tags = merge(
-    { Name = "${var.cluster_name}-sg" },
-    local.common_tags
-  )
-
-  lifecycle {
-    ignore_changes = [egress]
-  }
-}
+# REMOVED: Custom security group - using default EKS cluster security group instead
+# This custom SG was being added as an "additional" security group
+# resource "aws_security_group" "eks_sg" {
+#   name        = "${var.cluster_name}-sg"
+#   description = "Security Group for EKS cluster ${var.cluster_name}"
+#   vpc_id      = var.vpc_id
+#   egress = []
+#   tags = merge(
+#     { Name = "${var.cluster_name}-sg" },
+#     local.common_tags
+#   )
+#   lifecycle {
+#     ignore_changes = [egress]
+#   }
+# }
 
 resource "aws_security_group_rule" "cluster_sg_rules" {
   for_each = var.cluster_sg_rules
@@ -147,7 +149,8 @@ resource "aws_security_group_rule" "cluster_sg_rules" {
   protocol                 = each.value.protocol
   cidr_blocks              = each.value.source_sg_id == null ? each.value.cidr_blocks : null
   source_security_group_id = each.value.source_sg_id
-  security_group_id        = aws_security_group.eks_sg.id
+  # Use the default cluster security group created by EKS instead of custom SG
+  security_group_id        = aws_eks_cluster.eks_cluster.vpc_config[0].cluster_security_group_id
 }
 
 resource "aws_eks_addon" "addons" {

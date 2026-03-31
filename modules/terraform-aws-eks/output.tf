@@ -42,3 +42,7 @@ output "module_node_group_resources" {
   description = "EKS module resources"
   value       = module.node_group.node_group_resources
 }
+output "cluster_security_group_id" {
+  description = "Default security group ID created by EKS for the cluster"
+  value       = aws_eks_cluster.eks_cluster.vpc_config[0].cluster_security_group_id
+}
