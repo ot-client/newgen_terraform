@@ -1,0 +1,195 @@
+##########################
+# General Settings
+##########################
+
+variable "resource_group_name" {
+  description = "(Required) The resource group name for AKS"
+  type        = string
+}
+
+variable "location" {
+  description = "(Required) The Azure region for AKS"
+  type        = string
+}
+
+variable "cluster_name" {
+  description = "(Required) The name of the AKS cluster"
+  type        = string
+}
+
+variable "prefix" {
+  description = "(Required) Prefix for AKS resources (used for dns_prefix, naming)"
+  type        = string
+}
+
+variable "tags" {
+  description = "Tags to apply to all resources"
+  type        = map(string)
+}
+
+variable "kubernetes_version" {
+  description = "Kubernetes version for the cluster"
+  type        = string
+}
+
+variable "sku_tier" {
+  description = "AKS SKU tier"
+  type        = string
+}
+
+variable "node_os_upgrade_channel" {
+  description = "Node OS automatic upgrade channel"
+  type        = string
+  default     = "NodeImage"
+}
+
+variable "private_cluster_enabled" {
+  description = "Whether the cluster should be private"
+  type        = bool
+}
+
+##########################
+# Authentication
+##########################
+
+variable "admin_username" {
+  description = "Admin username for Linux nodes"
+  type        = string
+}
+
+variable "public_ssh_key" {
+  description = "SSH public key for AKS nodes"
+  type        = string
+}
+
+variable "identity_type" {
+  description = "Identity type for the cluster: SystemAssigned/UserAssigned"
+  type        = string
+}
+
+variable "user_assigned_identity_name" {
+  description = "Name of the user-assigned identity (if identity_type=UserAssigned)"
+  type        = string
+  default     = ""
+}
+
+variable "client_id" {
+  description = "Client ID for service principal (optional)"
+  type        = string
+  default     = ""
+}
+
+variable "client_secret" {
+  description = "Client secret for service principal (optional)"
+  type        = string
+  default     = ""
+}
+
+variable "client_name" {
+  description = "AKS client name"
+  type        = string
+}
+
+##########################
+# Network
+##########################
+
+variable "network_plugin" {
+  description = "Network plugin for AKS (azure/kubenet)"
+  type        = string
+}
+
+variable "network_policy" {
+  description = "Network policy (azure/calico)"
+  type        = string
+}
+
+variable "service_cidr" {
+  description = "Kubernetes service CIDR"
+  type        = string
+}
+
+variable "dns_service_ip" {
+  description = "Kubernetes DNS service IP"
+  type        = string
+}
+
+variable "outbound_type" {
+  description = "Cluster outbound type (loadBalancer/userDefinedRouting)"
+  type        = string
+}
+
+variable "subnet_id" {
+  description = "Subnet ID for all node pools"
+  type        = string
+}
+
+##########################
+# Node Pools
+##########################
+
+variable "system_node_pool" {
+  description = "Configuration for system node pool"
+  type = object({
+    name                = string
+    vm_size             = string
+    node_count          = number
+    min_count           = number
+    max_count           = number
+    enable_auto_scaling = bool
+    availability_zones  = list(string)
+    max_pods            = number
+  })
+}
+
+variable "user_node_pool" {
+  description = "Configuration for user node pool"
+  type = object({
+    name                = string
+    vm_size             = string
+    node_count          = number
+    min_count           = number
+    max_count           = number
+    enable_auto_scaling = bool
+    availability_zones  = list(string)
+    max_pods            = number
+    labels              = map(string)
+  })
+}
+
+variable "observability_node_pool" {
+  description = "Configuration for observability node pool"
+  type = object({
+    name               = string
+    vm_size            = string
+    node_count         = number
+    availability_zones = list(string)
+    max_pods           = number
+    labels             = map(string)
+    taints             = list(string)
+  })
+}
+
+##########################
+# ACR
+##########################
+
+# variable "acr_id" {
+#   description = "ACR resource ID to assign AcrPull role"
+#   type        = string
+# }
+
+variable "client_code" {
+  description = "ACR resource ID to assign AcrPull role"
+  type        = string
+}
+
+variable "env" {
+  description = "ACR resource ID to assign AcrPull role"
+  type        = string
+}
+
+variable "acr_id" {
+  description = "ACR resource ID for AcrPull role"
+  type        = string
+}

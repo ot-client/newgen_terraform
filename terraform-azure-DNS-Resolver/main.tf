@@ -10,7 +10,7 @@ resource "azurerm_private_dns_resolver" "resolver" {
 resource "azurerm_private_dns_resolver_outbound_endpoint" "outbound" {
   name                    = "${var.name}-outbound"
   private_dns_resolver_id = azurerm_private_dns_resolver.resolver.id
-  subnet_id               = data.terraform_remote_state.network.outputs.network_aks_subnet_route_table_associations["subnet9"].subnet_id
+  subnet_id               = var.subnet_id
   location                = var.location
 
   tags = var.tags
