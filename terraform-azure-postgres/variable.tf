@@ -111,5 +111,51 @@ variable "private_dns_zone_name" {
 
 variable "private_dns_zone_virtual_network_link_name" {
   description = "he name which should be used for this Private DNS Resolver Virtual Network Link"
+}
 
+# HA toggle: true = enable SameZone high availability
+variable "high_availability_enabled" {
+  description = "Enable High Availability for PostgreSQL Flexible Server"
+  default     = false
+}
+
+# DR: geo-redundant backup stores backups in paired region (GRS)
+variable "geo_redundant_backup_enabled" {
+  description = "Enable geo-redundant backup for DR (GRS)"
+  default     = false
+}
+
+# Maintenance window variables - client changes these in tfvars
+# day_of_week: 0=Sunday, 1=Monday, 2=Tuesday ... 6=Saturday
+variable "maintenance_window_day" {
+  description = "Day of week for maintenance window (0=Sunday, 6=Saturday)"
+  default     = 0
+}
+
+variable "maintenance_window_hour" {
+  description = "Start hour (UTC) for maintenance window (0-23)"
+  default     = 3
+}
+
+variable "maintenance_window_minute" {
+  description = "Start minute for maintenance window (0-59)"
+  default     = 0
+}
+
+# Diagnostic settings toggle
+variable "enable_diagnostic_settings" {
+  description = "Enable diagnostic settings for logs and metrics"
+  default     = false
+}
+
+# Log Analytics Workspace ID - fetched from AGW remote state in wrapper
+variable "log_analytics_workspace_id" {
+  description = "Resource ID of the Log Analytics Workspace"
+  default     = null
+}
+
+# Storage Account ID - fetched from AGW remote state in wrapper
+variable "diagnostic_storage_account_id" {
+  description = "Resource ID of the Storage Account for diagnostic logs"
+  default     = null
 }
