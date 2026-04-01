@@ -52,16 +52,6 @@ variable "private_cluster_enabled" {
 # Authentication
 ##########################
 
-variable "admin_username" {
-  description = "Admin username for Linux nodes"
-  type        = string
-}
-
-variable "public_ssh_key" {
-  description = "SSH public key for AKS nodes"
-  type        = string
-}
-
 variable "identity_type" {
   description = "Identity type for the cluster: SystemAssigned/UserAssigned"
   type        = string
@@ -173,11 +163,6 @@ variable "observability_node_pool" {
 ##########################
 # ACR
 ##########################
-
-# variable "acr_id" {
-#   description = "ACR resource ID to assign AcrPull role"
-#   type        = string
-# }
 
 variable "client_code" {
   description = "ACR resource ID to assign AcrPull role"

@@ -38,14 +38,6 @@ resource "azurerm_kubernetes_cluster" "aks" {
     identity_ids = var.identity_type == "UserAssigned" ? [azurerm_user_assigned_identity.aks_identity[0].id] : null
   }
 
-  linux_profile {
-    admin_username = var.admin_username
-
-    ssh_key {
-      key_data = file(var.public_ssh_key)
-    }
-  }
-
   # CHANGED: Added pod_cidr for kubenet network plugin
   network_profile {
     network_plugin = var.network_plugin
