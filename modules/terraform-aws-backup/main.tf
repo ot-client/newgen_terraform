@@ -50,10 +50,8 @@ resource "aws_backup_plan" "this" {
     start_window      = var.start_window_minutes
     completion_window = var.completion_window_minutes
 
-    # Point-in-time recovery: Disabled
-    enable_continuous_backup = false
-
     # Cold storage: Disabled - no cold_storage_after set
+    # PITR (Point-in-time recovery): Disabled by default
     lifecycle {
       delete_after = var.retention_days
     }
@@ -63,15 +61,19 @@ resource "aws_backup_plan" "this" {
 }
 
 # -------------------------------------------------------------------
-# Backup_1 - EC2 All Instances
-#   Include : tag Backup=True
-#   Exclude : EKS cluster nodes (have tag kubernetes.io/cluster/<name>)
+# Backup_1 - EC2: All Instances
+#   Resource type : EC2 instances (all)
+#   Refine by tag : Backup=True (do NOT tag EKS cluster nodes)
 # -------------------------------------------------------------------
 resource "aws_backup_selection" "ec2" {
   name         = var.ec2_assignment_name
   iam_role_arn = aws_iam_role.backup.arn
   plan_id      = aws_backup_plan.this.id
 
+  # Select specific resource type: EC2 - All Instances
+  resources = var.ec2_resource_arns
+
+  # Refine selection using tag: Key=Backup, Value=True
   selection_tag {
     type  = "STRINGEQUALS"
     key   = var.ec2_tag_key
@@ -80,13 +82,19 @@ resource "aws_backup_selection" "ec2" {
 }
 
 # -------------------------------------------------------------------
-# Backup_2 - Aurora clusters (tag: Backup=True)
+# Backup_2 - Aurora: All Clusters
+#   Resource type : RDS Aurora clusters (all)
+#   Refine by tag : Backup=True
 # -------------------------------------------------------------------
 resource "aws_backup_selection" "aurora" {
   name         = var.aurora_assignment_name
   iam_role_arn = aws_iam_role.backup.arn
   plan_id      = aws_backup_plan.this.id
 
+  # Select specific resource type: Aurora clusters
+  resources = var.aurora_resource_arns
+
+  # Refine selection using tag: Key=Backup, Value=True
   selection_tag {
     type  = "STRINGEQUALS"
     key   = var.aurora_tag_key
