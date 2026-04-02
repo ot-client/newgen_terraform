@@ -6,12 +6,12 @@ resource "azurerm_storage_account" "storage_account" {
   account_replication_type      = var.account_replication_type
   access_tier                   = var.access_tier
   public_network_access_enabled = var.public_network_access_enabled
-  min_tls_version               = "TLS1_2"
-  is_hns_enabled               = var.is_hns_enabled
+  min_tls_version               = var.min_tls_version
+  is_hns_enabled                = var.is_hns_enabled
 
   network_rules {
-    default_action             = "Deny"
-    bypass                     = ["AzureServices"]
+    default_action             = var.network_rules_default_action
+    bypass                     = var.network_rules_bypass
     ip_rules                   = var.allowed_ip_ranges
     virtual_network_subnet_ids = var.allowed_subnet_ids
   }
@@ -38,10 +38,10 @@ resource "azurerm_private_endpoint" "private_endpoint" {
   subnet_id           = var.subnet_id
 
   private_service_connection {
-    name                           = "${var.private_endpoint_name}-connection"
-    is_manual_connection           = false
+    name                           = var.private_service_connection_name
+    is_manual_connection           = var.is_manual_connection
     private_connection_resource_id = azurerm_storage_account.storage_account.id
-    subresource_names              = ["blob"]
+    subresource_names              = var.private_endpoint_subresource_names
   }
 
   tags = var.tags

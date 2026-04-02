@@ -37,6 +37,11 @@ variable "public_network_access_enabled" {
   default     = true
 }
 
+variable "min_tls_version" {
+  description = "The minimum supported TLS version for the storage account"
+  type        = string
+}
+
 variable "is_hns_enabled" {
   description = "Is Hierarchical Namespace enabled? This can be used with Azure Data Lake Storage Gen 2."
   type        = bool
@@ -47,6 +52,17 @@ variable "allowed_ip_ranges" {
   description = "List of public IP or IP ranges in CIDR Format that should be able to access the storage account."
   type        = list(string)
   default     = []
+}
+
+variable "network_rules_default_action" {
+  description = "Network rules default action - Allow or Deny"
+  type        = string
+}
+
+variable "network_rules_bypass" {
+  description = "Network rules bypass list"
+  type        = list(string)
+
 }
 
 variable "allowed_subnet_ids" {
@@ -89,6 +105,21 @@ variable "private_endpoint_name" {
   description = "The name of the Private Endpoint."
   type        = string
   default     = null
+}
+
+variable "private_service_connection_name" {
+  description = "The name of the private service connection"
+  type        = string
+}
+
+variable "is_manual_connection" {
+  description = "Does the Private Endpoint require Manual Approval from the remote resource owner"
+  type        = bool
+}
+
+variable "private_endpoint_subresource_names" {
+  description = "A list of subresource names which the Private Endpoint is able to connect to"
+  type        = list(string)
 }
 
 variable "tags" {
