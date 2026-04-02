@@ -74,7 +74,7 @@ variable "retention_days" {
   default     = 7
 }
 
-# EC2 selection tags & resources
+# EC2 selection tags
 variable "ec2_tag_key" {
   description = "Tag key to filter EC2 instances for backup"
   type        = string
@@ -85,6 +85,12 @@ variable "ec2_tag_value" {
   description = "Tag value to filter EC2 instances for backup"
   type        = string
   default     = "True"
+}
+
+variable "ec2_resource_arns" {
+  description = "EC2 resource ARNs - all instances by default"
+  type        = list(string)
+  default     = ["arn:aws:ec2:*:*:instance/*"]
 }
 
 # Aurora selection tags
@@ -98,6 +104,12 @@ variable "aurora_tag_value" {
   description = "Tag value to filter Aurora clusters for backup"
   type        = string
   default     = "True"
+}
+
+variable "aurora_resource_arns" {
+  description = "Aurora resource ARNs - all clusters by default"
+  type        = list(string)
+  default     = ["arn:aws:rds:*:*:cluster:*"]
 }
 
 variable "tags" {
