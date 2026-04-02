@@ -13,6 +13,12 @@ variable "location" {
   type        = string
 }
 
+variable "account_kind" {
+  description = "Storage account kind - Storage, StorageV2, BlobStorage, FileStorage, BlockBlobStorage"
+  type        = string
+  default     = "StorageV2"
+}
+
 variable "account_tier" {
   description = "Performance tier: Standard or Premium."
   type        = string
@@ -31,6 +37,21 @@ variable "access_tier" {
 variable "public_network_access_enabled" {
   description = "Whether public network access is enabled."
   type        = bool
+}
+
+variable "min_tls_version" {
+  description = "The minimum supported TLS version for the storage account"
+  type        = string
+}
+
+variable "network_rules_default_action" {
+  description = "Network rules default action - Allow or Deny"
+  type        = string
+}
+
+variable "network_rules_bypass" {
+  description = "Network rules bypass list"
+  type        = list(string)
 }
 
 variable "share_retention_days" {
