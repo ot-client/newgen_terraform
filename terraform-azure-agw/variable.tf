@@ -23,6 +23,18 @@ variable "public_ip_name" {
   type        = string
 }
 
+variable "public_ip_allocation_method" {
+  description = "Public IP allocation method"
+  type        = string
+  default     = "Static"
+}
+
+variable "public_ip_sku" {
+  description = "Public IP SKU"
+  type        = string
+  default     = "Standard"
+}
+
 variable "sku_name" {
   description = "The SKU name of the Application Gateway"
   type        = string
@@ -137,6 +149,60 @@ variable "log_analytics_workspace_id" {
 variable "diag_storage_account_name" {
   description = "Name of the storage account for AGW diagnostic logs"
   type        = string
+}
+
+variable "storage_account_tier" {
+  description = "Storage account tier"
+  type        = string
+  default     = "Standard"
+}
+
+variable "storage_account_replication_type" {
+  description = "Storage account replication type"
+  type        = string
+  default     = "LRS"
+}
+
+variable "gateway_ip_configuration_name" {
+  description = "Name of the gateway IP configuration"
+  type        = string
+  default     = "appGatewayIpConfig"
+}
+
+variable "cookie_based_affinity" {
+  description = "Cookie based affinity - Enabled or Disabled"
+  type        = string
+  default     = "Disabled"
+}
+
+variable "pick_host_name_from_backend_address" {
+  description = "Pick hostname from backend address"
+  type        = bool
+  default     = true
+}
+
+variable "routing_rule_type" {
+  description = "Routing rule type - Basic or PathBasedRouting"
+  type        = string
+  default     = "Basic"
+}
+
+variable "routing_rule_priority" {
+  description = "Routing rule priority"
+  type        = number
+  default     = 1
+}
+
+variable "probe_pick_host_name_from_backend" {
+  description = "Pick hostname from backend HTTP settings for probe"
+  type        = bool
+  default     = true
+}
+
+variable "diag_metric_category" {
+  description = "Diagnostic metric category"
+  type        = string
+  default     = "AllMetrics"
 }
 
 variable "diag_log_categories" {

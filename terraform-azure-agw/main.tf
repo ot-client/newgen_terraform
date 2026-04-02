@@ -2,8 +2,8 @@ resource "azurerm_public_ip" "pip" {
   name                = var.public_ip_name
   resource_group_name = var.resource_group_name
   location            = var.location
-  allocation_method   = "Static"
-  sku                 = "Standard"
+  allocation_method   = var.public_ip_allocation_method
+  sku                 = var.public_ip_sku
 
   tags = var.tags
 }
@@ -12,8 +12,8 @@ resource "azurerm_storage_account" "diag" {
   name                     = var.diag_storage_account_name
   resource_group_name      = var.resource_group_name
   location                 = var.location
-  account_tier             = "Standard"
-  account_replication_type = "LRS"
+  account_tier             = var.storage_account_tier
+  account_replication_type = var.storage_account_replication_type
 
   tags = var.tags
 }
@@ -46,7 +46,7 @@ resource "azurerm_application_gateway" "main" {
   }
 
   gateway_ip_configuration {
-    name      = "appGatewayIpConfig"
+    name      = var.gateway_ip_configuration_name
     subnet_id = var.subnet_id
   }
 
@@ -78,12 +78,12 @@ resource "azurerm_application_gateway" "main" {
 
   backend_http_settings {
     name                                = local.http_setting_name
-    cookie_based_affinity               = "Disabled"
+    cookie_based_affinity               = var.cookie_based_affinity
     port                                = var.backend_port
     protocol                            = var.backend_protocol
     request_timeout                     = var.backend_request_timeout
     probe_name                          = local.probe_name
-    pick_host_name_from_backend_address = true
+    pick_host_name_from_backend_address = var.pick_host_name_from_backend_address
     trusted_root_certificate_names      = [local.trusted_root_cert_name]
   }
 
@@ -97,11 +97,11 @@ resource "azurerm_application_gateway" "main" {
 
   request_routing_rule {
     name                       = local.request_routing_rule_name
-    rule_type                  = "Basic"
+    rule_type                  = var.routing_rule_type
     http_listener_name         = local.listener_name
     backend_address_pool_name  = local.backend_address_pool_name
     backend_http_settings_name = local.http_setting_name
-    priority                   = 1
+    priority                   = var.routing_rule_priority
   }
 
   probe {
@@ -111,7 +111,7 @@ resource "azurerm_application_gateway" "main" {
     interval                                  = var.probe_interval
     timeout                                   = var.probe_timeout
     unhealthy_threshold                       = var.probe_unhealthy_threshold
-    pick_host_name_from_backend_http_settings = true
+    pick_host_name_from_backend_http_settings = var.probe_pick_host_name_from_backend
     port                                      = var.backend_port
 
     match {
@@ -136,6 +136,6 @@ resource "azurerm_monitor_diagnostic_setting" "agw" {
   }
 
   enabled_metric {
-    category = "AllMetrics"
+    category = var.diag_metric_category
   }
 }
