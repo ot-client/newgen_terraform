@@ -53,17 +53,6 @@ resource "azurerm_route_table" "rt" {
   tags = var.tags
 }
 
-resource "azurerm_route" "default_route" {
-  for_each = azurerm_route_table.rt
-
-  name                   = "default-fw-route"
-  resource_group_name    = var.resource_group_name
-  route_table_name       = each.value.name
-  address_prefix         = "0.0.0.0/0"
-  next_hop_type          = "VirtualAppliance"
-  next_hop_in_ip_address = var.firewall_ip
-}
-
 resource "azurerm_subnet_route_table_association" "association" {
   for_each = azurerm_route_table.rt
 
