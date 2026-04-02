@@ -148,6 +148,13 @@ variable "enable_diagnostic_settings" {
   default     = false
 }
 
+# Diagnostic log categories
+variable "diagnostic_log_categories" {
+  description = "List of log categories to enable for diagnostic settings"
+  type        = list(string)
+  default     = ["PostgreSQLLogs", "PostgreSQLFlexDatabaseXacts"]
+}
+
 # Log Analytics Workspace ID - fetched from AGW remote state in wrapper
 variable "log_analytics_workspace_id" {
   description = "Resource ID of the Log Analytics Workspace"
@@ -158,4 +165,8 @@ variable "log_analytics_workspace_id" {
 variable "diagnostic_storage_account_id" {
   description = "Resource ID of the Storage Account for diagnostic logs"
   default     = null
+}
+
+variable "mode" {
+  type    = string
 }

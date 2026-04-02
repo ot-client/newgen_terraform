@@ -12,7 +12,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "private_dns_zone_virtu
 
 
 resource "azurerm_postgresql_flexible_server" "default" {
-  name                          = "${var.name}-server"
+  name                          = var.name
   resource_group_name           = var.resource_group_name
   location                      = var.location
   version                       = var.posgressversion
@@ -32,7 +32,7 @@ resource "azurerm_postgresql_flexible_server" "default" {
   dynamic "high_availability" {
     for_each = var.high_availability_enabled ? [1] : []
     content {
-      mode                      = "SameZone"
+      mode                      = var.mode
       standby_availability_zone = var.postgres_zones
     }
   }
@@ -50,7 +50,7 @@ resource "azurerm_postgresql_flexible_server" "default" {
   }
 
   tags = merge(
-    { "Name" = "${var.name}-server" },
+    { "Name" = var.name },
     var.tags
   )
 }
@@ -60,16 +60,15 @@ resource "azurerm_postgresql_flexible_server" "default" {
 # Enabled only when enable_diagnostic_settings = true in tfvars
 resource "azurerm_monitor_diagnostic_setting" "postgres_diag" {
   count                      = var.enable_diagnostic_settings ? 1 : 0
-  name                       = "${var.name}-diag"
+  name                       = var.name
   target_resource_id         = azurerm_postgresql_flexible_server.default.id
   log_analytics_workspace_id = var.log_analytics_workspace_id
   storage_account_id         = var.diagnostic_storage_account_id
 
-  enabled_log {
-    category = "PostgreSQLLogs"
-  }
-
-  enabled_log {
-    category = "PostgreSQLFlexDatabaseXacts"
+  dynamic "enabled_log" {
+    for_each = var.diagnostic_log_categories
+    content {
+      category = enabled_log.value
+    }
   }
 }
