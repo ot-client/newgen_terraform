@@ -103,3 +103,7 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "public_access_network_enable" {
+  type        = bool
+}

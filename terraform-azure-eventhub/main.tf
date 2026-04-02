@@ -10,7 +10,7 @@ resource "azurerm_eventhub_namespace" "evh_ns" {
   sku                           = var.sku
   capacity                      = var.capacity
   local_authentication_enabled  = var.local_authentication_enabled
-  public_network_access_enabled = false
+  public_network_access_enabled = var.public_access_network_enable
 
   tags = var.tags
 }
