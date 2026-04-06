@@ -31,6 +31,23 @@ variable "tags" {
   default     = {}
 }
 
+variable "family" {
+  description = "A map of tags to assign to the resource"
+  type        = string
+}
+
+variable "minimum_tls_version" {
+  description = "A map of tags to assign to the resource"
+  type        = string
+}
+
+variable "public_network_access_enabled" {
+  description = "A map of tags to assign to the resource"
+  type        = bool
+}
+
+
+
 # Private endpoint managed separately in private-endpoint module
 # variable "virtual_network_id" {
 #   description = "The ID of the virtual network for private endpoint"

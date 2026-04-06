@@ -7,7 +7,7 @@ resource "azurerm_private_endpoint" "pe" {
   subnet_id           = var.subnet_id
 
   private_service_connection {
-    name                           = "${each.value.name}-psc"
+    name                           = each.value.name
     private_connection_resource_id = each.value.resource_id
     is_manual_connection           = false
     subresource_names              = each.value.subresource_names
