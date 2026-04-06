@@ -25,16 +25,6 @@ variable "iam_role_name" {
   type = string
 }
 
-variable "ec2_assignment_name" {
-  type    = string
-  default = "Backup_1"
-}
-
-variable "aurora_assignment_name" {
-  type    = string
-  default = "Backup_2"
-}
-
 # Schedule
 variable "schedule_hour" {
   description = "Hour (UTC) to start backup, e.g. 5 for 05:00"
@@ -74,42 +64,14 @@ variable "retention_days" {
   default     = 7
 }
 
-# EC2 selection tags
-variable "ec2_tag_key" {
-  description = "Tag key to filter EC2 instances for backup"
-  type        = string
-  default     = "Backup"
-}
-
-variable "ec2_tag_value" {
-  description = "Tag value to filter EC2 instances for backup"
-  type        = string
-  default     = "True"
-}
-
-variable "ec2_resource_arns" {
-  description = "EC2 resource ARNs - all instances by default"
-  type        = list(string)
-  default     = ["arn:aws:ec2:*:*:instance/*"]
-}
-
-# Aurora selection tags
-variable "aurora_tag_key" {
-  description = "Tag key to filter Aurora clusters for backup"
-  type        = string
-  default     = "Backup"
-}
-
-variable "aurora_tag_value" {
-  description = "Tag value to filter Aurora clusters for backup"
-  type        = string
-  default     = "True"
-}
-
-variable "aurora_resource_arns" {
-  description = "Aurora resource ARNs - all clusters by default"
-  type        = list(string)
-  default     = ["arn:aws:rds:*:*:cluster:*"]
+variable "selections" {
+  description = "Map of backup selections. Add any service (EC2, Aurora, EFS, etc.) here via tfvars."
+  type = map(object({
+    name          = string
+    resource_arns = list(string)
+    tag_key       = string
+    tag_value     = string
+  }))
 }
 
 variable "tags" {
