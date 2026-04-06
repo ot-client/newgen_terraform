@@ -212,7 +212,7 @@ resource "aws_efs_access_point" "ap" {
   )
 }
 
-# ─── Existing EFS Volumes (Nikita's pattern) ──────────────────────────────────
+# ─── Existing EFS Volumes ──────────────────────────────────
 
 data "aws_efs_file_system" "existing" {
   count          = var.additional_existing_efs_volumes != null ? length(var.additional_existing_efs_volumes) : 0
@@ -227,29 +227,3 @@ resource "aws_efs_mount_target" "existing" {
     concat(var.external_security_group_ids, [aws_security_group.efs_sg[0].id])
   ) : var.external_security_group_ids
 }
-
-# ─── User-Data Templates ──────────────────────────────────────────────────────
-
-# User-data for new EFS volumes (keyed by efs_configs key)
-# data "template_file" "efs_user_data" {
-#   for_each = {
-#    for k, v in var.efs_configs : k => v
-#    if v.mount_point != null
-#  }
-#
-#  template = file("${path.module}/efs-user-data.sh.tpl")
-#  vars = {
-#    efs_dns_name    = aws_efs_file_system.main[each.key].dns_name
-#    efs_mount_point = each.value.mount_point
-#  }
-# }
-
-# User-data for existing EFS volumes
-# data "template_file" "existing_efs_user_data" {
-#  count    = var.additional_existing_efs_volumes != null ? length(var.additional_existing_efs_volumes) : 0
-#  template = file("${path.module}/efs-user-data.sh.tpl")
-#  vars = {
-#    efs_dns_name    = data.aws_efs_file_system.existing[count.index].dns_name
-#    efs_mount_point = var.additional_existing_efs_volumes[count.index].mount_point
-#  }
-# }
