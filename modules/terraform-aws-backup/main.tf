@@ -1,7 +1,7 @@
 # -------------------------------------------------------------------
 # Backup Vault - AWS Default encryption (no custom KMS key)
 # -------------------------------------------------------------------
-resource "aws_backup_vault" "this" {
+resource "aws_backup_vault" "vault" {
   name        = var.vault_name
   kms_key_arn = var.kms_key_arn  # null = AWS managed default key
   tags        = merge({ Name = var.vault_name }, var.tags)
@@ -25,25 +25,25 @@ resource "aws_iam_role" "backup" {
   tags = merge({ Name = var.iam_role_name }, var.tags)
 }
 
-resource "aws_iam_role_policy_attachment" "backup_policy" {
-  role       = aws_iam_role.backup.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSBackupServiceRolePolicyForBackup"
-}
+resource "aws_iam_role_policy_attachment" "backup_policies" {
+  for_each = toset([
+    "arn:aws:iam::aws:policy/service-role/AWSBackupServiceRolePolicyForBackup",
+    "arn:aws:iam::aws:policy/service-role/AWSBackupServiceRolePolicyForRestores",
+  ])
 
-resource "aws_iam_role_policy_attachment" "restore_policy" {
   role       = aws_iam_role.backup.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSBackupServiceRolePolicyForRestores"
+  policy_arn = each.value
 }
 
 # -------------------------------------------------------------------
 # Backup Plan
 # -------------------------------------------------------------------
-resource "aws_backup_plan" "this" {
+resource "aws_backup_plan" "plan" {
   name = var.plan_name
 
   rule {
     rule_name                = var.rule_name
-    target_vault_name        = aws_backup_vault.this.name
+    target_vault_name        = aws_backup_vault.vault.name
     schedule                 = "cron(${var.schedule_minute} ${var.schedule_hour} * * ? *)"
     schedule_expression_timezone = var.schedule_timezone
 
@@ -61,43 +61,19 @@ resource "aws_backup_plan" "this" {
 }
 
 # -------------------------------------------------------------------
-# Backup_1 - EC2: All Instances
-#   Resource type : EC2 instances (all)
-#   Refine by tag : Backup=True (do NOT tag EKS cluster nodes)
+# Backup Selections - driven entirely by var.selections from tfvars
 # -------------------------------------------------------------------
-resource "aws_backup_selection" "ec2" {
-  name         = var.ec2_assignment_name
+resource "aws_backup_selection" "assignments" {
+  for_each = var.selections
+
+  name         = each.value.name
   iam_role_arn = aws_iam_role.backup.arn
-  plan_id      = aws_backup_plan.this.id
+  plan_id      = aws_backup_plan.plan.id
+  resources    = each.value.resource_arns
 
-  # Select specific resource type: EC2 - All Instances
-  resources = var.ec2_resource_arns
-
-  # Refine selection using tag: Key=Backup, Value=True
   selection_tag {
     type  = "STRINGEQUALS"
-    key   = var.ec2_tag_key
-    value = var.ec2_tag_value
-  }
-}
-
-# -------------------------------------------------------------------
-# Backup_2 - Aurora: All Clusters
-#   Resource type : RDS Aurora clusters (all)
-#   Refine by tag : Backup=True
-# -------------------------------------------------------------------
-resource "aws_backup_selection" "aurora" {
-  name         = var.aurora_assignment_name
-  iam_role_arn = aws_iam_role.backup.arn
-  plan_id      = aws_backup_plan.this.id
-
-  # Select specific resource type: Aurora clusters
-  resources = var.aurora_resource_arns
-
-  # Refine selection using tag: Key=Backup, Value=True
-  selection_tag {
-    type  = "STRINGEQUALS"
-    key   = var.aurora_tag_key
-    value = var.aurora_tag_value
+    key   = each.value.tag_key
+    value = each.value.tag_value
   }
 }
