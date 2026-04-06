@@ -26,10 +26,7 @@ resource "aws_iam_role" "backup" {
 }
 
 resource "aws_iam_role_policy_attachment" "backup_policies" {
-  for_each = toset([
-    "arn:aws:iam::aws:policy/service-role/AWSBackupServiceRolePolicyForBackup",
-    "arn:aws:iam::aws:policy/service-role/AWSBackupServiceRolePolicyForRestores",
-  ])
+  for_each = toset(var.iam_role_policies)
 
   role       = aws_iam_role.backup.name
   policy_arn = each.value
