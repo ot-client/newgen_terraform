@@ -64,6 +64,11 @@ variable "retention_days" {
   default     = 7
 }
 
+variable "iam_role_policies" {
+  description = "List of IAM policy ARNs to attach to the backup role."
+  type        = list(string)
+}
+
 variable "selections" {
   description = "Map of backup selections. Add any service (EC2, Aurora, EFS, etc.) here via tfvars."
   type = map(object({
