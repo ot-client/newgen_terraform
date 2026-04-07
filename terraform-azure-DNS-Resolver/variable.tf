@@ -18,3 +18,11 @@ variable "forwarding_rules" {
     }))
   }))
 }
+
+variable "vnet_links" {
+  description = "Map of virtual network links for DNS forwarding ruleset"
+  type = map(object({
+    vnet_id = string
+  }))
+  default = {}
+}

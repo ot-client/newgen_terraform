@@ -33,3 +33,15 @@ output "forwarding_rules" {
     }
   }
 }
+
+output "vnet_links" {
+  description = "Virtual network links attached to DNS forwarding ruleset"
+  value = {
+    for k, v in azurerm_private_dns_resolver_virtual_network_link.vnet_links :
+    k => {
+      id                 = v.id
+      virtual_network_id = v.virtual_network_id
+      status             = "Successfully Linked"
+    }
+  }
+}

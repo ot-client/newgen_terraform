@@ -42,3 +42,11 @@ resource "azurerm_private_dns_resolver_forwarding_rule" "rules" {
     }
   }
 }
+
+resource "azurerm_private_dns_resolver_virtual_network_link" "vnet_links" {
+  for_each = var.vnet_links
+
+  name                      = each.key
+  dns_forwarding_ruleset_id = azurerm_private_dns_resolver_dns_forwarding_ruleset.ruleset.id
+  virtual_network_id        = each.value.vnet_id
+}
