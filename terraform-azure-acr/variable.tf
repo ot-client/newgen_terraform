@@ -42,7 +42,6 @@ variable "georeplications" {
   type = list(object({
     location                = string
     zone_redundancy_enabled = optional(bool, false)
-    tags                    = optional(map(string), {})
   }))
   default = []
 }
