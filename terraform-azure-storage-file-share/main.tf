@@ -24,9 +24,11 @@ resource "azurerm_storage_account" "this" {
 }
 
 resource "azurerm_storage_share" "this" {
-  for_each           = var.file_shares
-  name               = each.key
-  storage_account_id = azurerm_storage_account.this.id
-  quota              = each.value.quota_gb
-  access_tier        = each.value.access_tier
+  for_each                      = var.file_shares
+  name                          = each.key
+  storage_account_id            = azurerm_storage_account.this.id
+  quota                         = each.value.quota_gb
+  access_tier                   = each.value.access_tier
+  provisioned_iops              = each.value.provisioned_iops
+  provisioned_bandwidth_mibps   = each.value.provisioned_bandwidth_mibps
 }
