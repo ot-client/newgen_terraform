@@ -7,14 +7,5 @@ resource "aws_ec2_transit_gateway_vpc_attachment" "tgw_attachment" {
 
   dns_support                            = each.value.dns_support
   ipv6_support                           = each.value.ipv6_support
-  # transit_gateway_default_route_table_association = each.value.associate_with_tgw_route_table
-  # transit_gateway_default_route_table_propagation = each.value.propagate_to_tgw_route_table
-
-#     tags = merge(
-#     {
-#       Name = "${local.base_name}-${each.value.name}-tgw-attach"
-#     },
-#     local.common_tags
-#   )
 
  }

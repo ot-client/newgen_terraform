@@ -124,22 +124,6 @@ resource "aws_ec2_tag" "add_tags_into_subnet" {
   value       = "shared"
 }
 
-# REMOVED: Custom security group - using default EKS cluster security group instead
-# This custom SG was being added as an "additional" security group
-# resource "aws_security_group" "eks_sg" {
-#   name        = "${var.cluster_name}-sg"
-#   description = "Security Group for EKS cluster ${var.cluster_name}"
-#   vpc_id      = var.vpc_id
-#   egress = []
-#   tags = merge(
-#     { Name = "${var.cluster_name}-sg" },
-#     local.common_tags
-#   )
-#   lifecycle {
-#     ignore_changes = [egress]
-#   }
-# }
-
 resource "aws_security_group_rule" "cluster_sg_rules" {
   for_each = var.cluster_sg_rules
 
