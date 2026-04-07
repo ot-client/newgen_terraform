@@ -140,3 +140,28 @@ variable "zone" {
   type        = string
   default     = null
 }
+
+variable "route_tables" {
+  description = "Map of route tables to add firewall routes"
+  type = map(object({
+    name = string
+  }))
+  default = {}
+}
+
+variable "firewall_nic_id" {
+  description = "NIC ID of the firewall VM to use for routing"
+  type        = string
+  default     = null
+}
+
+variable "firewall_route_address_prefix" {
+  description = "Address prefix for firewall route"
+  type        = string
+  default     = "0.0.0.0/0"
+}
+
+variable "firewall_route_name" {
+  description = "Address prefix for firewall route"
+  type        = string
+}

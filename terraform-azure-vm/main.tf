@@ -115,3 +115,20 @@ resource "azurerm_virtual_machine_data_disk_attachment" "attachment" {
   lun                = each.value.lun
   caching            = "ReadWrite"
 }
+
+data "azurerm_route_table" "rt" {
+  for_each            = var.route_tables
+  name                = each.value.name
+  resource_group_name = var.resource_group_name
+}
+
+resource "azurerm_route" "firewall_route" {
+  for_each = var.firewall_nic_id == "self" ? var.route_tables : {}
+
+  name                   = var.firewall_route_name
+  resource_group_name    = var.resource_group_name
+  route_table_name       = data.azurerm_route_table.rt[each.key].name
+  address_prefix         = var.firewall_route_address_prefix
+  next_hop_type          = "VirtualAppliance"
+  next_hop_in_ip_address = azurerm_network_interface.nic.private_ip_address
+}

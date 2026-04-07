@@ -17,3 +17,15 @@ output "public_ip_id" {
   description = "The ID of the public IP"
   value       = var.public_ip_id
 }
+
+output "firewall_routes" {
+  description = "Firewall routes created by this VM"
+  value = var.firewall_nic_id == "self" ? {
+    for k, v in azurerm_route.firewall_route : k => {
+      route_table_name = v.route_table_name
+      address_prefix   = v.address_prefix
+      next_hop_type    = v.next_hop_type
+      route_id         = v.id
+    }
+  } : {}
+}
