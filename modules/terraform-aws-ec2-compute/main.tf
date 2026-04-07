@@ -151,18 +151,15 @@ resource "aws_security_group_rule" "security_rules" {
   protocol          = each.value.rule.protocol
   security_group_id = each.value.sg_id
   
-  # Use CIDR blocks when no security group is specified
+  # Use cidr_blocks if no source_sg_name is specified
   cidr_blocks = (
-    lookup(each.value.rule, "source_sg_id", null) == null && 
-    lookup(each.value.rule, "source_sg_name", null) == null
-  ) ? lookup(each.value.rule, "cidr_blocks", null) : null
+    !can(each.value.rule.source_sg_name) || each.value.rule.source_sg_name == null
+  ) ? (can(each.value.rule.cidr_blocks) ? each.value.rule.cidr_blocks : ["0.0.0.0/0"]) : null
   
-  # Use security group ID when specified (either directly or by name)
+  # Use source_security_group_id when source_sg_name is specified
   source_security_group_id = (
-    lookup(each.value.rule, "source_sg_id", null) != null ? 
-    lookup(each.value.rule, "source_sg_id", null) :
-    lookup(each.value.rule, "source_sg_name", null) != null ? 
-    data.aws_security_group.existing_sg_by_name[lookup(each.value.rule, "source_sg_name", "")].id :
+    can(each.value.rule.source_sg_name) && each.value.rule.source_sg_name != null ?
+    data.aws_security_group.existing_sg_by_name[each.value.rule.source_sg_name].id :
     null
   )
 }
