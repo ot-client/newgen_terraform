@@ -27,3 +27,8 @@ output "public_network_access_enabled" {
   description = "Whether public network access is enabled"
   value       = azurerm_container_registry.acr.public_network_access_enabled
 }
+
+output "georeplications" {
+  description = "List of geo-replication locations configured for the ACR"
+  value       = azurerm_container_registry.acr.georeplications
+}

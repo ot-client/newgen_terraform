@@ -36,3 +36,13 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "georeplications" {
+  description = "List of geo-replication locations. Only supported with Premium SKU."
+  type = list(object({
+    location                = string
+    zone_redundancy_enabled = optional(bool, false)
+    tags                    = optional(map(string), {})
+  }))
+  default = []
+}
