@@ -150,9 +150,20 @@ resource "aws_security_group_rule" "security_rules" {
   from_port                = each.value.rule.from_port
   to_port                  = each.value.rule.to_port
   protocol                 = each.value.rule.protocol
-  cidr_blocks              = each.value.rule.source_sg_id == null ? each.value.rule.cidr_blocks : null
-  source_security_group_id = each.value.rule.source_sg_id
+  # cidr_blocks              = each.value.rule.source_sg_id == null ? each.value.rule.cidr_blocks : null
+  # source_security_group_id = each.value.rule.source_sg_id
   security_group_id        = each.value.sg_id
+   # CIDR blocks (when not using source security group)
+  cidr_blocks = (
+    each.value.rule.source_sg_id == null && each.value.rule.source_sg_name == null
+  ) ? each.value.rule.cidr_blocks : null
+  
+  # Source security group ID - support both ID and name
+  source_security_group_id = (
+    each.value.rule.source_sg_id != null ? each.value.rule.source_sg_id :
+    each.value.rule.source_sg_name != null ? data.aws_security_group.existing_sg_by_name[each.value.rule.source_sg_name].id :
+    null
+  )
 }
 
 ###############################
