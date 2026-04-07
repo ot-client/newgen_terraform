@@ -3,10 +3,7 @@ variable "vm_name" {
   type        = string
 }
 
-variable "computer_name" {
-  description = "The name of the virtual machine"
-  type        = optional(string)
-}
+
 
 
 variable "resource_group_name" {
