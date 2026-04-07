@@ -118,7 +118,6 @@ resource "aws_security_group" "sg" {
 
   name        = each.value
   description = "Security Group ${each.value}"
-  vpc_id      = var.vpc_id
   lifecycle {
     ignore_changes = [egress]
   }
@@ -166,18 +165,6 @@ resource "aws_security_group_rule" "security_rules" {
     data.aws_security_group.existing_sg_by_name[lookup(each.value.rule, "source_sg_name", "")].id :
     null
   )
-  
-  # Add validation to ensure at least one source is specified
-  lifecycle {
-    precondition {
-      condition = (
-        lookup(each.value.rule, "cidr_blocks", null) != null ||
-        lookup(each.value.rule, "source_sg_id", null) != null ||
-        lookup(each.value.rule, "source_sg_name", null) != null
-      )
-      error_message = "Security group rule '${each.key}' must specify either cidr_blocks, source_sg_id, or source_sg_name."
-    }
-  }
 }
 
 ###############################
