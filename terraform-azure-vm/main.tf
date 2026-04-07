@@ -70,6 +70,7 @@ resource "azurerm_windows_virtual_machine" "vm" {
   zone                  = var.zone
   patch_mode            = var.patch_mode
   patch_assessment_mode = var.patch_assessment_mode
+  computer_name         = var.computer_name
 
   os_disk {
     caching              = "ReadWrite"
