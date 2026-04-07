@@ -95,12 +95,26 @@ resource "azurerm_application_gateway" "main" {
     ssl_certificate_name           = local.ssl_cert_name
   }
 
+  url_path_map {
+    name                               = "${var.agw_name}-upm"
+    default_backend_address_pool_name  = local.backend_address_pool_name
+    default_backend_http_settings_name = local.http_setting_name
+
+    path_rule {
+      name                       = var.url_path_rule_name
+      paths                      = var.url_path_rules
+      backend_address_pool_name  = local.backend_address_pool_name
+      backend_http_settings_name = local.http_setting_name
+    }
+  }
+
   request_routing_rule {
     name                       = local.request_routing_rule_name
     rule_type                  = var.routing_rule_type
     http_listener_name         = local.listener_name
-    backend_address_pool_name  = local.backend_address_pool_name
-    backend_http_settings_name = local.http_setting_name
+    backend_address_pool_name  = var.routing_rule_type == "Basic" ? local.backend_address_pool_name : null
+    backend_http_settings_name = var.routing_rule_type == "Basic" ? local.http_setting_name : null
+    url_path_map_name          = var.routing_rule_type == "PathBasedRouting" ? "${var.agw_name}-upm" : null
     priority                   = var.routing_rule_priority
   }
 
@@ -112,6 +126,7 @@ resource "azurerm_application_gateway" "main" {
     timeout                                   = var.probe_timeout
     unhealthy_threshold                       = var.probe_unhealthy_threshold
     pick_host_name_from_backend_http_settings = var.probe_pick_host_name_from_backend
+    host                                      = var.probe_pick_host_name_from_backend ? null : var.probe_host
     port                                      = var.backend_port
 
     match {

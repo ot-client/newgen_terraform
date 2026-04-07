@@ -79,7 +79,7 @@ variable "backend_protocol" {
 variable "backend_request_timeout" {
   description = "Backend request timeout in seconds"
   type        = number
-  default     = 60
+  default     = 320
 }
 
 variable "frontend_port" {
@@ -178,13 +178,25 @@ variable "cookie_based_affinity" {
 variable "pick_host_name_from_backend_address" {
   description = "Pick hostname from backend address"
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "routing_rule_type" {
   description = "Routing rule type - Basic or PathBasedRouting"
   type        = string
-  default     = "Basic"
+  default     = "PathBasedRouting"
+}
+
+variable "url_path_rules" {
+  description = "List of URL paths for path-based routing rule"
+  type        = list(string)
+  default     = ["/test/*"]
+}
+
+variable "url_path_rule_name" {
+  description = "Name of the URL path rule"
+  type        = string
+  default     = "default-path-rule"
 }
 
 variable "routing_rule_priority" {
@@ -196,7 +208,13 @@ variable "routing_rule_priority" {
 variable "probe_pick_host_name_from_backend" {
   description = "Pick hostname from backend HTTP settings for probe"
   type        = bool
-  default     = true
+  default     = false
+}
+
+variable "probe_host" {
+  description = "Explicit hostname for health probe, used when probe_pick_host_name_from_backend is false"
+  type        = string
+  default     = null
 }
 
 variable "diag_metric_category" {
