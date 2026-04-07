@@ -60,12 +60,10 @@ variable "share_retention_days" {
 }
 
 variable "file_shares" {
-  description = "Map of file shares: name => { quota_gb, access_tier, provisioned_iops, provisioned_bandwidth_mibps }. provisioned_iops and provisioned_bandwidth_mibps are only for Provisioned v2 (FileStorage + Premium)."
+  description = "Map of file shares: name => { quota_gb, access_tier }"
   type = map(object({
-    quota_gb                      = number
-    access_tier                   = string
-    provisioned_iops              = optional(number, null)
-    provisioned_bandwidth_mibps   = optional(number, null)
+    quota_gb    = number
+    access_tier = string
   }))
 }
 
