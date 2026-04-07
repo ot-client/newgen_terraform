@@ -27,7 +27,7 @@ output "vpc_attachment_details" {
       subnet_ids        = v.subnet_ids
       dns_support       = v.dns_support
       ipv6_support      = v.ipv6_support
-      state             = v.state
+      
     }
   }
 }
