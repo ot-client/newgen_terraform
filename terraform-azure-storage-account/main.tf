@@ -30,19 +30,3 @@ resource "azurerm_storage_container" "container" {
   container_access_type = each.value.container_access_type
 }
 
-resource "azurerm_private_endpoint" "private_endpoint" {
-  count               = var.enable_private_endpoint ? 1 : 0
-  name                = var.private_endpoint_name
-  location            = var.location
-  resource_group_name = var.resource_group_name
-  subnet_id           = var.subnet_id
-
-  private_service_connection {
-    name                           = var.private_service_connection_name
-    is_manual_connection           = var.is_manual_connection
-    private_connection_resource_id = azurerm_storage_account.storage_account.id
-    subresource_names              = var.private_endpoint_subresource_names
-  }
-
-  tags = var.tags
-}

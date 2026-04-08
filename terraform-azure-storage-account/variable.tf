@@ -89,39 +89,6 @@ variable "containers" {
   }
 }
 
-variable "enable_private_endpoint" {
-  description = "Whether to create a private endpoint for the storage account."
-  type        = bool
-  default     = true
-}
-
-variable "subnet_id" {
-  description = "The ID of the subnet from which private IP addresses will be allocated for this Private Endpoint."
-  type        = string
-  default     = null
-}
-
-variable "private_endpoint_name" {
-  description = "The name of the Private Endpoint."
-  type        = string
-  default     = null
-}
-
-variable "private_service_connection_name" {
-  description = "The name of the private service connection"
-  type        = string
-}
-
-variable "is_manual_connection" {
-  description = "Does the Private Endpoint require Manual Approval from the remote resource owner"
-  type        = bool
-}
-
-variable "private_endpoint_subresource_names" {
-  description = "A list of subresource names which the Private Endpoint is able to connect to"
-  type        = list(string)
-}
-
 variable "tags" {
   description = "A mapping of tags to assign to the resource."
   type        = map(string)
