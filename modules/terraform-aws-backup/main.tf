@@ -66,7 +66,8 @@ resource "aws_backup_selection" "assignments" {
   name         = each.value.name
   iam_role_arn = aws_iam_role.backup.arn
   plan_id      = aws_backup_plan.plan.id
-  resources    = each.value.resource_arns
+# resources    = each.value.resource_arns
+  resources    = length(each.value.resource_arns) > 0 ? each.value.resource_arns : null 
 
   selection_tag {
     type  = "STRINGEQUALS"
