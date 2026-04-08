@@ -3,7 +3,7 @@ output "security_groups" {
   value = merge(
     # New security groups
     {
-      for k, v in aws_security_group.this : k => {
+      for k, v in aws_security_group.sg : k => {
         id   = v.id
         name = v.name
         arn  = v.arn
@@ -27,7 +27,7 @@ output "security_group_ids" {
   value = merge(
     # New security groups
     {
-      for k, v in aws_security_group.this : k => v.id
+      for k, v in aws_security_group.sg : k => v.id
     },
     # Existing security groups
     {
@@ -39,7 +39,7 @@ output "security_group_ids" {
 output "new_security_groups" {
   description = "Map of newly created security groups"
   value = {
-    for k, v in aws_security_group.this : k => {
+    for k, v in aws_security_group.sg : k => {
       id   = v.id
       name = v.name
       arn  = v.arn

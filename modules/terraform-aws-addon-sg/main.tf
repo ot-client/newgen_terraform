@@ -116,40 +116,18 @@ resource "aws_network_interface_sg_attachment" "rds_instances" {
   network_interface_id = data.aws_db_instance.specific_instances[each.value.instance_id].network_interface_ids[0]
 }
 
-# EFS Mount Target attachments (by ID)
+# EFS Mount Target attachments (by ID only)
+# Note: EFS by name is not supported due to AWS provider limitations
 resource "aws_network_interface_sg_attachment" "efs" {
   for_each = {
     for attachment_key, attachment_value in flatten([
       for sg_key, sg_value in var.security_groups : [
-        for fs_id in lookup(lookup(sg_value, "service_attachments", {}), "efs_filesystems", []) : [
-          for idx, mt in data.aws_efs_mount_targets.specific_efs[fs_id].mount_targets : {
-            key           = "${sg_key}-efs-${fs_id}-${idx}"
-            sg_key        = sg_key
-            create_new_sg = lookup(sg_value, "create_new_sg", true)
-            eni_id        = mt.network_interface_id
-          }
-        ]
-      ]
-    ]) : attachment_value.key => attachment_value
-  }
-
-  security_group_id    = each.value.create_new_sg ? aws_security_group.sg[each.value.sg_key].id : data.aws_security_group.existing[each.value.sg_key].id
-  network_interface_id = each.value.eni_id
-}
-
-# EFS Mount Target attachments (by name)
-resource "aws_network_interface_sg_attachment" "efs_by_name" {
-  for_each = {
-    for attachment_key, attachment_value in flatten([
-      for sg_key, sg_value in var.security_groups : [
-        for fs_name in lookup(lookup(sg_value, "service_attachments", {}), "efs_names", []) : [
-          for idx, mt in data.aws_efs_mount_targets.specific_efs_by_name[fs_name].mount_targets : {
-            key           = "${sg_key}-efs-name-${fs_name}-${idx}"
-            sg_key        = sg_key
-            create_new_sg = lookup(sg_value, "create_new_sg", true)
-            eni_id        = mt.network_interface_id
-          }
-        ]
+        for fs_id in lookup(lookup(sg_value, "service_attachments", {}), "efs_filesystems", []) : {
+          key           = "${sg_key}-efs-${fs_id}"
+          sg_key        = sg_key
+          create_new_sg = lookup(sg_value, "create_new_sg", true)
+          eni_id        = data.aws_efs_mount_target.specific_efs[fs_id].network_interface_id
+        }
       ]
     ]) : attachment_value.key => attachment_value
   }
