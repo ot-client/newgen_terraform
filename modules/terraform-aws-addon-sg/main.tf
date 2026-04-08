@@ -1,29 +1,243 @@
-resource "aws_security_group" "this" {
-  name        = var.name
-  description = var.name
-  vpc_id      = var.vpc_id
+# Create new security groups
+resource "aws_security_group" "sg" {
+  for_each = {
+    for sg_key, sg_config in var.security_groups : sg_key => sg_config
+    if lookup(sg_config, "create_new_sg", true) == true
+  }
+
+  name        = each.value.name
+  description = each.value.name
+  vpc_id      = each.value.vpc_id
 
   tags = var.tags
 }
 
+# Data source for existing security groups
+data "aws_security_group" "existing" {
+  for_each = {
+    for sg_key, sg_config in var.security_groups : sg_key => sg_config
+    if lookup(sg_config, "create_new_sg", true) == false
+  }
+
+  id = each.value.existing_sg_id
+}
+
+# Security group rules for both new and existing SGs
 resource "aws_security_group_rule" "this" {
-  for_each = var.rules
+  for_each = {
+    for rule_key, rule_value in flatten([
+      for sg_key, sg_value in var.security_groups : [
+        for rule_name, rule_config in sg_value.rules : {
+          key                      = "${sg_key}-${rule_name}"
+          sg_key                   = sg_key
+          create_new_sg            = lookup(sg_value, "create_new_sg", true)
+          type                     = rule_config.type
+          from_port                = rule_config.from_port
+          to_port                  = rule_config.to_port
+          protocol                 = rule_config.protocol
+          cidr_blocks              = lookup(rule_config, "cidr_blocks", null)
+          source_security_group_id = lookup(rule_config, "source_sg_id", null)
+          description              = lookup(rule_config, "description", null)
+        }
+      ]
+    ]) : rule_value.key => rule_value
+  }
 
   type              = each.value.type
   from_port         = each.value.from_port
   to_port           = each.value.to_port
   protocol          = each.value.protocol
-  security_group_id = aws_security_group.this.id
+  
+  # Use new SG ID if creating new, otherwise use existing SG ID
+  security_group_id = each.value.create_new_sg ? aws_security_group.sg[each.value.sg_key].id : data.aws_security_group.existing[each.value.sg_key].id
 
-  cidr_blocks              = lookup(each.value, "cidr_blocks", null)
-  source_security_group_id = lookup(each.value, "source_sg_id", null)
+  cidr_blocks              = each.value.cidr_blocks
+  source_security_group_id = each.value.source_security_group_id
 
-  description = lookup(each.value, "description", null)
+  description = each.value.description
 }
 
-resource "aws_network_interface_sg_attachment" "this" {
-  for_each = var.eni_ids
+# ENI attachments for both new and existing SGs (manual ENI IDs)
+resource "aws_network_interface_sg_attachment" "manual" {
+  for_each = {
+    for attachment_key, attachment_value in flatten([
+      for sg_key, sg_value in var.security_groups : [
+        for eni_name, eni_id in lookup(sg_value, "eni_ids", {}) : {
+          key                  = "${sg_key}-${eni_name}"
+          sg_key               = sg_key
+          create_new_sg        = lookup(sg_value, "create_new_sg", true)
+          network_interface_id = eni_id
+        }
+      ]
+    ]) : attachment_value.key => attachment_value
+  }
 
-  security_group_id    = aws_security_group.this.id
-  network_interface_id = each.value
+  # Use new SG ID if creating new, otherwise use existing SG ID
+  security_group_id    = each.value.create_new_sg ? aws_security_group.sg[each.value.sg_key].id : data.aws_security_group.existing[each.value.sg_key].id
+  network_interface_id = each.value.network_interface_id
+}
+
+# Specific service attachments
+# RDS Cluster attachments
+resource "aws_network_interface_sg_attachment" "rds_clusters" {
+  for_each = {
+    for attachment_key, attachment_value in flatten([
+      for sg_key, sg_value in var.security_groups : [
+        for cluster_id in lookup(lookup(sg_value, "service_attachments", {}), "rds_clusters", []) : {
+          key           = "${sg_key}-rds-cluster-${cluster_id}"
+          sg_key        = sg_key
+          create_new_sg = lookup(sg_value, "create_new_sg", true)
+          cluster_id    = cluster_id
+        }
+      ]
+    ]) : attachment_value.key => attachment_value
+  }
+
+  security_group_id    = each.value.create_new_sg ? aws_security_group.sg[each.value.sg_key].id : data.aws_security_group.existing[each.value.sg_key].id
+  network_interface_id = data.aws_rds_cluster.specific_clusters[each.value.cluster_id].network_interface_ids[0]
+}
+
+# RDS Instance attachments
+resource "aws_network_interface_sg_attachment" "rds_instances" {
+  for_each = {
+    for attachment_key, attachment_value in flatten([
+      for sg_key, sg_value in var.security_groups : [
+        for instance_id in lookup(lookup(sg_value, "service_attachments", {}), "rds_instances", []) : {
+          key           = "${sg_key}-rds-instance-${instance_id}"
+          sg_key        = sg_key
+          create_new_sg = lookup(sg_value, "create_new_sg", true)
+          instance_id   = instance_id
+        }
+      ]
+    ]) : attachment_value.key => attachment_value
+  }
+
+  security_group_id    = each.value.create_new_sg ? aws_security_group.sg[each.value.sg_key].id : data.aws_security_group.existing[each.value.sg_key].id
+  network_interface_id = data.aws_db_instance.specific_instances[each.value.instance_id].network_interface_ids[0]
+}
+
+# EFS Mount Target attachments (by ID)
+resource "aws_network_interface_sg_attachment" "efs" {
+  for_each = {
+    for attachment_key, attachment_value in flatten([
+      for sg_key, sg_value in var.security_groups : [
+        for fs_id in lookup(lookup(sg_value, "service_attachments", {}), "efs_filesystems", []) : [
+          for idx, mt in data.aws_efs_mount_targets.specific_efs[fs_id].mount_targets : {
+            key           = "${sg_key}-efs-${fs_id}-${idx}"
+            sg_key        = sg_key
+            create_new_sg = lookup(sg_value, "create_new_sg", true)
+            eni_id        = mt.network_interface_id
+          }
+        ]
+      ]
+    ]) : attachment_value.key => attachment_value
+  }
+
+  security_group_id    = each.value.create_new_sg ? aws_security_group.sg[each.value.sg_key].id : data.aws_security_group.existing[each.value.sg_key].id
+  network_interface_id = each.value.eni_id
+}
+
+# EFS Mount Target attachments (by name)
+resource "aws_network_interface_sg_attachment" "efs_by_name" {
+  for_each = {
+    for attachment_key, attachment_value in flatten([
+      for sg_key, sg_value in var.security_groups : [
+        for fs_name in lookup(lookup(sg_value, "service_attachments", {}), "efs_names", []) : [
+          for idx, mt in data.aws_efs_mount_targets.specific_efs_by_name[fs_name].mount_targets : {
+            key           = "${sg_key}-efs-name-${fs_name}-${idx}"
+            sg_key        = sg_key
+            create_new_sg = lookup(sg_value, "create_new_sg", true)
+            eni_id        = mt.network_interface_id
+          }
+        ]
+      ]
+    ]) : attachment_value.key => attachment_value
+  }
+
+  security_group_id    = each.value.create_new_sg ? aws_security_group.sg[each.value.sg_key].id : data.aws_security_group.existing[each.value.sg_key].id
+  network_interface_id = each.value.eni_id
+}
+
+# Redis/ElastiCache attachments
+resource "aws_network_interface_sg_attachment" "redis" {
+  for_each = {
+    for attachment_key, attachment_value in flatten([
+      for sg_key, sg_value in var.security_groups : [
+        for cluster_id in lookup(lookup(sg_value, "service_attachments", {}), "redis_clusters", []) : [
+          for idx, node in data.aws_elasticache_replication_group.specific_redis[cluster_id].cache_nodes : {
+            key           = "${sg_key}-redis-${cluster_id}-${idx}"
+            sg_key        = sg_key
+            create_new_sg = lookup(sg_value, "create_new_sg", true)
+            eni_id        = node.network_interface_id
+          }
+        ]
+      ]
+    ]) : attachment_value.key => attachment_value
+  }
+
+  security_group_id    = each.value.create_new_sg ? aws_security_group.sg[each.value.sg_key].id : data.aws_security_group.existing[each.value.sg_key].id
+  network_interface_id = each.value.eni_id
+}
+
+# EKS Cluster attachments
+resource "aws_network_interface_sg_attachment" "eks" {
+  for_each = {
+    for attachment_key, attachment_value in flatten([
+      for sg_key, sg_value in var.security_groups : [
+        for cluster_name in lookup(lookup(sg_value, "service_attachments", {}), "eks_clusters", []) : [
+          for idx, eni in data.aws_eks_cluster.specific_eks[cluster_name].vpc_config[0].network_interface_ids : {
+            key           = "${sg_key}-eks-${cluster_name}-${idx}"
+            sg_key        = sg_key
+            create_new_sg = lookup(sg_value, "create_new_sg", true)
+            eni_id        = eni
+          }
+        ]
+      ]
+    ]) : attachment_value.key => attachment_value
+  }
+
+  security_group_id    = each.value.create_new_sg ? aws_security_group.sg[each.value.sg_key].id : data.aws_security_group.existing[each.value.sg_key].id
+  network_interface_id = each.value.eni_id
+}
+
+# EC2 Instance attachments
+resource "aws_network_interface_sg_attachment" "ec2" {
+  for_each = {
+    for attachment_key, attachment_value in flatten([
+      for sg_key, sg_value in var.security_groups : [
+        for instance_name in lookup(lookup(sg_value, "service_attachments", {}), "ec2_instances", []) : [
+          for idx, eni in data.aws_instance.specific_ec2[instance_name].network_interface_ids : {
+            key           = "${sg_key}-ec2-${instance_name}-${idx}"
+            sg_key        = sg_key
+            create_new_sg = lookup(sg_value, "create_new_sg", true)
+            eni_id        = eni
+          }
+        ]
+      ]
+    ]) : attachment_value.key => attachment_value
+  }
+
+  security_group_id    = each.value.create_new_sg ? aws_security_group.sg[each.value.sg_key].id : data.aws_security_group.existing[each.value.sg_key].id
+  network_interface_id = each.value.eni_id
+}
+
+# VPC Endpoint attachments
+resource "aws_network_interface_sg_attachment" "vpc_endpoints" {
+  for_each = {
+    for attachment_key, attachment_value in flatten([
+      for sg_key, sg_value in var.security_groups : [
+        for endpoint_id in lookup(lookup(sg_value, "service_attachments", {}), "vpc_endpoints", []) : [
+          for idx, eni in data.aws_vpc_endpoint.specific_endpoints[endpoint_id].network_interface_ids : {
+            key           = "${sg_key}-vpce-${endpoint_id}-${idx}"
+            sg_key        = sg_key
+            create_new_sg = lookup(sg_value, "create_new_sg", true)
+            eni_id        = eni
+          }
+        ]
+      ]
+    ]) : attachment_value.key => attachment_value
+  }
+
+  security_group_id    = each.value.create_new_sg ? aws_security_group.sg[each.value.sg_key].id : data.aws_security_group.existing[each.value.sg_key].id
+  network_interface_id = each.value.eni_id
 }
