@@ -78,7 +78,7 @@ locals {
       name       = name
       subnet_ids = [for i in subnet_indexes : local.subnet_ids_by_index[i]]
 
-      ingress = [
+      ingress = var.nacl_allow_all ? [
         {
           rule_no    = 100
           protocol   = "-1"
@@ -87,9 +87,9 @@ locals {
           from_port  = 0
           to_port    = 0
         }
-      ]
+      ] : lookup(lookup(var.nacl_rules, name, {}), "ingress", [])
 
-      egress = [
+      egress = var.nacl_allow_all ? [
         {
           rule_no    = 100
           protocol   = "-1"
@@ -98,7 +98,7 @@ locals {
           from_port  = 0
           to_port    = 0
         }
-      ]
+      ] : lookup(lookup(var.nacl_rules, name, {}), "egress", [])
     }
   }
 }

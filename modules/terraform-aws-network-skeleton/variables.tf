@@ -141,6 +141,12 @@ variable "nacl_names" {
 
 }
 
+variable "nacl_allow_all" {
+  type        = bool
+  description = "If true, allow all traffic in NACLs (overrides nacl_rules)"
+  default     = true
+}
+
 variable "nacl_rules" {
   type        = any
   description = "Map of NACL rules (ingress/egress)"
