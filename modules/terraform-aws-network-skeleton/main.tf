@@ -174,25 +174,48 @@ resource "aws_network_acl" "nacls" {
 ######################################
 # Flow Logs
 ######################################
-data "aws_caller_identity" "current_account" {}
 
-resource "aws_s3_bucket" "flow_logs_bucket" {
-  count         = var.flow_logs_enabled ? 1 : 0
-  bucket        = format("%s-flow-logs-bucket", data.aws_caller_identity.current_account.account_id)
-  force_destroy = true
+# Flow Log 1 - CloudWatch Logs
+resource "aws_cloudwatch_log_group" "flow_log_cw" {
+  count             = var.flow_log_cw_enabled ? 1 : 0
+  name              = var.flow_log_cw_log_group_name
+  retention_in_days = 0
+
+  tags = merge(
+    { Name = var.flow_log_cw_name },
+    local.common_tags
+  )
 }
 
-resource "aws_flow_log" "vpc_flow_log" {
-  count                = var.flow_logs_enabled ? 1 : 0
-  log_destination      = aws_s3_bucket.flow_logs_bucket[0].arn
-  log_destination_type = "s3"
-  traffic_type         = var.flow_logs_traffic_type
-  vpc_id               = aws_vpc.vpc.id
+resource "aws_flow_log" "flow_log_cw" {
+  count                    = var.flow_log_cw_enabled ? 1 : 0
+  vpc_id                   = aws_vpc.vpc.id
+  traffic_type             = "ALL"
+  log_destination_type     = "cloud-watch-logs"
+  log_destination          = aws_cloudwatch_log_group.flow_log_cw[0].arn
+  iam_role_arn             = var.flow_log_iam_role_arn
+  max_aggregation_interval = 60
 
-  destination_options {
-    file_format        = var.flow_logs_file_format
-    per_hour_partition = true
-  }
+  tags = merge(
+    { Name = var.flow_log_cw_name },
+    local.common_tags
+  )
+}
+
+# Flow Log 2 - S3 (admin account bucket)
+resource "aws_flow_log" "flow_log_s3" {
+  count                    = var.flow_log_s3_enabled ? 1 : 0
+  vpc_id                   = aws_vpc.vpc.id
+  traffic_type             = "ALL"
+  log_destination_type     = "s3"
+  log_destination          = var.flow_log_s3_bucket_arn
+  iam_role_arn             = var.flow_log_iam_role_arn
+  max_aggregation_interval = 60
+
+  tags = merge(
+    { Name = var.flow_log_s3_name },
+    local.common_tags
+  )
 }
 
 ######################################
