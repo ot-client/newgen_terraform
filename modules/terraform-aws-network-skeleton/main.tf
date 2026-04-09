@@ -180,11 +180,6 @@ resource "aws_cloudwatch_log_group" "flow_log_cw" {
   count             = var.flow_log_cw_enabled ? 1 : 0
   name              = var.flow_log_cw_log_group_name
   retention_in_days = 0
-
-  tags = merge(
-    { Name = var.flow_log_cw_name },
-    local.common_tags
-  )
 }
 
 resource "aws_flow_log" "flow_log_cw" {
@@ -209,7 +204,6 @@ resource "aws_flow_log" "flow_log_s3" {
   traffic_type             = "ALL"
   log_destination_type     = "s3"
   log_destination          = var.flow_log_s3_bucket_arn
-  iam_role_arn             = var.flow_log_iam_role_arn
   max_aggregation_interval = 60
 
   tags = merge(
