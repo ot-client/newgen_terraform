@@ -1,10 +1,14 @@
-variable "certificate_arns" {
-  type        = list(string)
-  description = "List of ACM certificate ARNs provided by the client to attach to ALB"
+variable "certificates" {
+  description = "List of certificates to import into ACM. Each object needs certificate_body and private_key. certificate_chain is optional."
+  type = list(object({
+    certificate_body  = string
+    private_key       = string
+    certificate_chain = optional(string)
+  }))
 }
 
 variable "tags" {
   type        = map(string)
   default     = {}
-  description = "Tags to propagate (used in outputs/locals for reference)"
+  description = "Tags to apply to imported ACM certificates"
 }
