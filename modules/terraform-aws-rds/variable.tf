@@ -74,6 +74,48 @@ variable "publicly_accessible" {
 }
 
 
+variable "availability_zones" {
+  description = "List of availability zones for the RDS cluster"
+  type        = list(string)
+  default     = []
+}
+
+variable "storage_type" {
+  description = "Storage type for the RDS cluster (aurora, aurora-iopt1)"
+  type        = string
+  default     = "aurora"
+}
+
+variable "performance_insights_enabled" {
+  description = "Enable Performance Insights"
+  type        = bool
+  default     = false
+}
+
+variable "performance_insights_retention_period" {
+  description = "Retention period for Performance Insights in days (7 or 731)"
+  type        = number
+  default     = 7
+}
+
+variable "monitoring_interval" {
+  description = "Enhanced Monitoring interval in seconds (0 to disable, 1/5/10/15/30/60)"
+  type        = number
+  default     = 0
+}
+
+variable "monitoring_role_arn" {
+  description = "ARN of IAM role for Enhanced Monitoring"
+  type        = string
+  default     = null
+}
+
+variable "enabled_cloudwatch_logs_exports" {
+  description = "List of log types to export to CloudWatch (instance, postgresql)"
+  type        = list(string)
+  default     = []
+}
+
 # Security group
 variable "name_sg" {
   description = "Name of the security group"

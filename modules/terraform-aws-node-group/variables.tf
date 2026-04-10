@@ -12,6 +12,7 @@ variable "node_groups" {
     capacity_type      = string
     ami_type           = string
     taints             = optional(any, {})
+    launch_template_id = string
   }))
 }
 
@@ -34,9 +35,4 @@ variable "force_update_version" {
   type        = bool
   description = "Force version update if existing pods are unable to be drained due to a pod disruption budget issue."
   default     = false
-}
-
-variable "launch_template_id" {
-  description = "Launch template ID from remote state"
-  type        = string
 }

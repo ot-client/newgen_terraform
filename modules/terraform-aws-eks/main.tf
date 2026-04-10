@@ -3,6 +3,7 @@ resource "aws_eks_cluster" "eks_cluster" {
   enabled_cluster_log_types = var.enabled_cluster_log_types
   role_arn                  = aws_iam_role.cluster_role.arn
   version                   = var.eks_cluster_version
+  deletion_protection       = var.deletion_protection
 
   access_config {
     authentication_mode = var.access_mode
@@ -37,7 +38,6 @@ module "node_group" {
   cluster_name      = aws_eks_cluster.eks_cluster.id
   node_role_arn     = aws_iam_role.node_group_role.arn
   node_groups       = var.node_groups
-  launch_template_id = var.launch_template_id
 
   depends_on = [
     aws_iam_role_policy_attachment.node_managed_policies,
@@ -46,7 +46,7 @@ module "node_group" {
 }
 
 resource "aws_iam_role" "cluster_role" {
-  name = "${var.cluster_name}-cluster-role"
+  name = var.cluster_iam_role_name
   assume_role_policy = <<POLICY
 {
   "Version": "2012-10-17",
@@ -173,17 +173,31 @@ resource "aws_eks_access_policy_association" "sso_role_policy" {
 resource "aws_eks_access_entry" "additional" {
   for_each      = var.access_entries
   cluster_name  = aws_eks_cluster.eks_cluster.name
-  principal_arn = each.value
+  principal_arn = each.value.principal_arn
   type          = "STANDARD"
 }
 
 resource "aws_eks_access_policy_association" "additional_policy" {
-  for_each      = aws_eks_access_entry.additional
+  for_each = {
+    for item in flatten([
+      for role_key, role_val in var.access_entries : [
+        for policy_arn in role_val.policy_arns : {
+          key           = "${role_key}:${policy_arn}"
+          role_key      = role_key
+          principal_arn = role_val.principal_arn
+          policy_arn    = policy_arn
+        }
+      ]
+    ]) : item.key => item
+  }
+
   cluster_name  = aws_eks_cluster.eks_cluster.name
   principal_arn = each.value.principal_arn
-  policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+  policy_arn    = each.value.policy_arn
 
   access_scope {
     type = "cluster"
   }
+
+  depends_on = [aws_eks_access_entry.additional]
 }

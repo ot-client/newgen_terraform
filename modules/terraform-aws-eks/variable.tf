@@ -1,3 +1,14 @@
+variable "deletion_protection" {
+  description = "Enable deletion protection for EKS cluster"
+  type        = bool
+  default     = false
+}
+
+variable "cluster_iam_role_name" {
+  description = "Name of the IAM role for EKS cluster"
+  type        = string
+}
+
 variable "cluster_name" {
   description = "EKS cluster name"
   default     = "terraform-eks-demo"
@@ -178,9 +189,12 @@ variable "aws_sso_role_arn" {
 }
 
 variable "access_entries" {
-  description = "Map of additional IAM role ARNs to grant EKS cluster access with AmazonEKSClusterAdminPolicy"
-  type        = map(string)
-  default     = {}
+  description = "Map of IAM role ARNs with their policy ARNs to grant EKS cluster access"
+  type = map(object({
+    principal_arn = string
+    policy_arns   = list(string)
+  }))
+  default = {}
 }
 
 variable "node_groups" {
@@ -197,6 +211,8 @@ variable "node_groups" {
     capacity_type      = string
     ami_type           = string
     taints             = optional(any, {})
+    subnet_names       = optional(list(string), [])
+    launch_template_id = string
   }))
   default = {}
 }
