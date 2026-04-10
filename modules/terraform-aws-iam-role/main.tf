@@ -20,7 +20,7 @@ resource "aws_iam_role" "roles" {
     Statement = [{
       Effect = "Allow"
       Principal = {
-        Service = var.assume_role_service
+        Service = coalesce(each.value.assume_role_service, var.assume_role_service)
       }
       Action = "sts:AssumeRole"
     }]
