@@ -1,4 +1,4 @@
-resource "aws_db_subnet_group" "this" {
+resource "aws_db_subnet_group" "db-subnet-group" {
   name = var.db_subnet_group_name
   subnet_ids = var.subnet_ids
 
