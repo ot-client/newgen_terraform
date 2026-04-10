@@ -1,14 +1,14 @@
 output "lambda_arn" {
   description = "ARN of the Lambda function"
-  value       = aws_lambda_function.this.arn
+  value       = aws_lambda_function.lembda.arn
 }
 
 output "lambda_name" {
   description = "Name of the Lambda function"
-  value       = aws_lambda_function.this.function_name
+  value       = aws_lambda_function.lembda.function_name
 }
 
 output "lambda_invoke_arn" {
   description = "Invoke ARN of the Lambda function"
-  value       = aws_lambda_function.this.invoke_arn
+  value       = aws_lambda_function.lembda.invoke_arn
 }
