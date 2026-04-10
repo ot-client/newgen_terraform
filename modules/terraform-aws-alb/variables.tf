@@ -74,8 +74,9 @@ variable "certificate_arn" {
 }
 
 variable "target_group_arn" {
-  description = "Target group ARN to forward traffic to"
+  description = "Target group ARN to forward traffic to. Leave empty to use fixed-response 503 until TG is created."
   type        = string
+  default     = ""
 }
 
 variable "tags" {

@@ -24,9 +24,24 @@ resource "aws_lb_listener" "https" {
   ssl_policy        = var.ssl_policy
   certificate_arn   = var.certificate_arn
 
-  default_action {
-    type             = "forward"
-    target_group_arn = var.target_group_arn
+  dynamic "default_action" {
+    for_each = var.target_group_arn != "" ? [1] : []
+    content {
+      type             = "forward"
+      target_group_arn = var.target_group_arn
+    }
+  }
+
+  dynamic "default_action" {
+    for_each = var.target_group_arn == "" ? [1] : []
+    content {
+      type = "fixed-response"
+      fixed_response {
+        content_type = "text/plain"
+        message_body = "Service unavailable"
+        status_code  = "503"
+      }
+    }
   }
 
   tags = var.tags
