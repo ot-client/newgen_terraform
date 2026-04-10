@@ -1,11 +1,26 @@
+output "eks_cluster_id" {
+  description = "EKS cluster ID"
+  value       = aws_eks_cluster.eks_cluster.id
+}
+
+output "eks_cluster_arn" {
+  description = "EKS cluster ARN"
+  value       = aws_eks_cluster.eks_cluster.arn
+}
+
 output "endpoint" {
-  description = "Endpoint for EKS cluster"
+  description = "EKS cluster endpoint"
   value       = aws_eks_cluster.eks_cluster.endpoint
 }
 
-output "node_iam_role_arn" {
-  description = "Worker nodes IAM Role ARN"
-  value       = aws_iam_role.node_group_role.arn
+output "kubeconfig_certificate_authority_data" {
+  description = "Kubernetes SSL certificate data"
+  value       = aws_eks_cluster.eks_cluster.certificate_authority[0].data
+}
+
+output "cluster_security_group_id" {
+  description = "Default security group ID created by EKS for the cluster"
+  value       = aws_eks_cluster.eks_cluster.vpc_config[0].cluster_security_group_id
 }
 
 output "cluster_iam_role_arn" {
@@ -13,36 +28,17 @@ output "cluster_iam_role_arn" {
   value       = aws_iam_role.cluster_role.arn
 }
 
-output "node_groups_arn" {
-  description = "Worker nodes resource ARN"
+output "node_iam_role_arn" {
+  description = "Node group IAM Role ARN"
+  value       = aws_iam_role.node_group_role.arn
+}
+
+output "node_group_arns" {
+  description = "Map of node group IDs to ARNs"
   value       = module.node_group.node_group_arn
 }
 
-output "node_groups_resources" {
-  description = "Cluster resource ARN"
+output "node_group_resources" {
+  description = "Map of node group IDs to resources"
   value       = module.node_group.node_group_resources
-}
-
-output "kubeconfig-certificate-authority-data" {
-  description = "Kubernetes SSL certificate data"
-  value       = aws_eks_cluster.eks_cluster.certificate_authority.0.data
-}
-
-output "eks_cluster_id" {
-  description = "EKS cluster ID"
-  value       = aws_eks_cluster.eks_cluster.id
-}
-
-output "eks_cluster_arn" {
-  description = "EKS resource ARN"
-  value       = aws_eks_cluster.eks_cluster.arn
-}
-
-output "module_node_group_resources" {
-  description = "EKS module resources"
-  value       = module.node_group.node_group_resources
-}
-output "cluster_security_group_id" {
-  description = "Default security group ID created by EKS for the cluster"
-  value       = aws_eks_cluster.eks_cluster.vpc_config[0].cluster_security_group_id
 }
