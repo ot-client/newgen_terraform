@@ -1,7 +1,5 @@
-variable "name" {
-  description = "Name of the DB Subnet Group"
-  type        = string
-  default = ""
+variable "db_subnet_group_name" {
+  type = string
 }
 
 variable "subnet_ids" {
