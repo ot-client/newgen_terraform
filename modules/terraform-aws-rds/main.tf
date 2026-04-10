@@ -12,6 +12,7 @@ resource "aws_rds_cluster" "rds" {
   deletion_protection     = var.deletion_protection
   skip_final_snapshot     = var.skip_final_snapshot
   availability_zones      = var.availability_zones
+  enabled_cloudwatch_logs_exports = var.enabled_cloudwatch_logs_exports
 
   tags = merge(
     { Name = var.cluster_identifier },
@@ -31,9 +32,6 @@ resource "aws_rds_cluster_instance" "rds_instance" {
   performance_insights_retention_period = var.performance_insights_retention_period
   monitoring_interval                   = var.monitoring_interval
   monitoring_role_arn                   = var.monitoring_role_arn
-  enable_performance_insights           = var.performance_insights_enabled
-
-  enabled_cloudwatch_logs_exports = var.enabled_cloudwatch_logs_exports
 
   tags = merge(
     { Name = "${var.cluster_identifier}-${count.index + 1}" },
