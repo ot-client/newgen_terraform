@@ -166,7 +166,7 @@ variable "eks_addons" {
   description = "List of EKS addons to install"
   type = list(object({
     name    = string
-    version = string
+    version = optional(string, null)
   }))
 }
 
