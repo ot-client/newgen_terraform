@@ -7,6 +7,10 @@ variable "tgw_id" {
   type        = string
 }
 
+variable "vpc_name" {
+  type = string
+}
+
 variable "description" {
     type = string
 }
