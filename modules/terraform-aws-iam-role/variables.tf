@@ -7,6 +7,7 @@ variable "roles" {
   type = map(object({
     managed_policy_arns = list(string)
     custom_policy_names = list(string)
+    assume_role_service = optional(string)
   }))
 }
 

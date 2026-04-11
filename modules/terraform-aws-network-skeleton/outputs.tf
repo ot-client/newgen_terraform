@@ -13,14 +13,14 @@ output "default_security_group_id" {
   value       = aws_vpc.vpc.default_security_group_id
 }
 
-output "flow_logs_bucket_arn" {
-  description = "The ARN of the Flow Log bucket"
-  value       = aws_s3_bucket.flow_logs_bucket[*].arn
+output "flow_log_cw_arn" {
+  description = "ARN of the CloudWatch VPC Flow Log"
+  value       = aws_flow_log.flow_log_cw[*].arn
 }
 
-output "vpc_flow_log_arn" {
-  description = "The ARN of the VPC Flow Log"
-  value       = aws_flow_log.vpc_flow_log[*].arn
+output "flow_log_s3_arn" {
+  description = "ARN of the S3 VPC Flow Log"
+  value       = aws_flow_log.flow_log_s3[*].arn
 }
 
 output "igw_id" {

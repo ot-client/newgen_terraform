@@ -1,12 +1,12 @@
 resource "aws_eks_node_group" "node_groups" {
   for_each     = var.create_node_group ? var.node_groups : {}
-  cluster_name = var.cluster_name
-  node_group_name      = substr(each.key, 0, 12)
+  cluster_name         = var.cluster_name
+  node_group_name      = each.key
   node_role_arn        = var.node_role_arn
   subnet_ids           = each.value.subnets
-  
-   launch_template {
-    id      = var.launch_template_id
+
+  launch_template {
+    id      = each.value.launch_template_id
     version = "$Latest"
   }
 

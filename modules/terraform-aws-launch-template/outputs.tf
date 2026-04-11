@@ -1,9 +1,9 @@
-output "launch_template_id" {
-  value       = aws_launch_template.template.id
-  description = "ID of the launch template"
+output "launch_template_ids" {
+  description = "Map of launch template names to IDs"
+  value       = { for k, v in aws_launch_template.template : k => v.id }
 }
 
-output "launch_template_name" {
-  value       = aws_launch_template.template.name
-  description = "Name of the launch template"
+output "launch_template_names" {
+  description = "List of launch template names"
+  value       = [ for k, v in aws_launch_template.template : v.name ]
 }

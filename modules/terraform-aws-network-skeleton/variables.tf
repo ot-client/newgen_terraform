@@ -141,6 +141,12 @@ variable "nacl_names" {
 
 }
 
+variable "nacl_allow_all" {
+  type        = bool
+  description = "If true, allow all traffic in NACLs (overrides nacl_rules)"
+  default     = true
+}
+
 variable "nacl_rules" {
   type        = any
   description = "Map of NACL rules (ingress/egress)"
@@ -167,22 +173,46 @@ variable "route53_zone" {
 
 ###################### VPC Flow Logs #########################
 
-variable "flow_logs_enabled" {
+variable "flow_log_cw_enabled" {
   type        = bool
-  description = "Enable VPC Flow Logs"
+  description = "Enable CloudWatch flow log"
   default     = false
 }
 
-variable "flow_logs_traffic_type" {
-  type        = string
-  description = "Type of traffic to capture: ACCEPT, REJECT, ALL"
-  default     = "ALL"
+variable "flow_log_s3_enabled" {
+  type        = bool
+  description = "Enable S3 flow log"
+  default     = false
 }
 
-variable "flow_logs_file_format" {
+variable "flow_log_cw_name" {
   type        = string
-  description = "File format for VPC Flow Logs: plain-text or parquet"
-  default     = "plain-text"
+  description = "Name tag for the CloudWatch flow log"
+  default     = ""
+}
+
+variable "flow_log_s3_name" {
+  type        = string
+  description = "Name tag for the S3 flow log"
+  default     = ""
+}
+
+variable "flow_log_cw_log_group_name" {
+  type        = string
+  description = "CloudWatch log group name for flow logs"
+  default     = ""
+}
+
+variable "flow_log_iam_role_arn" {
+  type        = string
+  description = "ARN of existing IAM role for VPC flow logs"
+  default     = ""
+}
+
+variable "flow_log_s3_bucket_arn" {
+  type        = string
+  description = "ARN of existing S3 bucket in admin account for flow logs"
+  default     = ""
 }
 
 ###################### VPC Endpoints ##########################
