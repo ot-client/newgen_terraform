@@ -1,18 +1,19 @@
 resource "aws_rds_cluster" "rds" {
-  cluster_identifier      = var.cluster_identifier
-  engine                  = var.engine
-  engine_version          = var.engine_version
-  master_username         = var.master_username
-  master_password         = var.master_password
-  port                    = var.port
-  db_subnet_group_name    = var.db_subnet_group_name
-  vpc_security_group_ids  = var.vpc_security_group_ids
-  storage_encrypted       = var.storage_encrypted
-  storage_type            = var.storage_type
-  deletion_protection     = var.deletion_protection
-  skip_final_snapshot     = var.skip_final_snapshot
-  availability_zones      = var.availability_zones
+  cluster_identifier              = var.cluster_identifier
+  engine                          = var.engine
+  engine_version                  = var.engine_version
+  master_username                 = var.master_username
+  master_password                 = var.master_password
+  port                            = var.port
+  db_subnet_group_name            = var.db_subnet_group_name
+  vpc_security_group_ids          = var.vpc_security_group_ids
+  storage_encrypted               = var.storage_encrypted
+  storage_type                    = var.storage_type
+  deletion_protection             = var.deletion_protection
+  skip_final_snapshot             = var.skip_final_snapshot
+  availability_zones              = var.availability_zones
   enabled_cloudwatch_logs_exports = var.enabled_cloudwatch_logs_exports
+  engine_lifecycle_support        = var.engine_lifecycle_support
 
   tags = merge(
     { Name = var.cluster_identifier },
@@ -32,6 +33,7 @@ resource "aws_rds_cluster_instance" "rds_instance" {
   performance_insights_retention_period = var.performance_insights_retention_period
   monitoring_interval                   = var.monitoring_interval
   monitoring_role_arn                   = var.monitoring_role_arn
+  auto_minor_version_upgrade            = var.auto_minor_version_upgrade
 
   tags = merge(
     { Name = "${var.cluster_identifier}-${count.index + 1}" },

@@ -116,6 +116,18 @@ variable "enabled_cloudwatch_logs_exports" {
   default     = []
 }
 
+variable "auto_minor_version_upgrade" {
+  description = "Enable auto minor version upgrade for cluster instances"
+  type        = bool
+  default     = true
+}
+
+variable "engine_lifecycle_support" {
+  description = "RDS extended support lifecycle (open-source-rds-extended-support or open-source-rds-extended-support-disabled)"
+  type        = string
+  default     = "open-source-rds-extended-support"
+}
+
 # Security group
 variable "name_sg" {
   description = "Name of the security group"
