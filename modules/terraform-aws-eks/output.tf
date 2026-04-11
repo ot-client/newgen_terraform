@@ -42,3 +42,8 @@ output "node_group_resources" {
   description = "Map of node group IDs to resources"
   value       = module.node_group.node_group_resources
 }
+
+output "oidc_issuer_url" {
+  description = "OIDC issuer URL of the EKS cluster"
+  value       = aws_eks_cluster.eks_cluster.identity[0].oidc[0].issuer
+}

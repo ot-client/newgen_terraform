@@ -1,11 +1,11 @@
 output "oidc_provider_arn" {
   description = "ARN of the OIDC identity provider"
-  value       = aws_iam_openid_connect_provider.this.arn
+  value       = aws_iam_openid_connect_provider.identity_provider.arn
 }
 
 output "oidc_provider_url" {
   description = "URL of the OIDC identity provider"
-  value       = aws_iam_openid_connect_provider.this.url
+  value       = aws_iam_openid_connect_provider.identity_provider.url
 }
 
 output "irsa_role_arns" {

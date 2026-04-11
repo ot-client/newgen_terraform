@@ -1,7 +1,7 @@
 ######################################
 # OIDC Identity Provider
 ######################################
-resource "aws_iam_openid_connect_provider" "this" {
+resource "aws_iam_openid_connect_provider" "identity_provider" {
   url             = var.oidc_issuer_url
   client_id_list  = var.oidc_client_id_list
   thumbprint_list = var.oidc_thumbprint_list
@@ -25,13 +25,13 @@ resource "aws_iam_role" "irsa" {
     Statement = [{
       Effect = "Allow"
       Principal = {
-        Federated = aws_iam_openid_connect_provider.this.arn
+        Federated = aws_iam_openid_connect_provider.identity_provider.arn
       }
       Action = "sts:AssumeRoleWithWebIdentity"
       Condition = {
         StringEquals = {
-          "${replace(aws_iam_openid_connect_provider.this.url, "https://", "")}:sub" = each.value.service_account
-          "${replace(aws_iam_openid_connect_provider.this.url, "https://", "")}:aud" = var.oidc_client_id_list[0]
+          "${replace(aws_iam_openid_connect_provider.identity_provider.url, "https://", "")}:sub" = each.value.service_account
+          "${replace(aws_iam_openid_connect_provider.identity_provider.url, "https://", "")}:aud" = var.oidc_client_id_list[0]
         }
       }
     }]
