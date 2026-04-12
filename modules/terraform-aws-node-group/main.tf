@@ -10,7 +10,7 @@ resource "aws_eks_node_group" "node_groups" {
     version = "$Latest"
   }
 
-  labels               = each.value.labels
+  labels               = try(each.value.labels, {})
   capacity_type        = each.value.capacity_type
   force_update_version = var.force_update_version
 
@@ -21,7 +21,7 @@ resource "aws_eks_node_group" "node_groups" {
   }
 
   dynamic "taint" {
-    for_each = each.value.taints
+    for_each = try(each.value.taints, [])
 
     content {
       key    = taint.value.key

@@ -1,19 +1,6 @@
 variable "node_groups" {
   description = "Paramters which are required for creating node group"
-  type = map(object({
-    subnets            = list(string)
-    instance_type      = list(string)
-    disk_size          = number
-    desired_capacity   = number
-    max_capacity       = number
-    min_capacity       = number
-    security_group_ids = list(string)
-    labels             = map(string)
-    capacity_type      = string
-    ami_type           = string
-    taints             = optional(any, {})
-    launch_template_id = string
-  }))
+  type        = any
 }
 
 variable "cluster_name" {

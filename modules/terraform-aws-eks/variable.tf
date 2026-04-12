@@ -199,22 +199,8 @@ variable "access_entries" {
 
 variable "node_groups" {
   description = "Parameters required for creating node groups"
-  type = map(object({
-    subnets            = list(string)
-    instance_type      = list(string)
-    disk_size          = number
-    desired_capacity   = number
-    max_capacity       = number
-    min_capacity       = number
-    security_group_ids = list(string)
-    labels             = optional(map(string), {})
-    capacity_type      = string
-    ami_type           = string
-    taints             = optional(any, [])
-    subnet_names       = optional(list(string), [])
-    launch_template_id = string
-  }))
-  default = {}
+  type        = any
+  default     = {}
 }
 
 variable "launch_template_id" {
