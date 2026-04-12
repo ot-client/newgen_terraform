@@ -207,10 +207,10 @@ variable "node_groups" {
     max_capacity       = number
     min_capacity       = number
     security_group_ids = list(string)
-    labels             = map(string)
+    labels             = optional(map(string), {})
     capacity_type      = string
     ami_type           = string
-    taints             = optional(any, {})
+    taints             = optional(any, [])
     subnet_names       = optional(list(string), [])
     launch_template_id = string
   }))
