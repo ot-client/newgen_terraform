@@ -39,18 +39,6 @@ variable "tags" {
   default     = {}
 }
 
-# variable "program" {
-#   description = "Project/Program name"
-#   type        = string
-#   default     = ""
-# }
-
-# variable "s3_tags" {
-#   description = "Tag for S3 specific resources"
-#   type        = string
-#   default     = ""
-# }
-
 variable "acl" {
   description = "Canned ACL to apply"
   type        = string
@@ -227,13 +215,105 @@ variable "replication_destination_arn" {
 }
 
 variable "crr_enabled" {
-  default = false
+  description = "Enable CRR replication configuration"
+  type        = bool
+  default     = false
 }
 
-variable "replication_destination_bucket" {
-  description = "Map of destination buckets for CRR"
-  type        = map(string)
-  default     = {}
+variable "crr_iam_role_arn" {
+  description = "IAM role ARN for CRR replication"
+  type        = string
+  default     = ""
+}
+
+variable "crr_destination_bucket_arn" {
+  description = "Destination bucket ARN for CRR"
+  type        = string
+  default     = ""
+}
+
+variable "replication_rule_id" {
+  description = "ID for the S3 replication rule"
+  type        = string
+  default     = "S3-Replication-Rule-1"
+}
+
+variable "replication_status" {
+  description = "Status of the replication rule"
+  type        = string
+  default     = "Enabled"
+}
+
+variable "delete_marker_replication_status" {
+  description = "Status of delete marker replication"
+  type        = string
+  default     = "Disabled"
+}
+
+variable "lambda_notification_enabled" {
+  description = "Enable Lambda event notification on the bucket"
+  type        = bool
+  default     = false
+}
+
+variable "lambda_function_arn" {
+  description = "ARN of the Lambda function to notify"
+  type        = string
+  default     = ""
+}
+
+variable "lambda_s3_event" {
+  description = "S3 event type to trigger Lambda"
+  type        = string
+  default     = "s3:ObjectCreated:Put"
+}
+
+variable "lambda_permission_statement_id" {
+  description = "Statement ID for the Lambda permission"
+  type        = string
+  default     = "AllowS3Invoke"
+}
+
+variable "website_enabled" {
+  description = "Enable static website hosting on the bucket"
+  type        = bool
+  default     = false
+}
+
+variable "website_index_document" {
+  description = "Index document for static website hosting"
+  type        = string
+  default     = "index.html"
+}
+
+variable "website_error_document" {
+  description = "Error document for static website hosting"
+  type        = string
+  default     = "error.html"
+}
+
+variable "deny_ssl_sid" {
+  description = "SID for the deny non-SSL requests statement"
+  type        = string
+  default     = "DenyNonSSLRequests"
+}
+
+variable "cloudtrail_policy_sid" {
+  description = "SID for the CloudTrail bucket policy statement"
+  type        = string
+  default     = "AllowCloudTrailToGetBucketAcl"
+}
+
+variable "lb_log_delivery_sid" {
+  description = "SID for the LB log delivery policy statement"
+  type        = string
+  default     = "AllowLoadBalancerLogging"
+}
+
+variable "elb_region_override_sid" {
+  description = "SID for the ELB region override policy statement"
+  type        = string
+  default     = "ELBRegionOverride"
 }
 
 
@@ -241,22 +321,10 @@ variable "replication_destination_bucket" {
 
 ################################## Naming Convention Variables #########################################
 
-# variable "env" {
-#   type    = string
-#   default = "dev"
-#
-# }
-
 variable "owner" {
   type    = string
   default = "opstree"
 }
-
-# variable "app" {
-#   type    = string
-#   default = "otcloud-kit"
-#
-# }
 
 variable "instance_sg_id" {
   type        = string

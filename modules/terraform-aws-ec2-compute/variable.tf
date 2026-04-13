@@ -63,6 +63,30 @@ variable "security_group_ports" {
   }))
 }
 
+variable "firewall_route_cidr" {
+  description = "Destination CIDR block for firewall route"
+  type        = string
+  default     = "0.0.0.0/0"
+}
+
+variable "key_algorithm" {
+  description = "Algorithm for key pair generation"
+  type        = string
+  default     = "RSA"
+}
+
+variable "key_rsa_bits" {
+  description = "RSA key size in bits"
+  type        = number
+  default     = 4096
+}
+
+variable "key_file_permission" {
+  description = "File permission for the generated PEM key file"
+  type        = string
+  default     = "0400"
+}
+
 variable "tags" {
   type    = map(string)
   default = {}

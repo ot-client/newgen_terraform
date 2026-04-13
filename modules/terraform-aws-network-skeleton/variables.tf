@@ -411,3 +411,26 @@ variable "alb_listeners" {
   default = []
 }
 
+variable "cw_traffic_type" {
+  type = string
+}
+
+variable "cw_log_destination_type" {
+  type = string
+}
+
+variable "cw_max_aggregation_interval" {
+  type = string
+}
+
+variable "s3_traffic_type" {
+  type = string
+}
+
+variable "s3_log_destination_type" {
+  type = string
+}
+
+variable "s3_max_aggregation_interval" {
+  type = string
+}

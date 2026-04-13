@@ -54,7 +54,7 @@ data "aws_iam_policy_document" "s3denyssl" {
   count = var.attach_iam_policy ? 1 : 0
 
   statement {
-    sid = "DenyNonSSLRequests"
+    sid = var.deny_ssl_sid
 
     principals {
       type        = "AWS"
@@ -103,7 +103,7 @@ data "aws_iam_policy_document" "elb_log_delivery" {
   }
 
   statement {
-    sid = "ELBRegionOverride"
+    sid = var.elb_region_override_sid
 
     principals {
       type        = "Service"
@@ -124,7 +124,7 @@ data "aws_iam_policy_document" "cloudtrail" {
   count = local.create_bucket && var.attach_cloudtrail_policy ? 1 : 0
 
   statement {
-    sid     = "AllowCloudTrailToGetBucketAcl"
+    sid     = var.cloudtrail_policy_sid
     effect  = "Allow"
     actions = ["s3:GetBucketAcl", "s3:GetBucketLocation", "s3:PutObject"]
 
@@ -144,7 +144,7 @@ data "aws_iam_policy_document" "lb_log_delivery" {
   count = var.create_bucket && var.attach_lb_log_delivery_policy ? 1 : 0
 
   statement {
-    sid = "AllowLoadBalancerLogging"
+    sid = var.lb_log_delivery_sid
 
     principals {
       type        = "Service"
@@ -258,14 +258,64 @@ resource "aws_s3_bucket_metric" "metrics" {
 
 
 resource "aws_s3_bucket_website_configuration" "website" {
-  count  = local.create_bucket ? 1 : 0
+  count  = local.create_bucket && var.website_enabled ? 1 : 0
   bucket = aws_s3_bucket.main[0].id
 
   index_document {
-    suffix = "index.html"
+    suffix = var.website_index_document
   }
 
   error_document {
-    key = "error.html"
+    key = var.website_error_document
   }
+}
+
+######################################
+# CRR Replication Configuration
+######################################
+resource "aws_s3_bucket_replication_configuration" "crr" {
+  count  = var.crr_enabled ? 1 : 0
+  bucket = aws_s3_bucket.main[0].id
+  role   = var.crr_iam_role_arn
+
+  rule {
+    id     = var.replication_rule_id
+    status = var.replication_status
+
+    filter {}
+
+    destination {
+      bucket = var.crr_destination_bucket_arn
+    }
+
+    delete_marker_replication {
+      status = var.delete_marker_replication_status
+    }
+  }
+
+  depends_on = [aws_s3_bucket_versioning.versioning]
+}
+
+######################################
+# Lambda Event Notification
+######################################
+resource "aws_lambda_permission" "allow_s3" {
+  count         = var.lambda_notification_enabled ? 1 : 0
+  statement_id  = var.lambda_permission_statement_id
+  action        = "lambda:InvokeFunction"
+  function_name = var.lambda_function_arn
+  principal     = "s3.amazonaws.com"
+  source_arn    = aws_s3_bucket.main[0].arn
+}
+
+resource "aws_s3_bucket_notification" "lambda" {
+  count  = var.lambda_notification_enabled ? 1 : 0
+  bucket = aws_s3_bucket.main[0].id
+
+  lambda_function {
+    lambda_function_arn = var.lambda_function_arn
+    events              = [var.lambda_s3_event]
+  }
+
+  depends_on = [aws_lambda_permission.allow_s3]
 }

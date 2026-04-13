@@ -163,7 +163,7 @@ resource "aws_route" "private_default_to_firewall" {
   for_each = toset(data.aws_route_tables.selected.ids)
 
   route_table_id         = each.value
-  destination_cidr_block = "0.0.0.0/0"
+  destination_cidr_block = var.firewall_route_cidr
   network_interface_id   = aws_instance.ec2[var.firewall_instance_key].primary_network_interface_id
 }
 
@@ -174,8 +174,8 @@ resource "aws_route" "private_default_to_firewall" {
 resource "tls_private_key" "instance_keys" {
   for_each = var.ec2_instances
 
-  algorithm = "RSA"
-  rsa_bits  = 4096
+  algorithm = var.key_algorithm
+  rsa_bits  = var.key_rsa_bits
 }
 
 resource "aws_key_pair" "instance_keys" {
@@ -197,5 +197,5 @@ resource "local_file" "pem_files" {
 
   filename        = "${path.root}/${each.value.key_name}.pem"
   content         = tls_private_key.instance_keys[each.key].private_key_pem
-  file_permission = "0400"
+  file_permission = var.key_file_permission
 }

@@ -57,7 +57,12 @@ output "ownership_control" {
 
 output "replication_role_arn" {
   description = "IAM role ARN used for cross-region replication"
-  value       = null
+  value       = var.crr_iam_role_arn
+}
+
+output "lambda_notification_id" {
+  description = "ID of the S3 bucket notification"
+  value       = try(aws_s3_bucket_notification.lambda[0].id, null)
 }
 
 output "elb_identifier" {
