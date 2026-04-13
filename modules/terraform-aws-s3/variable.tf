@@ -1,4 +1,3 @@
-
 variable "create_bucket" {
   description = "Whether to create the S3 bucket"
   type        = bool
@@ -206,14 +205,9 @@ variable "lb_log_delivery_conditions" {
   default = {}
 }
 
-
-
-variable "replication_destination_arn" {
-  description = "Destination bucket ARN for CRR"
-  type        = string
-  default     = "*"
-}
-
+######################################
+# CRR Variables
+######################################
 variable "crr_enabled" {
   description = "Enable CRR replication configuration"
   type        = bool
@@ -250,6 +244,9 @@ variable "delete_marker_replication_status" {
   default     = "Disabled"
 }
 
+######################################
+# Lambda Notification Variables
+######################################
 variable "lambda_notification_enabled" {
   description = "Enable Lambda event notification on the bucket"
   type        = bool
@@ -286,6 +283,9 @@ variable "lambda_permission_statement_id" {
   default     = "AllowS3Invoke"
 }
 
+######################################
+# Website Variables
+######################################
 variable "website_enabled" {
   description = "Enable static website hosting on the bucket"
   type        = bool
@@ -304,6 +304,9 @@ variable "website_error_document" {
   default     = "error.html"
 }
 
+######################################
+# Policy SID Variables
+######################################
 variable "deny_ssl_sid" {
   description = "SID for the deny non-SSL requests statement"
   type        = string
@@ -326,57 +329,4 @@ variable "elb_region_override_sid" {
   description = "SID for the ELB region override policy statement"
   type        = string
   default     = "ELBRegionOverride"
-}
-
-
-
-
-################################## Naming Convention Variables #########################################
-
-variable "owner" {
-  type    = string
-  default = "opstree"
-}
-
-variable "instance_sg_id" {
-  type        = string
-  default     = ""
-  description = " SG IDs to attach to the EC2 instance"
-}
-
-variable "s3_buckets" {
-  description = "Map of S3 buckets to create"
-  type = map(object({
-    name                     = string
-    force_destroy            = bool
-    control_object_ownership = bool
-    object_ownership         = string
-    attach_public_policy     = bool
-    block_public_acls        = bool
-    block_public_policy      = bool
-    ignore_public_acls       = bool
-    restrict_public_buckets  = bool
-    versioning = object({
-      enabled    = bool
-      status     = string
-      mfa_delete = bool
-    })
-    server_side_encryption_configuration = list(object({
-      bucket_key_enabled = optional(bool)
-      apply_server_side_encryption_by_default = object({
-        sse_algorithm     = string
-        kms_master_key_id = optional(string)
-      })
-    }))
-    tags = map(string)
-  }))
-  default = {}
-}
-
-variable "lambda_s3_action" {
-  type = string
-}
-
-variable "lambda_s3_principal" {
-  type = string
 }
