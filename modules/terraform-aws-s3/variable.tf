@@ -268,6 +268,18 @@ variable "lambda_s3_event" {
   default     = "s3:ObjectCreated:Put"
 }
 
+variable "lambda_s3_action" {
+  description = "Action for the Lambda permission"
+  type        = string
+  default     = "lambda:InvokeFunction"
+}
+
+variable "lambda_s3_principal" {
+  description = "Principal for the Lambda permission"
+  type        = string
+  default     = "s3.amazonaws.com"
+}
+
 variable "lambda_permission_statement_id" {
   description = "Statement ID for the Lambda permission"
   type        = string
