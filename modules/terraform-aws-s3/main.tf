@@ -302,9 +302,9 @@ resource "aws_s3_bucket_replication_configuration" "crr" {
 resource "aws_lambda_permission" "allow_s3" {
   count         = var.lambda_notification_enabled ? 1 : 0
   statement_id  = var.lambda_permission_statement_id
-  action        = "lambda:InvokeFunction"
+  action        = var.lambda_s3_action
   function_name = var.lambda_function_arn
-  principal     = "s3.amazonaws.com"
+  principal     = var.lambda_s3_principal
   source_arn    = aws_s3_bucket.main[0].arn
 }
 

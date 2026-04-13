@@ -360,3 +360,11 @@ variable "s3_buckets" {
   }))
   default = {}
 }
+
+variable "lambda_s3_action" {
+  type = string
+}
+
+variable "lambda_s3_principal" {
+  type = string
+}
