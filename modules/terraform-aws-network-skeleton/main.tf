@@ -185,11 +185,11 @@ resource "aws_cloudwatch_log_group" "flow_log_cw" {
 resource "aws_flow_log" "flow_log_cw" {
   count                    = var.flow_log_cw_enabled ? 1 : 0
   vpc_id                   = aws_vpc.vpc.id
-  traffic_type             = var.cw_traffic_type#"ALL"
-  log_destination_type     = var.cw_log_destination_type#"cloud-watch-logs"
+  traffic_type             = var.cw_traffic_type
+  log_destination_type     = var.cw_log_destination_type
   log_destination          = aws_cloudwatch_log_group.flow_log_cw[0].arn
   iam_role_arn             = var.flow_log_iam_role_arn
-  max_aggregation_interval = var.cw_max_aggregation_interval#60
+  max_aggregation_interval = var.cw_max_aggregation_interval
 
   tags = merge(
     { Name = var.flow_log_cw_name },
