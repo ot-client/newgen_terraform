@@ -60,9 +60,9 @@ resource "aws_efs_file_system" "main" {
   creation_token                  = each.key
   performance_mode                = each.value.performance_mode
   throughput_mode                 = each.value.throughput_mode
-  provisioned_throughput_in_mibps = each.value.provisioned_throughput_in_mibps
+  provisioned_throughput_in_mibps = try(each.value.provisioned_throughput_in_mibps, null)
   encrypted                       = each.value.encrypted
-  kms_key_id                      = each.value.kms_key_id
+  kms_key_id                      = try(each.value.kms_key_id, null)
 
   dynamic "lifecycle_policy" {
     for_each = each.value.lifecycle_policies
@@ -73,7 +73,7 @@ resource "aws_efs_file_system" "main" {
     }
   }
 
-  tags = merge(local.common_tags, each.value.tags, { Name = each.key })
+  tags = merge(local.common_tags, try(each.value.tags, {}), { Name = each.key })
 }
 
 resource "aws_efs_backup_policy" "backup" {
@@ -132,7 +132,7 @@ resource "aws_efs_access_point" "ap" {
     }
   }
 
-  tags = merge(local.common_tags, var.efs_configs[each.value.efs_key].tags, {
+  tags = merge(local.common_tags, try(var.efs_configs[each.value.efs_key].tags, {}), {
     Name = "${each.value.efs_key}-${each.value.ap_key}"
   })
 }
