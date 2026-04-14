@@ -68,8 +68,8 @@ resource "aws_efs_file_system" "main" {
     for_each = each.value.lifecycle_policies
     content {
       transition_to_ia                    = lifecycle_policy.value.transition_to_ia
-      transition_to_archive               = lifecycle_policy.value.transition_to_archive
-      transition_to_primary_storage_class = lifecycle_policy.value.transition_to_primary_storage_class
+      transition_to_archive               = try(lifecycle_policy.value.transition_to_archive, null)
+      transition_to_primary_storage_class = try(lifecycle_policy.value.transition_to_primary_storage_class, null)
     }
   }
 
