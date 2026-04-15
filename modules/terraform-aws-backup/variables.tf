@@ -20,9 +20,22 @@ variable "iam_role_name" {
   type = string
 }
 
+variable "create_iam_role" {
+  description = "Whether to create IAM role or use existing one"
+  type        = bool
+  default     = false
+}
+
+variable "iam_role_arn" {
+  description = "ARN of existing IAM role (required if create_iam_role = false)"
+  type        = string
+  default     = ""
+}
+
 variable "iam_role_policies" {
   description = "List of IAM policy ARNs to attach to the backup role."
   type        = list(string)
+  default     = []
 }
 
 variable "backup_rules" {

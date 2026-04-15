@@ -8,10 +8,11 @@ resource "aws_backup_vault" "vault" {
 }
 
 # -------------------------------------------------------------------
-# IAM Role
+# IAM Role (conditional - create or use existing)
 # -------------------------------------------------------------------
 resource "aws_iam_role" "backup" {
-  name = var.iam_role_name
+  count = var.create_iam_role ? 1 : 0
+  name  = var.iam_role_name
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -26,10 +27,14 @@ resource "aws_iam_role" "backup" {
 }
 
 resource "aws_iam_role_policy_attachment" "backup_policies" {
-  for_each = toset(var.iam_role_policies)
+  for_each = var.create_iam_role ? toset(var.iam_role_policies) : []
 
-  role       = aws_iam_role.backup.name
+  role       = aws_iam_role.backup[0].name
   policy_arn = each.value
+}
+
+locals {
+  iam_role_arn = var.create_iam_role ? aws_iam_role.backup[0].arn : var.iam_role_arn
 }
 
 # -------------------------------------------------------------------
@@ -73,7 +78,7 @@ resource "aws_backup_selection" "assignments" {
   for_each = var.selections
 
   name         = each.value.name
-  iam_role_arn = aws_iam_role.backup.arn
+  iam_role_arn = local.iam_role_arn
   plan_id      = aws_backup_plan.plan.id
   resources    = length(each.value.resource_arns) > 0 ? each.value.resource_arns : null
 
