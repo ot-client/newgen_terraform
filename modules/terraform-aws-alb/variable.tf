@@ -21,49 +21,8 @@ variable "subnet_ids" {
 }
 
 variable "security_group_ids" {
-  description = "List of security group IDs (optional, used when SG is created externally)"
+  description = "List of security group IDs to attach to the ALB"
   type        = list(string)
-  default     = []
-}
-
-# ── Security Group (created inside module) ───────────────────
-variable "vpc_id" {
-  description = "VPC ID for the security group"
-  type        = string
-  default     = ""
-}
-
-variable "security_group_name" {
-  description = "Name of the security group to create inside the module"
-  type        = string
-  default     = ""
-}
-
-variable "ingress_rules" {
-  type = list(object({
-    from_port   = number
-    to_port     = number
-    protocol    = string
-    cidr_blocks = list(string)
-    description = string
-  }))
-  default = []
-}
-
-variable "egress_allow_all" {
-  type    = bool
-  default = true
-}
-
-variable "egress_rules" {
-  type = list(object({
-    from_port   = number
-    to_port     = number
-    protocol    = string
-    cidr_blocks = list(string)
-    description = string
-  }))
-  default = []
 }
 
 variable "enable_deletion_protection" {
@@ -87,7 +46,7 @@ variable "access_logs_prefix" {
 variable "access_logs_enabled" {
   description = "Enable ALB access logs"
   type        = bool
-  default     = true
+  default     = false
 }
 
 # ── Listener ─────────────────────────────────────────────────
@@ -115,7 +74,7 @@ variable "certificate_arn" {
 }
 
 variable "target_group_arn" {
-  description = "Target group ARN to forward traffic to. Leave empty to use fixed-response 503 until TG is created."
+  description = "Target group ARN to forward traffic to"
   type        = string
   default     = ""
 }
