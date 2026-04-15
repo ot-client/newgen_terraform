@@ -1,4 +1,4 @@
-resource "aws_lb_target_group" "this" {
+resource "aws_lb_target_group" "application_target_group" {
   name             = var.name
   protocol         = var.protocol
   port             = var.port
