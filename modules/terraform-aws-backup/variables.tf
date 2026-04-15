@@ -16,52 +16,8 @@ variable "plan_name" {
   type = string
 }
 
-variable "rule_name" {
-  type    = string
-  default = "DailyBackup"
-}
-
 variable "iam_role_name" {
   type = string
-}
-
-# Schedule
-variable "schedule_hour" {
-  description = "Hour (UTC) to start backup, e.g. 5 for 05:00"
-  type        = number
-  default     = 5
-}
-
-variable "schedule_minute" {
-  description = "Minute to start backup, e.g. 0 for :00"
-  type        = number
-  default     = 0
-}
-
-variable "schedule_timezone" {
-  description = "Timezone for the backup schedule"
-  type        = string
-  default     = "Etc/UTC"
-}
-
-# Backup window
-variable "start_window_minutes" {
-  description = "Minutes within which backup must start (1 hour = 60)"
-  type        = number
-  default     = 60
-}
-
-variable "completion_window_minutes" {
-  description = "Minutes within which backup must complete (5 hours = 300)"
-  type        = number
-  default     = 300
-}
-
-# Retention
-variable "retention_days" {
-  description = "Number of days to retain backups (1 week = 7)"
-  type        = number
-  default     = 7
 }
 
 variable "iam_role_policies" {
@@ -69,13 +25,37 @@ variable "iam_role_policies" {
   type        = list(string)
 }
 
+variable "backup_rules" {
+  description = "List of backup rules. Each defines its own schedule, window, and retention."
+  type = list(object({
+    rule_name                 = string
+    schedule                  = string
+    start_window_minutes      = number
+    completion_window_minutes = number
+    retention_days            = number
+  }))
+}
+
+variable "copy_destination_vault_arn" {
+  description = "ARN of the backup vault for cross-region copy (applied to all rules)"
+  type        = string
+  default     = ""
+}
+
+variable "backup_report_s3_bucket" {
+  description = "S3 bucket name for AWS Backup audit report delivery"
+  type        = string
+  default     = ""
+}
+
 variable "selections" {
-  description = "Map of backup selections. Add any service (EC2, Aurora, EFS, etc.) here via tfvars."
+  description = "Map of backup selections. Supports tag-based and ARN-based selection."
   type = map(object({
-    name          = string
-    resource_arns = list(string)
-    tag_key       = string
-    tag_value     = string
+    name           = string
+    resource_arns  = list(string)
+    tag_key        = string
+    tag_value      = string
+    resource_types = list(string)
   }))
 }
 

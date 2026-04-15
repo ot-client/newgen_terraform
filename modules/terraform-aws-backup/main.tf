@@ -1,14 +1,14 @@
 # -------------------------------------------------------------------
-# Backup Vault - AWS Default encryption (no custom KMS key)
+# Backup Vault
 # -------------------------------------------------------------------
 resource "aws_backup_vault" "vault" {
   name        = var.vault_name
-  kms_key_arn = var.kms_key_arn  # null = AWS managed default key
+  kms_key_arn = var.kms_key_arn
   tags        = merge({ Name = var.vault_name }, var.tags)
 }
 
 # -------------------------------------------------------------------
-# IAM Role - shared by both Backup_1 (EC2) and Backup_2 (Aurora)
+# IAM Role
 # -------------------------------------------------------------------
 resource "aws_iam_role" "backup" {
   name = var.iam_role_name
@@ -33,24 +33,33 @@ resource "aws_iam_role_policy_attachment" "backup_policies" {
 }
 
 # -------------------------------------------------------------------
-# Backup Plan
+# Backup Plan with Multiple Rules
 # -------------------------------------------------------------------
 resource "aws_backup_plan" "plan" {
   name = var.plan_name
 
-  rule {
-    rule_name                = var.rule_name
-    target_vault_name        = aws_backup_vault.vault.name
-    schedule                 = "cron(${var.schedule_minute} ${var.schedule_hour} * * ? *)"
-    schedule_expression_timezone = var.schedule_timezone
+  dynamic "rule" {
+    for_each = var.backup_rules
+    content {
+      rule_name         = rule.value.rule_name
+      target_vault_name = aws_backup_vault.vault.name
+      schedule          = rule.value.schedule
+      start_window      = rule.value.start_window_minutes
+      completion_window = rule.value.completion_window_minutes
 
-    start_window      = var.start_window_minutes
-    completion_window = var.completion_window_minutes
+      lifecycle {
+        delete_after = rule.value.retention_days
+      }
 
-    # Cold storage: Disabled - no cold_storage_after set
-    # PITR (Point-in-time recovery): Disabled by default
-    lifecycle {
-      delete_after = var.retention_days
+      dynamic "copy_action" {
+        for_each = var.copy_destination_vault_arn != "" ? [1] : []
+        content {
+          destination_vault_arn = var.copy_destination_vault_arn
+          lifecycle {
+            delete_after = rule.value.retention_days
+          }
+        }
+      }
     }
   }
 
@@ -58,7 +67,7 @@ resource "aws_backup_plan" "plan" {
 }
 
 # -------------------------------------------------------------------
-# Backup Selections - driven entirely by var.selections from tfvars
+# Backup Selections
 # -------------------------------------------------------------------
 resource "aws_backup_selection" "assignments" {
   for_each = var.selections
@@ -66,12 +75,48 @@ resource "aws_backup_selection" "assignments" {
   name         = each.value.name
   iam_role_arn = aws_iam_role.backup.arn
   plan_id      = aws_backup_plan.plan.id
-# resources    = each.value.resource_arns
-  resources    = length(each.value.resource_arns) > 0 ? each.value.resource_arns : null 
+  resources    = length(each.value.resource_arns) > 0 ? each.value.resource_arns : null
 
-  selection_tag {
-    type  = "STRINGEQUALS"
-    key   = each.value.tag_key
-    value = each.value.tag_value
+  dynamic "selection_tag" {
+    for_each = each.value.tag_key != "" ? [1] : []
+    content {
+      type  = "STRINGEQUALS"
+      key   = each.value.tag_key
+      value = each.value.tag_value
+    }
   }
+
+  dynamic "condition" {
+    for_each = length(each.value.resource_types) > 0 ? [1] : []
+    content {
+      dynamic "string_equals" {
+        for_each = length(each.value.resource_types) > 0 ? [1] : []
+        content {
+          key   = "aws:ResourceType"
+          value = join(",", each.value.resource_types)
+        }
+      }
+    }
+  }
+}
+
+# -------------------------------------------------------------------
+# Backup Report Plan (optional)
+# -------------------------------------------------------------------
+resource "aws_backup_report_plan" "report" {
+  count = var.backup_report_s3_bucket != "" ? 1 : 0
+
+  name        = "${var.plan_name}-report"
+  description = "Backup audit report for ${var.plan_name}"
+
+  report_delivery_channel {
+    formats        = ["CSV", "JSON"]
+    s3_bucket_name = var.backup_report_s3_bucket
+  }
+
+  report_setting {
+    report_template = "BACKUP_JOB_REPORT"
+  }
+
+  tags = merge({ Name = "${var.plan_name}-report" }, var.tags)
 }
