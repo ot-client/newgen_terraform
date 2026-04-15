@@ -48,6 +48,12 @@ variable "backup_report_s3_bucket" {
   default     = ""
 }
 
+variable "backup_report_plan_name" {
+  description = "Name for the backup report plan (letters, numbers, underscores only)"
+  type        = string
+  default     = ""
+}
+
 variable "selections" {
   description = "Map of backup selections. Supports tag-based and ARN-based selection."
   type = map(object({

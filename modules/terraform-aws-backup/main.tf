@@ -104,9 +104,9 @@ resource "aws_backup_selection" "assignments" {
 # Backup Report Plan (optional)
 # -------------------------------------------------------------------
 resource "aws_backup_report_plan" "report" {
-  count = var.backup_report_s3_bucket != "" ? 1 : 0
+  count = var.backup_report_s3_bucket != "" && var.backup_report_plan_name != "" ? 1 : 0
 
-  name        = replace(var.plan_name, "-", "_")
+  name        = var.backup_report_plan_name
   description = "Backup audit report for ${var.plan_name}"
 
   report_delivery_channel {
@@ -118,5 +118,5 @@ resource "aws_backup_report_plan" "report" {
     report_template = "BACKUP_JOB_REPORT"
   }
 
-  tags = merge({ Name = replace(var.plan_name, "-", "_") }, var.tags)
+  tags = merge({ Name = var.backup_report_plan_name }, var.tags)
 }
