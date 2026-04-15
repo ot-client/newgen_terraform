@@ -22,3 +22,8 @@ output "listener_arn" {
   description = "ARN of the HTTPS listener"
   value       = aws_lb_listener.https.arn
 }
+
+output "security_group_id" {
+  description = "ID of the security group created by the module (empty if externally provided)"
+  value       = local.create_sg ? aws_security_group.alb_sg[0].id : null
+}

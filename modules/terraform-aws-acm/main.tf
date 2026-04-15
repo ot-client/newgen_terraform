@@ -1,8 +1,13 @@
-# ── ACM Certificate Data Sources ─────────────────────────────────
-# Client provides certificates externally.
-# This module looks up each ARN and exposes them for ALB attachment.
+resource "aws_acm_certificate" "imported" {
+  for_each = { for cert in var.certificates : cert.name => cert }
 
-data "aws_acm_certificate" "this" {
-  for_each = toset(var.certificate_arns)
-  arn      = each.value
+  certificate_body  = each.value.certificate_body
+  private_key       = each.value.private_key
+  certificate_chain = each.value.certificate_chain
+
+  tags = merge(var.tags, { Name = each.key })
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
