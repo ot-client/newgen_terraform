@@ -21,8 +21,49 @@ variable "subnet_ids" {
 }
 
 variable "security_group_ids" {
-  description = "List of security group IDs"
+  description = "List of security group IDs (optional, used when SG is created externally)"
   type        = list(string)
+  default     = []
+}
+
+# ── Security Group (created inside module) ───────────────────
+variable "vpc_id" {
+  description = "VPC ID for the security group"
+  type        = string
+  default     = ""
+}
+
+variable "security_group_name" {
+  description = "Name of the security group to create inside the module"
+  type        = string
+  default     = ""
+}
+
+variable "ingress_rules" {
+  type = list(object({
+    from_port   = number
+    to_port     = number
+    protocol    = string
+    cidr_blocks = list(string)
+    description = string
+  }))
+  default = []
+}
+
+variable "egress_allow_all" {
+  type    = bool
+  default = true
+}
+
+variable "egress_rules" {
+  type = list(object({
+    from_port   = number
+    to_port     = number
+    protocol    = string
+    cidr_blocks = list(string)
+    description = string
+  }))
+  default = []
 }
 
 variable "enable_deletion_protection" {
