@@ -1,6 +1,5 @@
 locals {
   create_sg = var.security_group_name != ""
-  sg_ids    = local.create_sg ? [aws_security_group.alb_sg[0].id] : var.security_group_ids
 }
 
 resource "aws_security_group" "alb_sg" {
@@ -49,7 +48,7 @@ resource "aws_lb" "application_load_balancer" {
   load_balancer_type = "application"
   ip_address_type    = var.ip_address_type
   subnets            = var.subnet_ids
-  security_groups    = local.sg_ids
+  security_groups    = local.create_sg ? [aws_security_group.alb_sg[0].id] : var.security_group_ids
 
   enable_deletion_protection = var.enable_deletion_protection
 
