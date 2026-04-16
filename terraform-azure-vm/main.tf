@@ -1,7 +1,8 @@
 resource "azurerm_network_interface" "nic" {
-  name                = "${var.vm_name}-nic"
-  location            = var.location
-  resource_group_name = var.resource_group_name
+  name                 = "${var.vm_name}-nic"
+  location             = var.location
+  resource_group_name  = var.resource_group_name
+  ip_forwarding_enabled = var.enable_ip_forwarding
 
   ip_configuration {
     name                          = "internal"

@@ -141,6 +141,12 @@ variable "zone" {
   default     = null
 }
 
+variable "enable_ip_forwarding" {
+  description = "Enable IP forwarding on the network interface"
+  type        = bool
+  default     = false
+}
+
 variable "route_tables" {
   description = "Map of route tables to add firewall routes"
   type = map(object({
