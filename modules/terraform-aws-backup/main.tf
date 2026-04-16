@@ -110,10 +110,10 @@ resource "aws_backup_selection" "assignments" {
     for_each = length(each.value.resource_types) > 0 ? [1] : []
     content {
       dynamic "string_equals" {
-        for_each = length(each.value.resource_types) > 0 ? [1] : []
+        for_each = each.value.resource_types
         content {
           key   = "aws:ResourceType"
-          value = join(",", each.value.resource_types)
+          value = string_equals.value
         }
       }
     }
