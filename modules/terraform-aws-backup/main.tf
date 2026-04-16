@@ -106,19 +106,6 @@ resource "aws_backup_selection" "assignments" {
     }
   }
 
-  dynamic "condition" {
-    for_each = length(each.value.resource_types) > 0 ? [1] : []
-    content {
-      dynamic "string_equals" {
-        for_each = each.value.resource_types
-        content {
-          key   = "aws:ResourceType"
-          value = string_equals.value
-        }
-      }
-    }
-  }
-
   depends_on = [time_sleep.wait_for_iam]
 }
 
