@@ -33,6 +33,21 @@ resource "aws_iam_role_policy_attachment" "backup_policies" {
   policy_arn = each.value
 }
 
+# Data source to verify existing IAM role
+data "aws_iam_role" "existing" {
+  count = var.create_iam_role ? 0 : 1
+  name  = var.iam_role_name
+}
+
+# Add delay to ensure IAM role is fully propagated
+resource "time_sleep" "wait_for_iam" {
+  count = var.create_iam_role ? 0 : 1
+
+  create_duration = "10s"
+
+  depends_on = [data.aws_iam_role.existing]
+}
+
 locals {
   iam_role_arn = var.create_iam_role ? aws_iam_role.backup[0].arn : var.iam_role_arn
 }
@@ -103,6 +118,8 @@ resource "aws_backup_selection" "assignments" {
       }
     }
   }
+
+  depends_on = [time_sleep.wait_for_iam]
 }
 
 # -------------------------------------------------------------------
