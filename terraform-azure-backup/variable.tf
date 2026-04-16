@@ -4,9 +4,6 @@ variable "resource_group_name" {}
 variable "vault_sku" {
   default = "Standard"
 }
-variable "soft_delete_enabled" {
-  default = true
-}
 variable "vm_policy_name" {}
 variable "timezone" {
   default = "UTC"
