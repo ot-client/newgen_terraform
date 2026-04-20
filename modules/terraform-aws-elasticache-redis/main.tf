@@ -1,5 +1,5 @@
 # ── Subnet Group ─────────────────────────────────────────────────
-resource "aws_elasticache_subnet_group" "cache_subnet_group" {
+resource "aws_elasticache_subnet_group" "this" {
   count      = var.create_subnet_group && var.existing_subnet_group_name == "" ? 1 : 0
   name       = var.subnet_group_name != "" ? var.subnet_group_name : "${local.base_name}-subnetgrp"
   subnet_ids = var.subnet_ids
@@ -11,7 +11,7 @@ resource "aws_elasticache_subnet_group" "cache_subnet_group" {
 }
 
 # ── Security Group ────────────────────────────────────────────────
-resource "aws_security_group" "cache_sg" {
+resource "aws_security_group" "this" {
   count  = var.create_default_security_group ? 1 : 0
   name   = var.security_group_name != "" ? var.security_group_name : "${local.base_name}-sg"
   vpc_id = var.vpc_id
@@ -25,13 +25,13 @@ resource "aws_security_group" "cache_sg" {
 # ── Dynamic Ingress / Egress locals ──────────────────────────────
 locals {
   cluster_name = var.replication_group_id != "" ? var.replication_group_id : local.base_name
-  subnet_grp   = var.create_subnet_group ? aws_elasticache_subnet_group.cache_subnet_group[0].name : var.existing_subnet_group_name
+  subnet_grp   = var.create_subnet_group ? aws_elasticache_subnet_group.this[0].name : var.existing_subnet_group_name
   security_groups = var.create_default_security_group ? concat(
-    [aws_security_group.cache_sg[0].id], var.existing_security_group_ids
+    [aws_security_group.this[0].id], var.existing_security_group_ids
   ) : var.existing_security_group_ids
   param_group = (
     var.parameter_group_enabled && var.parameter_group_name == ""
-    ? aws_elasticache_parameter_group.cache_params[0].name
+    ? aws_elasticache_parameter_group.this[0].name
     : var.parameter_group_name
   )
 
@@ -78,7 +78,7 @@ resource "aws_security_group_rule" "ingress_cidr" {
   protocol          = "tcp"
   cidr_blocks       = [local.ingress_cidr_rules[count.index].cidr]
   description       = local.ingress_cidr_rules[count.index].description
-  security_group_id = aws_security_group.cache_sg[0].id
+  security_group_id = aws_security_group.this[0].id
 }
 
 # Ingress: Source SG-based (EKS nodes, EC2, Lambda etc.)
@@ -91,7 +91,7 @@ resource "aws_security_group_rule" "ingress_sg" {
   protocol                 = "tcp"
   source_security_group_id = local.ingress_sg_rules[count.index].source_sg_id
   description              = local.ingress_sg_rules[count.index].description
-  security_group_id        = aws_security_group.cache_sg[0].id
+  security_group_id        = aws_security_group.this[0].id
 }
 
 # Egress: allow-all (default when egress_allow_all = true)
@@ -102,7 +102,7 @@ resource "aws_security_group_rule" "egress_all" {
   to_port           = 0
   protocol          = "-1"
   cidr_blocks       = ["0.0.0.0/0"]
-  security_group_id = aws_security_group.cache_sg[0].id
+  security_group_id = aws_security_group.this[0].id
 }
 
 # Egress: custom rules (used when egress_allow_all = false)
@@ -115,11 +115,11 @@ resource "aws_security_group_rule" "egress_custom" {
   protocol          = "tcp"
   cidr_blocks       = [local.egress_cidr_rules[count.index].cidr]
   description       = local.egress_cidr_rules[count.index].description
-  security_group_id = aws_security_group.cache_sg[0].id
+  security_group_id = aws_security_group.this[0].id
 }
 
 # ── Parameter Group ───────────────────────────────────────────────
-resource "aws_elasticache_parameter_group" "cache_params" {
+resource "aws_elasticache_parameter_group" "this" {
   count  = var.parameter_group_enabled && var.parameter_group_name == "" ? 1 : 0
   name   = "pg-${local.base_name}"
   family = var.redis_family
@@ -139,7 +139,7 @@ resource "aws_elasticache_parameter_group" "cache_params" {
 }
 
 # ── Redis Replication Group ───────────────────────────────────────
-resource "aws_elasticache_replication_group" "cluster" {
+resource "aws_elasticache_replication_group" "this" {
   replication_group_id = local.cluster_name
   description          = "${local.cluster_name} Redis Replication Group"
 
