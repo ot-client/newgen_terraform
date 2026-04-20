@@ -1,8 +1,9 @@
 resource "azurerm_monitor_diagnostic_setting" "activity_log" {
-  name               = var.diagnostic_name
+  for_each           = { for idx, sa in var.storage_account_id : idx => sa }
+  name               = "${var.diagnostic_name}-${each.key}"
   target_resource_id = var.target_resource_id
 
-  storage_account_id = var.storage_account_id
+  storage_account_id = each.value
 
   dynamic "enabled_log" {
     for_each = var.log_categories

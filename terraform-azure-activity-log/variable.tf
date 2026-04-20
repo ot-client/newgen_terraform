@@ -7,7 +7,7 @@ variable "target_resource_id" {
 }
 
 variable "storage_account_id" {
-  type = string
+  type = list(string)
 }
 
 variable "log_categories" {
