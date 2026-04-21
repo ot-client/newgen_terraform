@@ -24,6 +24,6 @@ output "listener_arn" {
 }
 
 output "security_group_id" {
-  description = "ID of the security group attached to the ALB"
-  value       = length(var.security_group_ids) > 0 ? var.security_group_ids[0] : null
+  description = "ID of the security group used by the ALB"
+  value       = local.security_group_id
 }
