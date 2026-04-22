@@ -6,13 +6,15 @@ variable "security_groups" {
     create_new_sg    = optional(bool, true)    # true = create new SG, false = use existing SG
     existing_sg_id   = optional(string)        # Required when create_new_sg = false
     rules = map(object({
-      type        = string
-      from_port   = number
-      to_port     = number
-      protocol    = string
-      cidr_blocks = optional(list(string))
-      source_sg_id = optional(string)
-      description = optional(string)
+      type             = string
+      from_port        = number
+      to_port          = number
+      protocol         = string
+      cidr_blocks      = optional(list(string))
+      source_sg_id     = optional(string)
+      source_sg_key    = optional(string)
+      prefix_list_ids  = optional(list(string))
+      description      = optional(string)
     }))
     eni_ids = optional(map(string), {})
     

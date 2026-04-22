@@ -36,7 +36,16 @@ resource "aws_security_group_rule" "this" {
           to_port                  = rule_config.to_port
           protocol                 = rule_config.protocol
           cidr_blocks              = lookup(rule_config, "cidr_blocks", null)
-          source_security_group_id = lookup(rule_config, "source_sg_id", null)
+          source_security_group_id = (
+            lookup(rule_config, "source_sg_key", null) != null
+            ? (
+                lookup(var.security_groups[rule_config.source_sg_key], "create_new_sg", true)
+                ? aws_security_group.sg[rule_config.source_sg_key].id
+                : data.aws_security_group.existing[rule_config.source_sg_key].id
+              )
+            : lookup(rule_config, "source_sg_id", null)
+          )
+          prefix_list_ids          = lookup(rule_config, "prefix_list_ids", null)
           description              = lookup(rule_config, "description", null)
         }
       ]
@@ -53,6 +62,7 @@ resource "aws_security_group_rule" "this" {
 
   cidr_blocks              = each.value.cidr_blocks
   source_security_group_id = each.value.source_security_group_id
+  prefix_list_ids          = each.value.prefix_list_ids
 
   description = each.value.description
 }
