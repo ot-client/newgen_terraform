@@ -1,3 +1,55 @@
+variable "create_security_group" {
+  description = "Whether to create a new security group or use existing one"
+  type        = bool
+  default     = true
+}
+
+variable "existing_security_group_id" {
+  description = "Existing security group ID to use (if create_security_group is false)"
+  type        = string
+  default     = ""
+}
+
+variable "vpc_id" {
+  description = "VPC ID where the security group will be created"
+  type        = string
+}
+
+variable "security_group_name" {
+  description = "Name of the ALB security group"
+  type        = string
+}
+
+variable "ingress_rules" {
+  description = "List of ingress rules for the security group"
+  type = list(object({
+    from_port   = number
+    to_port     = number
+    protocol    = string
+    cidr_blocks = list(string)
+    description = string
+  }))
+  default = []
+}
+
+variable "egress_allow_all" {
+  description = "Allow all outbound traffic"
+  type        = bool
+  default     = true
+}
+
+variable "egress_rules" {
+  description = "List of egress rules for the security group"
+  type = list(object({
+    from_port   = number
+    to_port     = number
+    protocol    = string
+    cidr_blocks = list(string)
+    description = string
+  }))
+  default = []
+}
+
 variable "name" {
   description = "Name of the ALB"
   type        = string
@@ -20,10 +72,7 @@ variable "subnet_ids" {
   type        = list(string)
 }
 
-variable "security_group_ids" {
-  description = "List of security group IDs to attach to the ALB"
-  type        = list(string)
-}
+
 
 variable "enable_deletion_protection" {
   description = "Enable deletion protection"
