@@ -78,11 +78,10 @@ variable "backup_report_plan_name" {
 variable "selections" {
   description = "Map of backup selections. Supports tag-based and ARN-based selection."
   type = map(object({
-    name           = string
-    resource_arns  = list(string)
-    tag_key        = string
-    tag_value      = string
-    resource_types = list(string)
+    name          = string
+    resource_arns = list(string)
+    tag_key       = string
+    tag_value     = string
   }))
 }
 
