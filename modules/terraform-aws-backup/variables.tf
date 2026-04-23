@@ -57,6 +57,12 @@ variable "copy_destination_vault_arn" {
   default     = ""
 }
 
+variable "enable_backup_report" {
+  description = "Whether to create backup report plan and S3 bucket policy"
+  type        = bool
+  default     = false
+}
+
 variable "backup_report_s3_bucket" {
   description = "S3 bucket name for AWS Backup audit report delivery"
   type        = string
