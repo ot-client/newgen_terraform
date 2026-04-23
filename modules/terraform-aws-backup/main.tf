@@ -122,8 +122,31 @@ resource "aws_backup_selection" "assignments" {
 # -------------------------------------------------------------------
 # Backup Report Plan (optional)
 # -------------------------------------------------------------------
+resource "aws_s3_bucket_policy" "backup_report" {
+  count  = var.enable_backup_report && var.backup_report_s3_bucket != "" ? 1 : 0
+  bucket = var.backup_report_s3_bucket
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid       = "AllowBackupReportDelivery"
+        Effect    = "Allow"
+        Principal = { Service = "backup.amazonaws.com" }
+        Action    = ["s3:PutObject"]
+        Resource  = "arn:aws:s3:::${var.backup_report_s3_bucket}/*"
+        Condition = {
+          StringEquals = {
+            "s3:x-amz-acl" = "bucket-owner-full-control"
+          }
+        }
+      }
+    ]
+  })
+}
+
 resource "aws_backup_report_plan" "report" {
-  count = var.backup_report_s3_bucket != "" && var.backup_report_plan_name != "" ? 1 : 0
+  count = var.enable_backup_report && var.backup_report_s3_bucket != "" && var.backup_report_plan_name != "" ? 1 : 0
 
   name        = var.backup_report_plan_name
   description = "Backup audit report for ${var.plan_name}"
