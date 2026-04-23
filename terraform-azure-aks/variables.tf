@@ -114,6 +114,12 @@ variable "subnet_id" {
   type        = string
 }
 
+variable "ingress_application_gateway_id" {
+  description = "Application Gateway ID for ingress controller"
+  type        = string
+  default     = null
+}
+
 ##########################
 # Node Pools
 ##########################
