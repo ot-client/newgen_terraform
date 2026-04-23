@@ -49,6 +49,18 @@ variable "backup_rules" {
   }))
 }
 
+variable "destination_vault_name" {
+  description = "Name of the backup vault to create in destination region for cross-region copy"
+  type        = string
+  default     = ""
+}
+
+variable "destination_region" {
+  description = "AWS region where the destination backup vault will be created"
+  type        = string
+  default     = ""
+}
+
 variable "copy_destination_vault_arn" {
   description = "ARN of the backup vault for cross-region copy (applied to all rules)"
   type        = string
