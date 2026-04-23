@@ -2,21 +2,11 @@
 # Destination Backup Vault (cross-region)
 # -------------------------------------------------------------------
 resource "aws_backup_vault" "destination_vault" {
-  count    = var.destination_vault_name != "" && var.destination_region != "" ? 1 : 0
+  count    = var.destination_vault_name != "" ? 1 : 0
   provider = aws.destination
   name     = var.destination_vault_name
   tags     = merge({ Name = var.destination_vault_name }, var.tags)
 }
-
-locals {
-  copy_destination_vault_arn = (
-    var.destination_vault_name != "" && var.destination_region != ""
-    ? "arn:aws:backup:${var.destination_region}:${data.aws_caller_identity.current.account_id}:backup-vault:${var.destination_vault_name}"
-    : var.copy_destination_vault_arn
-  )
-}
-
-data "aws_caller_identity" "current" {}
 
 # -------------------------------------------------------------------
 # Backup Vault
@@ -92,9 +82,9 @@ resource "aws_backup_plan" "plan" {
       }
 
       dynamic "copy_action" {
-        for_each = local.copy_destination_vault_arn != "" ? [1] : []
+        for_each = var.copy_destination_vault_arn != "" ? [1] : []
         content {
-          destination_vault_arn = local.copy_destination_vault_arn
+          destination_vault_arn = var.copy_destination_vault_arn
           lifecycle {
             delete_after = rule.value.retention_days
           }

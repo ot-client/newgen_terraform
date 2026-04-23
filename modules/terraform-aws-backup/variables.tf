@@ -1,7 +1,3 @@
-variable "region" {
-  type = string
-}
-
 variable "vault_name" {
   type = string
 }
@@ -51,12 +47,6 @@ variable "backup_rules" {
 
 variable "destination_vault_name" {
   description = "Name of the backup vault to create in destination region for cross-region copy"
-  type        = string
-  default     = ""
-}
-
-variable "destination_region" {
-  description = "AWS region where the destination backup vault will be created"
   type        = string
   default     = ""
 }
