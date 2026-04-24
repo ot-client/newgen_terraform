@@ -72,3 +72,15 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "diagnostic_settings_enabled" {
+  description = "Enable diagnostic settings for the storage account."
+  type        = bool
+  default     = false
+}
+
+variable "log_analytics_workspace_id" {
+  description = "The ID of the Log Analytics Workspace to send diagnostics to."
+  type        = string
+  default     = null
+}

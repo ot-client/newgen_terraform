@@ -23,6 +23,44 @@ resource "azurerm_storage_account" "storage_account" {
   tags = var.tags
 }
 
+resource "azurerm_monitor_diagnostic_setting" "storage_diagnostics" {
+  count                      = var.diagnostic_settings_enabled ? 1 : 0
+  name                       = "${var.storage_account_name}-diagnostics"
+  target_resource_id         = azurerm_storage_account.storage_account.id
+  log_analytics_workspace_id = var.log_analytics_workspace_id
+
+  enabled_metric {
+    category = "Transaction"
+  }
+
+  enabled_metric {
+    category = "Capacity"
+  }
+}
+
+resource "azurerm_monitor_diagnostic_setting" "blob_diagnostics" {
+  count                      = var.diagnostic_settings_enabled ? 1 : 0
+  name                       = "${var.storage_account_name}-blob-diagnostics"
+  target_resource_id         = "${azurerm_storage_account.storage_account.id}/blobServices/default"
+  log_analytics_workspace_id = var.log_analytics_workspace_id
+
+  enabled_log {
+    category = "StorageRead"
+  }
+
+  enabled_log {
+    category = "StorageWrite"
+  }
+
+  enabled_log {
+    category = "StorageDelete"
+  }
+
+  enabled_metric {
+    category = "Transaction"
+  }
+}
+
 resource "azurerm_storage_container" "container" {
   for_each              = var.containers
   name                  = each.key
