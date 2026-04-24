@@ -55,39 +55,47 @@ locals {
 }
 
 # ── Ingress Rules ─────────────────────────────────────────────
-resource "aws_vpc_security_group_ingress_rule" "this" {
+resource "aws_security_group_rule" "ingress" {
   for_each = local.ingress_rules
 
+  type              = "ingress"
+  from_port         = each.value.from_port
+  to_port           = each.value.to_port
+  protocol          = each.value.protocol
   security_group_id = each.value.create_new_sg ? aws_security_group.sg[each.value.sg_key].id : data.aws_security_group.existing[each.value.sg_key].id
 
-  from_port   = each.value.protocol == "-1" ? null : each.value.from_port
-  to_port     = each.value.protocol == "-1" ? null : each.value.to_port
-  ip_protocol = each.value.protocol
-
-  cidr_ipv4                    = each.value.source_sg_id == null && (each.value.prefix_list_ids == null || length(try(each.value.prefix_list_ids, [])) == 0) && each.value.cidr_blocks != null ? try(each.value.cidr_blocks[0], null) : null
-  referenced_security_group_id = each.value.source_sg_id != null ? each.value.source_sg_id : null
-  prefix_list_id               = each.value.source_sg_id == null && each.value.prefix_list_ids != null && length(try(each.value.prefix_list_ids, [])) > 0 ? each.value.prefix_list_ids[0] : null
+  cidr_blocks              = each.value.source_sg_id == null && (each.value.prefix_list_ids == null || length(try(each.value.prefix_list_ids, [])) == 0) ? each.value.cidr_blocks : null
+  source_security_group_id = each.value.source_sg_id
+  prefix_list_ids          = each.value.source_sg_id == null ? each.value.prefix_list_ids : null
 
   description = each.value.description
+
+  timeouts {
+    create = "5m"
+  }
 
   depends_on = [aws_security_group.sg]
 }
 
 # ── Egress Rules ──────────────────────────────────────────────
-resource "aws_vpc_security_group_egress_rule" "this" {
+resource "aws_security_group_rule" "egress" {
   for_each = local.egress_rules
 
+  type              = "egress"
+  from_port         = each.value.from_port
+  to_port           = each.value.to_port
+  protocol          = each.value.protocol
   security_group_id = each.value.create_new_sg ? aws_security_group.sg[each.value.sg_key].id : data.aws_security_group.existing[each.value.sg_key].id
 
-  from_port   = each.value.protocol == "-1" ? null : each.value.from_port
-  to_port     = each.value.protocol == "-1" ? null : each.value.to_port
-  ip_protocol = each.value.protocol
-
-  cidr_ipv4                    = each.value.source_sg_id == null && (each.value.prefix_list_ids == null || length(try(each.value.prefix_list_ids, [])) == 0) && each.value.cidr_blocks != null ? try(each.value.cidr_blocks[0], null) : null
-  referenced_security_group_id = each.value.source_sg_id != null ? each.value.source_sg_id : null
-  prefix_list_id               = each.value.source_sg_id == null && each.value.prefix_list_ids != null && length(try(each.value.prefix_list_ids, [])) > 0 ? each.value.prefix_list_ids[0] : null
+  cidr_blocks              = each.value.source_sg_id == null && (each.value.prefix_list_ids == null || length(try(each.value.prefix_list_ids, [])) == 0) ? each.value.cidr_blocks : null
+  source_security_group_id = each.value.source_sg_id
+  prefix_list_ids          = each.value.source_sg_id == null ? each.value.prefix_list_ids : null
 
   description = each.value.description
+
+  timeouts {
+    create = "5m"
+  }
 
   depends_on = [aws_security_group.sg]
 }
