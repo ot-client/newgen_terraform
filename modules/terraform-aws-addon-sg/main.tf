@@ -60,13 +60,13 @@ resource "aws_vpc_security_group_ingress_rule" "this" {
 
   security_group_id = each.value.create_new_sg ? aws_security_group.sg[each.value.sg_key].id : data.aws_security_group.existing[each.value.sg_key].id
 
-  from_port   = each.value.from_port
-  to_port     = each.value.to_port
+  from_port   = each.value.protocol == "-1" ? null : each.value.from_port
+  to_port     = each.value.protocol == "-1" ? null : each.value.to_port
   ip_protocol = each.value.protocol
 
   cidr_ipv4                    = each.value.source_sg_id == null && each.value.prefix_list_ids == null ? try(each.value.cidr_blocks[0], null) : null
-  referenced_security_group_id = each.value.source_sg_id
-  prefix_list_id               = each.value.source_sg_id == null ? try(each.value.prefix_list_ids[0], null) : null
+  referenced_security_group_id = each.value.source_sg_id != null ? each.value.source_sg_id : null
+  prefix_list_id               = each.value.source_sg_id == null && each.value.prefix_list_ids != null ? try(each.value.prefix_list_ids[0], null) : null
 
   description = each.value.description
 
@@ -79,13 +79,13 @@ resource "aws_vpc_security_group_egress_rule" "this" {
 
   security_group_id = each.value.create_new_sg ? aws_security_group.sg[each.value.sg_key].id : data.aws_security_group.existing[each.value.sg_key].id
 
-  from_port   = each.value.from_port
-  to_port     = each.value.to_port
+  from_port   = each.value.protocol == "-1" ? null : each.value.from_port
+  to_port     = each.value.protocol == "-1" ? null : each.value.to_port
   ip_protocol = each.value.protocol
 
   cidr_ipv4                    = each.value.source_sg_id == null && each.value.prefix_list_ids == null ? try(each.value.cidr_blocks[0], null) : null
-  referenced_security_group_id = each.value.source_sg_id
-  prefix_list_id               = each.value.source_sg_id == null ? try(each.value.prefix_list_ids[0], null) : null
+  referenced_security_group_id = each.value.source_sg_id != null ? each.value.source_sg_id : null
+  prefix_list_id               = each.value.source_sg_id == null && each.value.prefix_list_ids != null ? try(each.value.prefix_list_ids[0], null) : null
 
   description = each.value.description
 
