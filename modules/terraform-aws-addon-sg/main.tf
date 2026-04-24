@@ -22,54 +22,77 @@ data "aws_security_group" "existing" {
   id = each.value.existing_sg_id
 }
 
-# Security group rules for both new and existing SGs
-resource "aws_security_group_rule" "this" {
-  for_each = {
-    for rule_key, rule_value in flatten([
-      for sg_key, sg_value in var.security_groups : [
-        for rule_name, rule_config in sg_value.rules : {
-          key                      = "${sg_key}-${rule_name}"
-          sg_key                   = sg_key
-          create_new_sg            = lookup(sg_value, "create_new_sg", true)
-          type                     = rule_config.type
-          from_port                = rule_config.from_port
-          to_port                  = rule_config.to_port
-          protocol                 = rule_config.protocol
-          cidr_blocks              = lookup(rule_config, "cidr_blocks", null)
-          source_security_group_id = (
-            lookup(rule_config, "source_sg_key", null) != null
-            ? (
-                lookup(var.security_groups[rule_config.source_sg_key], "create_new_sg", true)
-                ? aws_security_group.sg[rule_config.source_sg_key].id
-                : data.aws_security_group.existing[rule_config.source_sg_key].id
-              )
-            : lookup(rule_config, "source_sg_id", null)
-          )
-          prefix_list_ids          = lookup(rule_config, "prefix_list_ids", null)
-          description              = lookup(rule_config, "description", null)
-        }
-      ]
-    ]) : rule_value.key => rule_value
-  }
+locals {
+  # Flatten all rules with resolved SG IDs
+  all_rules = flatten([
+    for sg_key, sg_value in var.security_groups : [
+      for rule_name, rule_config in sg_value.rules : {
+        key               = "${sg_key}-${rule_name}"
+        sg_key            = sg_key
+        create_new_sg     = lookup(sg_value, "create_new_sg", true)
+        type              = rule_config.type
+        from_port         = rule_config.from_port
+        to_port           = rule_config.to_port
+        protocol          = rule_config.protocol
+        cidr_blocks       = lookup(rule_config, "cidr_blocks", null)
+        source_sg_id      = (
+          lookup(rule_config, "source_sg_key", null) != null
+          ? (
+              lookup(var.security_groups[rule_config.source_sg_key], "create_new_sg", true)
+              ? aws_security_group.sg[rule_config.source_sg_key].id
+              : data.aws_security_group.existing[rule_config.source_sg_key].id
+            )
+          : lookup(rule_config, "source_sg_id", null)
+        )
+        prefix_list_ids   = lookup(rule_config, "prefix_list_ids", null)
+        description       = lookup(rule_config, "description", "")
+      }
+    ]
+  ])
 
-  type              = each.value.type
-  from_port         = each.value.from_port
-  to_port           = each.value.to_port
-  protocol          = each.value.protocol
+  ingress_rules = { for r in local.all_rules : r.key => r if r.type == "ingress" }
+  egress_rules  = { for r in local.all_rules : r.key => r if r.type == "egress" }
+}
+
+# ── Ingress Rules ─────────────────────────────────────────────
+resource "aws_vpc_security_group_ingress_rule" "this" {
+  for_each = local.ingress_rules
 
   security_group_id = each.value.create_new_sg ? aws_security_group.sg[each.value.sg_key].id : data.aws_security_group.existing[each.value.sg_key].id
 
-  # Only one of cidr_blocks, source_security_group_id, or prefix_list_ids can be set
-  cidr_blocks              = each.value.source_security_group_id == null && each.value.prefix_list_ids == null ? each.value.cidr_blocks : null
-  source_security_group_id = each.value.source_security_group_id
-  prefix_list_ids          = each.value.source_security_group_id == null ? each.value.prefix_list_ids : null
+  from_port   = each.value.from_port
+  to_port     = each.value.to_port
+  ip_protocol = each.value.protocol
+
+  cidr_ipv4                    = each.value.source_sg_id == null && each.value.prefix_list_ids == null ? try(each.value.cidr_blocks[0], null) : null
+  referenced_security_group_id = each.value.source_sg_id
+  prefix_list_id               = each.value.source_sg_id == null ? try(each.value.prefix_list_ids[0], null) : null
 
   description = each.value.description
 
   depends_on = [aws_security_group.sg]
 }
 
-# ENI attachments for both new and existing SGs (manual ENI IDs)
+# ── Egress Rules ──────────────────────────────────────────────
+resource "aws_vpc_security_group_egress_rule" "this" {
+  for_each = local.egress_rules
+
+  security_group_id = each.value.create_new_sg ? aws_security_group.sg[each.value.sg_key].id : data.aws_security_group.existing[each.value.sg_key].id
+
+  from_port   = each.value.from_port
+  to_port     = each.value.to_port
+  ip_protocol = each.value.protocol
+
+  cidr_ipv4                    = each.value.source_sg_id == null && each.value.prefix_list_ids == null ? try(each.value.cidr_blocks[0], null) : null
+  referenced_security_group_id = each.value.source_sg_id
+  prefix_list_id               = each.value.source_sg_id == null ? try(each.value.prefix_list_ids[0], null) : null
+
+  description = each.value.description
+
+  depends_on = [aws_security_group.sg]
+}
+
+# ── ENI attachments — manual ──────────────────────────────────
 resource "aws_network_interface_sg_attachment" "manual" {
   for_each = {
     for attachment_key, attachment_value in flatten([
@@ -84,13 +107,11 @@ resource "aws_network_interface_sg_attachment" "manual" {
     ]) : attachment_value.key => attachment_value
   }
 
-  # Use new SG ID if creating new, otherwise use existing SG ID
   security_group_id    = each.value.create_new_sg ? aws_security_group.sg[each.value.sg_key].id : data.aws_security_group.existing[each.value.sg_key].id
   network_interface_id = each.value.network_interface_id
 }
 
-# Specific service attachments
-# RDS Cluster attachments
+# ── RDS Cluster attachments ───────────────────────────────────
 resource "aws_network_interface_sg_attachment" "rds_clusters" {
   for_each = {
     for attachment_key, attachment_value in flatten([
@@ -109,7 +130,7 @@ resource "aws_network_interface_sg_attachment" "rds_clusters" {
   network_interface_id = data.aws_rds_cluster.specific_clusters[each.value.cluster_id].network_interface_ids[0]
 }
 
-# RDS Instance attachments
+# ── RDS Instance attachments ──────────────────────────────────
 resource "aws_network_interface_sg_attachment" "rds_instances" {
   for_each = {
     for attachment_key, attachment_value in flatten([
@@ -128,8 +149,7 @@ resource "aws_network_interface_sg_attachment" "rds_instances" {
   network_interface_id = data.aws_db_instance.specific_instances[each.value.instance_id].network_interface_id
 }
 
-# EFS Mount Target attachments (by ID only)
-# Note: EFS by name is not supported due to AWS provider limitations
+# ── EFS attachments ───────────────────────────────────────────
 resource "aws_network_interface_sg_attachment" "efs" {
   for_each = {
     for attachment_key, attachment_value in flatten([
@@ -148,7 +168,7 @@ resource "aws_network_interface_sg_attachment" "efs" {
   network_interface_id = each.value.eni_id
 }
 
-# Redis/ElastiCache attachments
+# ── Redis attachments ─────────────────────────────────────────
 resource "aws_network_interface_sg_attachment" "redis" {
   for_each = {
     for attachment_key, attachment_value in flatten([
@@ -169,7 +189,7 @@ resource "aws_network_interface_sg_attachment" "redis" {
   network_interface_id = each.value.eni_id
 }
 
-# EKS Cluster attachments
+# ── EKS attachments ───────────────────────────────────────────
 resource "aws_network_interface_sg_attachment" "eks" {
   for_each = {
     for attachment_key, attachment_value in flatten([
@@ -190,7 +210,7 @@ resource "aws_network_interface_sg_attachment" "eks" {
   network_interface_id = each.value.eni_id
 }
 
-# EC2 Instance attachments
+# ── EC2 attachments ───────────────────────────────────────────
 resource "aws_network_interface_sg_attachment" "ec2" {
   for_each = {
     for attachment_key, attachment_value in flatten([
@@ -209,7 +229,7 @@ resource "aws_network_interface_sg_attachment" "ec2" {
   network_interface_id = each.value.eni_id
 }
 
-# VPC Endpoint attachments
+# ── VPC Endpoint attachments ──────────────────────────────────
 resource "aws_network_interface_sg_attachment" "vpc_endpoints" {
   for_each = {
     for attachment_key, attachment_value in flatten([
