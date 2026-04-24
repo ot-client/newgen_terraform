@@ -56,13 +56,13 @@ resource "aws_security_group_rule" "this" {
   from_port         = each.value.from_port
   to_port           = each.value.to_port
   protocol          = each.value.protocol
-  
-  # Use new SG ID if creating new, otherwise use existing SG ID
+
   security_group_id = each.value.create_new_sg ? aws_security_group.sg[each.value.sg_key].id : data.aws_security_group.existing[each.value.sg_key].id
 
-  cidr_blocks              = each.value.cidr_blocks
+  # Only one of cidr_blocks, source_security_group_id, or prefix_list_ids can be set
+  cidr_blocks              = each.value.source_security_group_id == null && each.value.prefix_list_ids == null ? each.value.cidr_blocks : null
   source_security_group_id = each.value.source_security_group_id
-  prefix_list_ids          = each.value.prefix_list_ids
+  prefix_list_ids          = each.value.source_security_group_id == null ? each.value.prefix_list_ids : null
 
   description = each.value.description
 }
@@ -123,7 +123,7 @@ resource "aws_network_interface_sg_attachment" "rds_instances" {
   }
 
   security_group_id    = each.value.create_new_sg ? aws_security_group.sg[each.value.sg_key].id : data.aws_security_group.existing[each.value.sg_key].id
-  network_interface_id = data.aws_db_instance.specific_instances[each.value.instance_id].network_interface_ids[0]
+  network_interface_id = data.aws_db_instance.specific_instances[each.value.instance_id].network_interface_id
 }
 
 # EFS Mount Target attachments (by ID only)
@@ -193,14 +193,12 @@ resource "aws_network_interface_sg_attachment" "ec2" {
   for_each = {
     for attachment_key, attachment_value in flatten([
       for sg_key, sg_value in var.security_groups : [
-        for instance_name in lookup(lookup(sg_value, "service_attachments", {}), "ec2_instances", []) : [
-          for idx, eni in data.aws_instance.specific_ec2[instance_name].network_interface_ids : {
-            key           = "${sg_key}-ec2-${instance_name}-${idx}"
-            sg_key        = sg_key
-            create_new_sg = lookup(sg_value, "create_new_sg", true)
-            eni_id        = eni
-          }
-        ]
+        for instance_name in lookup(lookup(sg_value, "service_attachments", {}), "ec2_instances", []) : {
+          key           = "${sg_key}-ec2-${instance_name}"
+          sg_key        = sg_key
+          create_new_sg = lookup(sg_value, "create_new_sg", true)
+          eni_id        = data.aws_instance.specific_ec2[instance_name].network_interface_id
+        }
       ]
     ]) : attachment_value.key => attachment_value
   }
