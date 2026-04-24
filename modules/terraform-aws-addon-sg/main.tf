@@ -1,4 +1,4 @@
-# Create new security groups
+# Create new security groups with inline rules
 resource "aws_security_group" "sg" {
   for_each = {
     for sg_key, sg_config in var.security_groups : sg_key => sg_config
@@ -8,6 +8,38 @@ resource "aws_security_group" "sg" {
   name        = each.value.name
   description = each.value.name
   vpc_id      = each.value.vpc_id
+
+  dynamic "ingress" {
+    for_each = {
+      for rule_name, rule_config in each.value.rules :
+      rule_name => rule_config if rule_config.type == "ingress"
+    }
+    content {
+      from_port        = ingress.value.from_port
+      to_port          = ingress.value.to_port
+      protocol         = ingress.value.protocol
+      cidr_blocks      = lookup(ingress.value, "source_sg_id", null) == null && lookup(ingress.value, "source_sg_key", null) == null ? lookup(ingress.value, "cidr_blocks", null) : null
+      prefix_list_ids  = lookup(ingress.value, "prefix_list_ids", null)
+      security_groups  = lookup(ingress.value, "source_sg_id", null) != null ? [ingress.value.source_sg_id] : null
+      description      = lookup(ingress.value, "description", "")
+    }
+  }
+
+  dynamic "egress" {
+    for_each = {
+      for rule_name, rule_config in each.value.rules :
+      rule_name => rule_config if rule_config.type == "egress"
+    }
+    content {
+      from_port        = egress.value.from_port
+      to_port          = egress.value.to_port
+      protocol         = egress.value.protocol
+      cidr_blocks      = lookup(egress.value, "source_sg_id", null) == null && lookup(egress.value, "source_sg_key", null) == null ? lookup(egress.value, "cidr_blocks", null) : null
+      prefix_list_ids  = lookup(egress.value, "prefix_list_ids", null)
+      security_groups  = lookup(egress.value, "source_sg_id", null) != null ? [egress.value.source_sg_id] : null
+      description      = lookup(egress.value, "description", "")
+    }
+  }
 
   tags = var.tags
 }
@@ -23,13 +55,12 @@ data "aws_security_group" "existing" {
 }
 
 locals {
-  # Flatten all rules with resolved SG IDs
-  all_rules = flatten([
+  # Flatten rules only for EXISTING SGs — new SGs use inline rules
+  existing_sg_rules = flatten([
     for sg_key, sg_value in var.security_groups : [
       for rule_name, rule_config in sg_value.rules : {
         key               = "${sg_key}-${rule_name}"
         sg_key            = sg_key
-        create_new_sg     = lookup(sg_value, "create_new_sg", true)
         type              = rule_config.type
         from_port         = rule_config.from_port
         to_port           = rule_config.to_port
@@ -47,22 +78,22 @@ locals {
         prefix_list_ids   = lookup(rule_config, "prefix_list_ids", null)
         description       = lookup(rule_config, "description", "")
       }
-    ]
+    ] if lookup(sg_value, "create_new_sg", true) == false
   ])
 
-  ingress_rules = { for r in local.all_rules : r.key => r if r.type == "ingress" }
-  egress_rules  = { for r in local.all_rules : r.key => r if r.type == "egress" }
+  existing_ingress = { for r in local.existing_sg_rules : r.key => r if r.type == "ingress" }
+  existing_egress  = { for r in local.existing_sg_rules : r.key => r if r.type == "egress" }
 }
 
-# ── Ingress Rules ─────────────────────────────────────────────
+# ── Rules for EXISTING SGs only ─────────────────────────────────
 resource "aws_security_group_rule" "ingress" {
-  for_each = local.ingress_rules
+  for_each = local.existing_ingress
 
   type              = "ingress"
   from_port         = each.value.from_port
   to_port           = each.value.to_port
   protocol          = each.value.protocol
-  security_group_id = each.value.create_new_sg ? aws_security_group.sg[each.value.sg_key].id : data.aws_security_group.existing[each.value.sg_key].id
+  security_group_id = data.aws_security_group.existing[each.value.sg_key].id
 
   cidr_blocks              = each.value.source_sg_id == null && (each.value.prefix_list_ids == null || length(try(each.value.prefix_list_ids, [])) == 0) ? each.value.cidr_blocks : null
   source_security_group_id = each.value.source_sg_id
@@ -73,19 +104,16 @@ resource "aws_security_group_rule" "ingress" {
   timeouts {
     create = "5m"
   }
-
-  depends_on = [aws_security_group.sg]
 }
 
-# ── Egress Rules ──────────────────────────────────────────────
 resource "aws_security_group_rule" "egress" {
-  for_each = local.egress_rules
+  for_each = local.existing_egress
 
   type              = "egress"
   from_port         = each.value.from_port
   to_port           = each.value.to_port
   protocol          = each.value.protocol
-  security_group_id = each.value.create_new_sg ? aws_security_group.sg[each.value.sg_key].id : data.aws_security_group.existing[each.value.sg_key].id
+  security_group_id = data.aws_security_group.existing[each.value.sg_key].id
 
   cidr_blocks              = each.value.source_sg_id == null && (each.value.prefix_list_ids == null || length(try(each.value.prefix_list_ids, [])) == 0) ? each.value.cidr_blocks : null
   source_security_group_id = each.value.source_sg_id
@@ -96,8 +124,6 @@ resource "aws_security_group_rule" "egress" {
   timeouts {
     create = "5m"
   }
-
-  depends_on = [aws_security_group.sg]
 }
 
 # ── ENI attachments — manual ──────────────────────────────────
