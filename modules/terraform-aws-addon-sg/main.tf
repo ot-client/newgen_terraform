@@ -65,6 +65,8 @@ resource "aws_security_group_rule" "this" {
   prefix_list_ids          = each.value.source_security_group_id == null ? each.value.prefix_list_ids : null
 
   description = each.value.description
+
+  depends_on = [aws_security_group.sg]
 }
 
 # ENI attachments for both new and existing SGs (manual ENI IDs)
