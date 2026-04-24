@@ -159,13 +159,13 @@ resource "aws_security_group_rule" "security_rules" {
 # RT Attach to ENI
 ##############################
 
-resource "aws_route" "private_default_to_firewall" {
-  for_each = toset(data.aws_route_tables.selected.ids)
+# resource "aws_route" "private_default_to_firewall" {
+#   for_each = toset(data.aws_route_tables.selected.ids)
 
-  route_table_id         = each.value
-  destination_cidr_block = var.firewall_route_cidr
-  network_interface_id   = aws_instance.ec2[var.firewall_instance_key].primary_network_interface_id
-}
+#   route_table_id         = each.value
+#   destination_cidr_block = var.firewall_route_cidr
+#   network_interface_id   = aws_instance.ec2[var.firewall_instance_key].primary_network_interface_id
+# }
 
 #################################
 # Key Pairs
