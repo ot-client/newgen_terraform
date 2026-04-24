@@ -15,13 +15,13 @@ resource "aws_security_group" "sg" {
       rule_name => rule_config if rule_config.type == "ingress"
     }
     content {
-      from_port        = ingress.value.from_port
-      to_port          = ingress.value.to_port
-      protocol         = ingress.value.protocol
-      cidr_blocks      = lookup(ingress.value, "source_sg_id", null) == null && lookup(ingress.value, "source_sg_key", null) == null ? lookup(ingress.value, "cidr_blocks", null) : null
-      prefix_list_ids  = lookup(ingress.value, "prefix_list_ids", null)
-      security_groups  = lookup(ingress.value, "source_sg_id", null) != null ? [ingress.value.source_sg_id] : null
-      description      = lookup(ingress.value, "description", "")
+      from_port       = ingress.value.from_port
+      to_port         = ingress.value.to_port
+      protocol        = ingress.value.protocol
+      cidr_blocks     = ingress.value.source_sg_id == null && ingress.value.source_sg_key == null ? ingress.value.cidr_blocks : null
+      prefix_list_ids = ingress.value.source_sg_id == null ? ingress.value.prefix_list_ids : null
+      security_groups = ingress.value.source_sg_id != null ? [ingress.value.source_sg_id] : null
+      description     = ingress.value.description
     }
   }
 
@@ -31,13 +31,13 @@ resource "aws_security_group" "sg" {
       rule_name => rule_config if rule_config.type == "egress"
     }
     content {
-      from_port        = egress.value.from_port
-      to_port          = egress.value.to_port
-      protocol         = egress.value.protocol
-      cidr_blocks      = lookup(egress.value, "source_sg_id", null) == null && lookup(egress.value, "source_sg_key", null) == null ? lookup(egress.value, "cidr_blocks", null) : null
-      prefix_list_ids  = lookup(egress.value, "prefix_list_ids", null)
-      security_groups  = lookup(egress.value, "source_sg_id", null) != null ? [egress.value.source_sg_id] : null
-      description      = lookup(egress.value, "description", "")
+      from_port       = egress.value.from_port
+      to_port         = egress.value.to_port
+      protocol        = egress.value.protocol
+      cidr_blocks     = egress.value.source_sg_id == null && egress.value.source_sg_key == null ? egress.value.cidr_blocks : null
+      prefix_list_ids = egress.value.source_sg_id == null ? egress.value.prefix_list_ids : null
+      security_groups = egress.value.source_sg_id != null ? [egress.value.source_sg_id] : null
+      description     = egress.value.description
     }
   }
 
