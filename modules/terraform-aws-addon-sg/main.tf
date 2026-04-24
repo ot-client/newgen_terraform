@@ -18,9 +18,9 @@ resource "aws_security_group" "sg" {
       from_port       = ingress.value.from_port
       to_port         = ingress.value.to_port
       protocol        = ingress.value.protocol
-      cidr_blocks     = ingress.value.source_sg_id == null ? ingress.value.cidr_blocks : null
-      prefix_list_ids = ingress.value.source_sg_id == null ? ingress.value.prefix_list_ids : null
-      security_groups = ingress.value.source_sg_id != null ? [ingress.value.source_sg_id] : null
+      cidr_blocks     = ingress.value.source_sg_id == null ? coalesce(ingress.value.cidr_blocks, []) : []
+      prefix_list_ids = ingress.value.source_sg_id == null ? coalesce(ingress.value.prefix_list_ids, []) : []
+      security_groups = ingress.value.source_sg_id != null ? [ingress.value.source_sg_id] : []
       description     = ingress.value.description
     }
   }
@@ -34,9 +34,9 @@ resource "aws_security_group" "sg" {
       from_port       = egress.value.from_port
       to_port         = egress.value.to_port
       protocol        = egress.value.protocol
-      cidr_blocks     = egress.value.source_sg_id == null ? egress.value.cidr_blocks : null
-      prefix_list_ids = egress.value.source_sg_id == null ? egress.value.prefix_list_ids : null
-      security_groups = egress.value.source_sg_id != null ? [egress.value.source_sg_id] : null
+      cidr_blocks     = egress.value.source_sg_id == null ? coalesce(egress.value.cidr_blocks, []) : []
+      prefix_list_ids = egress.value.source_sg_id == null ? coalesce(egress.value.prefix_list_ids, []) : []
+      security_groups = egress.value.source_sg_id != null ? [egress.value.source_sg_id] : []
       description     = egress.value.description
     }
   }
