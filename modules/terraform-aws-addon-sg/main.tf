@@ -146,41 +146,23 @@ resource "aws_network_interface_sg_attachment" "manual" {
 }
 
 # ── RDS Cluster attachments ───────────────────────────────────
+# NOTE: Aurora RDS clusters do not expose network_interface_ids
+# Kept as empty for_each to satisfy cached module references
 resource "aws_network_interface_sg_attachment" "rds_clusters" {
-  for_each = {
-    for attachment_key, attachment_value in flatten([
-      for sg_key, sg_value in var.security_groups : [
-        for cluster_id in lookup(lookup(sg_value, "service_attachments", {}), "rds_clusters", []) : {
-          key           = "${sg_key}-rds-cluster-${cluster_id}"
-          sg_key        = sg_key
-          create_new_sg = lookup(sg_value, "create_new_sg", true)
-          cluster_id    = cluster_id
-        }
-      ]
-    ]) : attachment_value.key => attachment_value
-  }
+  for_each = {}
 
-  security_group_id    = each.value.create_new_sg ? aws_security_group.sg[each.value.sg_key].id : data.aws_security_group.existing[each.value.sg_key].id
-  network_interface_id = data.aws_rds_cluster.specific_clusters[each.value.cluster_id].network_interface_ids[0]
+  security_group_id    = ""
+  network_interface_id = ""
 }
 
 # ── RDS Instance attachments ──────────────────────────────────
+# NOTE: RDS instances do not expose network_interface_id
+# Kept as empty for_each to satisfy cached module references
 resource "aws_network_interface_sg_attachment" "rds_instances" {
-  for_each = {
-    for attachment_key, attachment_value in flatten([
-      for sg_key, sg_value in var.security_groups : [
-        for instance_id in lookup(lookup(sg_value, "service_attachments", {}), "rds_instances", []) : {
-          key           = "${sg_key}-rds-instance-${instance_id}"
-          sg_key        = sg_key
-          create_new_sg = lookup(sg_value, "create_new_sg", true)
-          instance_id   = instance_id
-        }
-      ]
-    ]) : attachment_value.key => attachment_value
-  }
+  for_each = {}
 
-  security_group_id    = each.value.create_new_sg ? aws_security_group.sg[each.value.sg_key].id : data.aws_security_group.existing[each.value.sg_key].id
-  network_interface_id = data.aws_db_instance.specific_instances[each.value.instance_id].network_interface_id
+  security_group_id    = ""
+  network_interface_id = ""
 }
 
 # ── EFS attachments ───────────────────────────────────────────

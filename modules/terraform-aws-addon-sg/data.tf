@@ -8,6 +8,28 @@ data "aws_efs_mount_target" "specific_efs" {
   file_system_id = each.value
 }
 
+# RDS Cluster — kept for reference only, ENI attachment not supported
+# Use vpc_security_group_ids on aws_rds_cluster resource instead
+data "aws_rds_cluster" "specific_clusters" {
+  for_each = toset(flatten([
+    for sg_key, sg_config in var.security_groups :
+    lookup(lookup(sg_config, "service_attachments", {}), "rds_clusters", [])
+  ]))
+
+  cluster_identifier = each.value
+}
+
+# RDS Instance — kept for reference only, ENI attachment not supported
+# Use vpc_security_group_ids on aws_db_instance resource instead
+data "aws_db_instance" "specific_instances" {
+  for_each = toset(flatten([
+    for sg_key, sg_config in var.security_groups :
+    lookup(lookup(sg_config, "service_attachments", {}), "rds_instances", [])
+  ]))
+
+  db_instance_identifier = each.value
+}
+
 # Redis/ElastiCache (specific replication groups)
 data "aws_elasticache_replication_group" "specific_redis" {
   for_each = toset(flatten([
