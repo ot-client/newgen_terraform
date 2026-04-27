@@ -1,5 +1,5 @@
-# EFS Mount Targets (specific filesystems by ID — must use fs-xxxx format)
-data "aws_efs_mount_target" "specific_efs" {
+# EFS Mount Targets — returns all mount targets for a filesystem
+data "aws_efs_mount_targets" "specific_efs" {
   for_each = toset(flatten([
     for sg_key, sg_config in var.security_groups :
     lookup(lookup(sg_config, "service_attachments", {}), "efs_filesystems", [])

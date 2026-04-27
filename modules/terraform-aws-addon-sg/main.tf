@@ -170,12 +170,14 @@ resource "aws_network_interface_sg_attachment" "efs" {
   for_each = {
     for attachment_key, attachment_value in flatten([
       for sg_key, sg_value in var.security_groups : [
-        for fs_id in lookup(lookup(sg_value, "service_attachments", {}), "efs_filesystems", []) : {
-          key           = "${sg_key}-efs-${fs_id}"
-          sg_key        = sg_key
-          create_new_sg = lookup(sg_value, "create_new_sg", true)
-          eni_id        = data.aws_efs_mount_target.specific_efs[fs_id].network_interface_id
-        }
+        for fs_id in lookup(lookup(sg_value, "service_attachments", {}), "efs_filesystems", []) : [
+          for mt_id in data.aws_efs_mount_targets.specific_efs[fs_id].ids : {
+            key           = "${sg_key}-efs-${fs_id}-${mt_id}"
+            sg_key        = sg_key
+            create_new_sg = lookup(sg_value, "create_new_sg", true)
+            eni_id        = mt_id
+          }
+        ]
       ]
     ]) : attachment_value.key => attachment_value
   }
@@ -185,24 +187,14 @@ resource "aws_network_interface_sg_attachment" "efs" {
 }
 
 # ── Redis attachments ─────────────────────────────────────────
+# NOTE: aws_elasticache_replication_group does not have cache_nodes
+# Redis ENI attachment is not supported via this method
+# Manage Redis SG via security_group_ids on the replication group resource
 resource "aws_network_interface_sg_attachment" "redis" {
-  for_each = {
-    for attachment_key, attachment_value in flatten([
-      for sg_key, sg_value in var.security_groups : [
-        for cluster_id in lookup(lookup(sg_value, "service_attachments", {}), "redis_clusters", []) : [
-          for idx, node in data.aws_elasticache_replication_group.specific_redis[cluster_id].cache_nodes : {
-            key           = "${sg_key}-redis-${cluster_id}-${idx}"
-            sg_key        = sg_key
-            create_new_sg = lookup(sg_value, "create_new_sg", true)
-            eni_id        = node.network_interface_id
-          }
-        ]
-      ]
-    ]) : attachment_value.key => attachment_value
-  }
+  for_each = {}
 
-  security_group_id    = each.value.create_new_sg ? aws_security_group.sg[each.value.sg_key].id : data.aws_security_group.existing[each.value.sg_key].id
-  network_interface_id = each.value.eni_id
+  security_group_id    = ""
+  network_interface_id = ""
 }
 
 # ── EKS attachments ───────────────────────────────────────────
