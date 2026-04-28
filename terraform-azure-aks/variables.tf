@@ -40,7 +40,6 @@ variable "sku_tier" {
 variable "node_os_upgrade_channel" {
   description = "Node OS automatic upgrade channel"
   type        = string
-  default     = "NodeImage"
 }
 
 variable "private_cluster_enabled" {

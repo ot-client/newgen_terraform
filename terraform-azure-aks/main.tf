@@ -14,6 +14,15 @@ resource "azurerm_role_assignment" "route_table" {
   principal_id         = azurerm_user_assigned_identity.aks_identity[0].principal_id
 }
 
+# Grant AcrPull role to AKS kubelet identity for ACR access
+resource "azurerm_role_assignment" "acr_pull" {
+  count                = var.acr_id != null ? 1 : 0
+  scope                = var.acr_id
+  role_definition_name = "AcrPull"
+  principal_id         = azurerm_kubernetes_cluster.aks.kubelet_identity[0].object_id
+  skip_service_principal_aad_check = true
+}
+
 
 resource "azurerm_kubernetes_cluster" "aks" {
   name                = "${var.client_code}-AKS-${var.env}-s1-1"
