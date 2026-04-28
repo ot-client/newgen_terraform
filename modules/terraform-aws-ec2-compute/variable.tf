@@ -45,10 +45,10 @@ variable "route_table_names" {
   type = list(string)
 }
 
-# variable "firewall_instance_key" {
-#   description = "Key name of firewall EC2 instance"
-#   type        = string
-# }
+variable "firewall_instance_key" {
+  description = "Key name of firewall EC2 instance"
+  type        = string
+}
 
 variable "security_group_ports" {
   description = "Ingress port configuration mapped to SG name patterns"
@@ -63,11 +63,11 @@ variable "security_group_ports" {
   }))
 }
 
-# variable "firewall_route_cidr" {
-#   description = "Destination CIDR block for firewall route"
-#   type        = string
-#   default     = "0.0.0.0/0"
-# }
+variable "firewall_route_cidr" {
+  description = "Destination CIDR block for firewall route"
+  type        = string
+  default     = "0.0.0.0/0"
+}
 
 variable "key_algorithm" {
   description = "Algorithm for key pair generation"
