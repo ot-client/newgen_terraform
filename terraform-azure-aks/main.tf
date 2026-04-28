@@ -48,8 +48,11 @@ resource "azurerm_kubernetes_cluster" "aks" {
     pod_cidr       = var.network_plugin == "kubenet" ? "10.244.0.0/16" : null
   }
 
-  ingress_application_gateway {
-    gateway_id = var.ingress_application_gateway_id
+  dynamic "ingress_application_gateway" {
+    for_each = var.ingress_application_gateway_id != null ? [1] : []
+    content {
+      gateway_id = var.ingress_application_gateway_id
+    }
   }
 
 # CHANGED: Added zones to default_node_pool to match other pools
