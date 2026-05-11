@@ -152,7 +152,7 @@ resource "aws_backup_report_plan" "report" {
   description = "Backup audit report for ${var.plan_name}"
 
   report_delivery_channel {
-    formats        = ["CSV", "JSON"]
+    formats        = var.backup_report_formats
     s3_bucket_name = var.backup_report_s3_bucket
   }
 

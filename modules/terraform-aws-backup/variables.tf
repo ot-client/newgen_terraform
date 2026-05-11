@@ -75,6 +75,12 @@ variable "backup_report_plan_name" {
   default     = ""
 }
 
+variable "backup_report_formats" {
+  description = "List of report formats. Valid values: CSV, JSON"
+  type        = list(string)
+  default     = ["CSV", "JSON"]
+}
+
 variable "selections" {
   description = "Map of backup selections. Supports tag-based and ARN-based selection."
   type = map(object({
