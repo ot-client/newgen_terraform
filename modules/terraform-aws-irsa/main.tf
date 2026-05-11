@@ -29,7 +29,7 @@ resource "aws_iam_role" "irsa" {
 
   name = each.key
 
-  assume_role_policy = jsonencode({
+  assume_role_policy = var.custom_trust_policy != null ? var.custom_trust_policy : jsonencode({
     Version = "2012-10-17"
     Statement = [{
       Effect = "Allow"

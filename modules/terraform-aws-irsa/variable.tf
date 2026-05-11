@@ -32,6 +32,12 @@ variable "oidc_client_id_list" {
   default     = ["sts.amazonaws.com"]
 }
 
+variable "custom_trust_policy" {
+  description = "Custom trust policy JSON string. When provided, overrides the auto-generated OIDC trust policy."
+  type        = string
+  default     = null
+}
+
 variable "irsa_roles" {
   description = "Map of IRSA roles to create with web identity trust policy"
   type = map(object({
