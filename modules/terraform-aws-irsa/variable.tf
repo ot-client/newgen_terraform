@@ -1,3 +1,15 @@
+variable "create_oidc_provider" {
+  description = "Whether to create a new OIDC provider. Set false to use an existing one via existing_oidc_provider_arn"
+  type        = bool
+  default     = true
+}
+
+variable "existing_oidc_provider_arn" {
+  description = "ARN of an existing OIDC provider to use instead of creating a new one"
+  type        = string
+  default     = null
+}
+
 variable "oidc_issuer_url" {
   description = "OIDC issuer URL from EKS cluster (e.g. https://oidc.eks.us-east-1.amazonaws.com/id/XXXX)"
   type        = string

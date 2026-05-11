@@ -2,6 +2,7 @@
 # OIDC Identity Provider
 ######################################
 resource "aws_iam_openid_connect_provider" "identity_provider" {
+  count           = var.create_oidc_provider ? 1 : 0
   url             = var.oidc_issuer_url
   client_id_list  = var.oidc_client_id_list
   thumbprint_list = var.oidc_thumbprint_list
@@ -11,6 +12,14 @@ resource "aws_iam_openid_connect_provider" "identity_provider" {
     local.common_tags
   )
 }
+
+locals {
+  # Use existing OIDC provider ARN if provided, otherwise use the one created above
+  oidc_provider_arn = var.existing_oidc_provider_arn != null ? var.existing_oidc_provider_arn : aws_iam_openid_connect_provider.identity_provider[0].arn
+  oidc_provider_url = var.existing_oidc_provider_arn != null ? replace(var.existing_oidc_provider_arn, "arn:aws:iam::${data.aws_caller_identity.current.account_id}:oidc-provider/", "") : replace(aws_iam_openid_connect_provider.identity_provider[0].url, "https://", "")
+}
+
+data "aws_caller_identity" "current" {}
 
 ######################################
 # IRSA Roles (Web Identity)
@@ -25,13 +34,13 @@ resource "aws_iam_role" "irsa" {
     Statement = [{
       Effect = "Allow"
       Principal = {
-        Federated = aws_iam_openid_connect_provider.identity_provider.arn
+        Federated = local.oidc_provider_arn
       }
       Action = "sts:AssumeRoleWithWebIdentity"
       Condition = {
         StringEquals = {
-          "${replace(aws_iam_openid_connect_provider.identity_provider.url, "https://", "")}:sub" = each.value.service_account
-          "${replace(aws_iam_openid_connect_provider.identity_provider.url, "https://", "")}:aud" = var.oidc_client_id_list[0]
+          "${local.oidc_provider_url}:sub" = each.value.service_account
+          "${local.oidc_provider_url}:aud" = var.oidc_client_id_list[0]
         }
       }
     }]
