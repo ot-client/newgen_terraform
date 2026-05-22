@@ -4,21 +4,87 @@ variable "cluster_name" {
   type        = string
 }
 
+variable "enable_auto_mode" {
+  description = "Enable EKS Auto Mode"
+  type        = bool
+  default     = false
+}
+
+variable "deletion_protection" {
+  description = "Enable deletion protection on the EKS cluster"
+  type        = bool
+  default     = false
+}
+
+variable "zonal_shift_enabled" {
+  description = "Enable ARC Zonal Shift"
+  type        = bool
+  default     = false
+}
+
+variable "control_plane_scaling_tier" {
+  description = "Control plane scaling tier (STANDARD or PREMIUM). Only applicable for Auto Mode."
+  type        = string
+  default     = null
+}
+
+variable "cluster_role_name" {
+  description = "Override name for the cluster IAM role. Defaults to <cluster_name>-cluster-role."
+  type        = string
+  default     = null
+}
+
+variable "node_role_name" {
+  description = "Override name for the node group IAM role. Defaults to <cluster_name>-node-role."
+  type        = string
+  default     = null
+}
+
+variable "auto_mode_cluster_managed_policies" {
+  description = "Managed policies for cluster role when Auto Mode is enabled (must include AmazonEKSClusterPolicy)"
+  type        = list(string)
+  default     = []
+}
+
+variable "standard_mode_cluster_policy_arn" {
+  description = "Cluster policy ARN attached in standard (non-Auto) mode"
+  type        = string
+  default     = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
+}
+
+variable "auto_mode_node_managed_policies" {
+  description = "Managed policies for node role when Auto Mode is enabled"
+  type        = list(string)
+  default     = []
+}
+
+variable "auto_mode_node_pools" {
+  description = "List of Auto Mode node pools to enable (e.g. general-purpose, system)"
+  type        = list(string)
+  default     = ["general-purpose", "system"]
+}
+
+variable "access_entries_policy_arn" {
+  description = "EKS access policy ARN for SSO role (aws_sso_role_arn) only"
+  type        = string
+  default     = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+}
+
 variable "cluster_autoscaler" {
-  description = "For Cluster Cluster Autoscalling"
-  default     = true
+  description = "Reserved for future use — cluster autoscaler toggle"
+  default     = false
   type        = bool
 }
 
 variable "metrics_server" {
-  description = "For Metrics Server"
-  default     = true
+  description = "Reserved for future use — metrics server toggle"
+  default     = false
   type        = bool
 }
 
 variable "k8s-spot-termination-handler" {
-  description = "For Spot Instance termination handler"
-  default     = true
+  description = "Reserved for future use — spot termination handler toggle"
+  default     = false
   type        = bool
 }
 
@@ -42,40 +108,14 @@ variable "subnets" {
 variable "eks_cluster_version" {
   description = "Kubernetes cluster version in EKS"
   type        = string
-}
-
-variable "disk_size" {
-  description = "Disk size of workers"
-  type        = number
-  default     = 20
-}
-
-variable "scale_min_size" {
-  description = "Minimum count of workers"
-  type        = number
-  default     = 2
-}
-
-variable "scale_max_size" {
-  description = "Maximum count of workers"
-  type        = number
-  default     = 5
-}
-
-variable "scale_desired_size" {
-  description = "Desired count of workers"
-  type        = number
-  default     = 3
+  validation {
+    condition     = can(regex("^[0-9]+\\.[0-9]+$", var.eks_cluster_version))
+    error_message = "eks_cluster_version must be in format like 1.35 or 1.33"
+  }
 }
 
 variable "tags" {
   description = "A map of tags to add to all resources"
-  type        = map(string)
-  default     = {}
-}
-
-variable "cluster_tags_only" {
-  description = "A map of tags to add to EKS cluster only"
   type        = map(string)
   default     = {}
 }
@@ -118,18 +158,6 @@ variable "create_node_group" {
   default     = true
 }
 
-variable "allow_eks_cidr" {
-  description = "allow eks cidr"
-  type        = list(string)
-  default     = ["0.0.0.0/32"]
-}
-
-variable "force_update_version" {
-  type        = bool
-  description = "Force version update if existing pods are unable to be drained due to a pod disruption budget issue."
-  default     = false
-}
-
 variable "cluster_sg_rules" {
   description = "Map of security group rules for EKS cluster SG"
   type = map(object({
@@ -137,8 +165,8 @@ variable "cluster_sg_rules" {
     from_port    = number
     to_port      = number
     protocol     = string
-    cidr_blocks  = optional(list(string))
-    source_sg_id = optional(string)
+    cidr_blocks  = optional(list(string), [])
+    source_sg_id = optional(string, null)
   }))
   default = {}
 }
@@ -154,33 +182,49 @@ variable "enabled_cluster_log_types" {
 variable "eks_addons" {
   description = "List of EKS addons to install"
   type = list(object({
-    name    = string
-    version = string
+    name                      = string
+    version                   = string
+    configuration_values      = optional(string, null)
+    irsa_role_name            = optional(string, null)  # provide to enable IRSA for this addon
+    service_account_namespace = optional(string, null)  # e.g. "kube-system"
+    service_account_name      = optional(string, null)  # e.g. "ebs-csi-controller-sa"
+    irsa_policy_arns          = optional(list(string), []) # policies to attach to IRSA role
   }))
 }
 
 
 
 variable "support_type" {
-  description = "Support type for EKS"
+  description = "Support type for EKS — STANDARD or EXTENDED"
   type        = string
+  validation {
+    condition     = contains(["STANDARD", "EXTENDED"], var.support_type)
+    error_message = "support_type must be STANDARD or EXTENDED"
+  }
 }
 
-variable access_mode {
-  description = "access mode for EKS"
+variable "access_mode" {
+  description = "Cluster authentication mode"
   type        = string
+  validation {
+    condition     = contains(["API", "API_AND_CONFIG_MAP", "CONFIG_MAP"], var.access_mode)
+    error_message = "access_mode must be API, API_AND_CONFIG_MAP, or CONFIG_MAP"
+  }
 }
 
 variable "aws_sso_role_arn" {
-  description = "AWS SSO role ARN that needs access to the EKS cluster"
- type        = string
+  description = "AWS SSO role ARN for EKS cluster access — set null if using access_entries instead"
+  type        = string
   default     = null
 }
 
 variable "access_entries" {
-  description = "Map of additional IAM role ARNs to grant EKS cluster access with AmazonEKSClusterAdminPolicy"
-  type        = map(string)
-  default     = {}
+  description = "Map of IAM roles to grant EKS cluster access — each with principal_arn and list of policy_arns"
+  type = map(object({
+    principal_arn = string
+    policy_arns   = list(string)
+  }))
+  default = {}
 }
 
 variable "node_groups" {
@@ -221,4 +265,11 @@ variable "node_group_inline_policies" {
   description = "Map of inline policy names to policy JSON documents for node group role"
   type        = map(string)
   default     = {}
+}
+
+
+variable "eks_node_sg_name" {
+  description = "EKS node security group name"
+  type        = string
+  default     = ""
 }
