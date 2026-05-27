@@ -1,12 +1,12 @@
 # Enhanced data sources for specific service targeting
 
-# RDS Cluster ENI IDs (specific clusters)
+# RDS Cluster ENI IDs — fetch cluster to get existing SG list before modifying
 data "aws_rds_cluster" "specific_clusters" {
   for_each = toset(flatten([
-    for sg_key, sg_config in var.security_groups : 
+    for sg_key, sg_config in var.security_groups :
     lookup(lookup(sg_config, "service_attachments", {}), "rds_clusters", [])
   ]))
-  
+
   cluster_identifier = each.value
 }
 
