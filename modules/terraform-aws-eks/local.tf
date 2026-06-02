@@ -1,12 +1,7 @@
 locals {
-  # base_name is derived from the "Name" key in var.tags (set per-resource in tfvars)
-  base_name = lookup(var.tags, "Name", "")
-
   # common_tags strips the "Name" key so each resource can set its own Name tag
   common_tags = { for k, v in var.tags : k => v if k != "Name" }
-}
 
-locals {
   kubeconfig = templatefile("${path.module}/templates/kubeconfig.tpl", {
     kubeconfig_name     = var.kubeconfig_name
     cluster_name        = var.cluster_name
@@ -15,16 +10,24 @@ locals {
     cluster_arn         = aws_eks_cluster.eks_cluster.arn
     region              = var.region
   })
+
   configmap_roles = [
     {
-      rolearn  = aws_iam_role.node_group_role.arn
+      rolearn  = var.node_role_arn
       username = "system:node:{{EC2PrivateDNSName}}"
-      groups = tolist(concat(
-        [
-          "system:bootstrappers",
-          "system:nodes",
-        ],
-      ))
+      groups   = ["system:bootstrappers", "system:nodes"]
     }
   ]
+
+  irsa_addons = {
+    for addon in var.eks_addons :
+    addon.name => addon
+    if addon.irsa_role_name != null && var.enable_auto_mode
+  }
+
+  # Build a set of addon names that need auto version resolution
+  addons_needing_version = toset([
+    for addon in var.eks_addons : addon.name
+    if addon.version == null
+  ])
 }

@@ -5,12 +5,12 @@ output "endpoint" {
 
 output "node_iam_role_arn" {
   description = "Worker nodes IAM Role ARN"
-  value       = aws_iam_role.node_group_role.arn
+  value       = var.node_role_arn
 }
 
 output "cluster_iam_role_arn" {
   description = "Cluster IAM Role ARN"
-  value       = aws_iam_role.cluster_role.arn
+  value       = var.cluster_role_arn
 }
 
 output "node_groups_arn" {

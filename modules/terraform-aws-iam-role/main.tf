@@ -20,9 +20,9 @@ resource "aws_iam_role" "roles" {
     Statement = [{
       Effect = "Allow"
       Principal = {
-        Service = var.assume_role_service
+        Service = length(each.value.assume_role_services) > 0 ? each.value.assume_role_services : [var.assume_role_service]
       }
-      Action = "sts:AssumeRole"
+      Action = each.value.assume_role_actions
     }]
   })
   tags = merge(
@@ -43,6 +43,25 @@ resource "aws_iam_role_policy_attachment" "custom" {
 
   role       = aws_iam_role.roles[each.value.role].name
   policy_arn = aws_iam_policy.custom[each.value.policy].arn
+}
+
+resource "aws_iam_role_policy" "inline" {
+  for_each = {
+    for pair in flatten([
+      for role_key, role in var.roles : [
+        for policy_name, policy_json in role.inline_policies : {
+          key         = "${role_key}__${policy_name}"
+          role_key    = role_key
+          policy_name = policy_name
+          policy_json = policy_json
+        }
+      ]
+    ]) : pair.key => pair
+  }
+
+  name   = each.value.policy_name
+  role   = aws_iam_role.roles[each.value.role_key].name
+  policy = each.value.policy_json
 }
 
 resource "aws_iam_instance_profile" "this" {
