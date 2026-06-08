@@ -254,9 +254,12 @@ variable "access_entries" {
   validation {
     condition = alltrue([
       for entry in values(var.access_entries) :
-      entry.type == "STANDARD" || length(entry.policy_arns) == 0
+      entry.type == "STANDARD" || length(entry.policy_arns) == 0 || (
+        contains(["EC2", "EC2_LINUX", "EC2_WINDOWS", "FARGATE_LINUX", "HYBRID_LINUX", "HYPERPOD_LINUX"], entry.type) &&
+        alltrue([for arn in entry.policy_arns : arn == "arn:aws:eks::aws:cluster-access-policy/AmazonEKSAutoNodePolicy"])
+      )
     ])
-    error_message = "Only STANDARD access entries can have policy_arns. For EC2, EC2_LINUX, EC2_WINDOWS, FARGATE_LINUX, HYBRID_LINUX, and HYPERPOD_LINUX, set policy_arns = []."
+    error_message = "Only STANDARD access entries can have policy_arns, except EC2-type entries which can only use AmazonEKSAutoNodePolicy."
   }
 
   validation {
