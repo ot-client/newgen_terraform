@@ -106,3 +106,15 @@ variable "log_analytics_workspace_id" {
   type        = string
   default     = null
 }
+
+variable "log_retention_days" {
+  description = "Number of days to retain logs in storage account for archival"
+  type        = number
+  default     = 365
+}
+
+variable "archive_storage_account_id" {
+  description = "Storage account ID for archiving diagnostic logs (for audit purposes)"
+  type        = string
+  default     = null
+}

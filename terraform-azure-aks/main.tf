@@ -28,7 +28,7 @@ resource "azurerm_kubernetes_cluster" "aks" {
   name                = "${var.client_code}-AKS-${var.env}-s1-1"
   location            = var.location
   resource_group_name = var.resource_group_name
-  dns_prefix          = var.prefix
+  dns_prefix          = "${lower(var.client_code)}-aks-${lower(var.env)}-dns"
 
   kubernetes_version  = var.kubernetes_version
   sku_tier            = var.sku_tier

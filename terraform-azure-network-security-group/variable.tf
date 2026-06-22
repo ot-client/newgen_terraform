@@ -41,9 +41,8 @@ variable "flow_log_workspace_id" {
 }
 
 variable "flow_log_retention_days" {
-  description = "Retention days for flow logs in storage account"
+  description = "Retention days for flow logs in storage account (30 for non-prod, 90 for prod)"
   type        = number
-  default     = 7
 }
 
 variable "flow_log_traffic_analytics_interval" {
@@ -69,13 +68,13 @@ variable "network_watcher_resource_group" {
 }
 
 variable "vnet_id" {
-  description = "VNet ID for VNet Flow Logs (replaces deprecated NSG Flow Logs)"
+  description = "VNet ID (deprecated - kept for backward compatibility)"
   type        = string
   default     = null
 }
 
 variable "vnet_name" {
-  description = "VNet name for VNet Flow Logs"
+  description = "VNet name (deprecated - kept for backward compatibility)"
   type        = string
   default     = null
 }

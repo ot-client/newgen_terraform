@@ -28,13 +28,16 @@ resource "azurerm_monitor_diagnostic_setting" "storage_diagnostics" {
   name                       = "${var.storage_account_name}-diagnostics"
   target_resource_id         = azurerm_storage_account.storage_account.id
   log_analytics_workspace_id = var.log_analytics_workspace_id
+  storage_account_id         = var.archive_storage_account_id
 
-  enabled_metric {
+  metric {
     category = "Transaction"
+    enabled  = true
   }
 
-  enabled_metric {
+  metric {
     category = "Capacity"
+    enabled  = true
   }
 }
 
@@ -43,6 +46,7 @@ resource "azurerm_monitor_diagnostic_setting" "blob_diagnostics" {
   name                       = "${var.storage_account_name}-blob-diagnostics"
   target_resource_id         = "${azurerm_storage_account.storage_account.id}/blobServices/default"
   log_analytics_workspace_id = var.log_analytics_workspace_id
+  storage_account_id         = var.archive_storage_account_id
 
   enabled_log {
     category = "StorageRead"
@@ -56,8 +60,9 @@ resource "azurerm_monitor_diagnostic_setting" "blob_diagnostics" {
     category = "StorageDelete"
   }
 
-  enabled_metric {
+  metric {
     category = "Transaction"
+    enabled  = true
   }
 }
 
@@ -66,5 +71,25 @@ resource "azurerm_storage_container" "container" {
   name                  = each.key
   storage_account_id    = azurerm_storage_account.storage_account.id
   container_access_type = each.value.container_access_type
+}
+
+# Lifecycle management for log retention in archive storage account
+resource "azurerm_storage_management_policy" "log_retention" {
+  count              = var.archive_storage_account_id != null && var.log_retention_days > 0 ? 1 : 0
+  storage_account_id = azurerm_storage_account.storage_account.id
+
+  rule {
+    name    = "diagnostic-logs-retention"
+    enabled = true
+    filters {
+      prefix_match = ["insights-logs-"]
+      blob_types   = ["blockBlob"]
+    }
+    actions {
+      base_blob {
+        delete_after_days_since_modification_greater_than = var.log_retention_days
+      }
+    }
+  }
 }
 

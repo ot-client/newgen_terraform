@@ -66,9 +66,12 @@ resource "azurerm_application_gateway" "main" {
     password = var.ssl_certificate_password
   }
 
-  trusted_root_certificate {
-    name = local.trusted_root_cert_name
-    data = var.trusted_root_certificate_data
+  dynamic "trusted_root_certificate" {
+    for_each = var.use_public_ca ? [] : [1]
+    content {
+      name = local.trusted_root_cert_name
+      data = var.trusted_root_certificate_data
+    }
   }
 
   backend_address_pool {
@@ -84,7 +87,7 @@ resource "azurerm_application_gateway" "main" {
     request_timeout                     = var.backend_request_timeout
     probe_name                          = local.probe_name
     pick_host_name_from_backend_address = var.pick_host_name_from_backend_address
-    trusted_root_certificate_names      = [local.trusted_root_cert_name]
+    trusted_root_certificate_names      = var.use_public_ca ? [] : [local.trusted_root_cert_name]
   }
 
   http_listener {

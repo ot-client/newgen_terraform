@@ -80,15 +80,15 @@ data "azurerm_log_analytics_workspace" "law" {
   resource_group_name = element(split("/", var.flow_log_workspace_id), 4)
 }
 
-# VNet Flow Logs (replaces deprecated NSG Flow Logs)
-# Note: VNet Flow Logs capture traffic at VNet level, providing same functionality as NSG Flow Logs
-resource "azurerm_network_watcher_flow_log" "vnet_flow_log" {
-  for_each = var.enable_flow_logs ? toset([var.vnet_id]) : toset([])
+# NSG Flow Logs (subnet-level via NSG)
+# Creates one flow log per NSG (per subnet) for granular traffic analysis
+resource "azurerm_network_watcher_flow_log" "nsg_flow_log" {
+  for_each = var.enable_flow_logs ? var.nsg_rules : {}
 
-  name                 = "${var.vnet_name}-flow-log"
+  name                 = "${each.key}-nsg-flow-log"
   network_watcher_name = data.azurerm_network_watcher.nw[0].name
   resource_group_name  = var.network_watcher_resource_group
-  target_resource_id   = each.value
+  target_resource_id   = azurerm_network_security_group.nsg[each.key].id
   storage_account_id   = var.flow_log_storage_account_id
   enabled              = true
   version              = 2

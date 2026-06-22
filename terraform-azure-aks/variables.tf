@@ -18,8 +18,9 @@ variable "cluster_name" {
 }
 
 variable "prefix" {
-  description = "(Required) Prefix for AKS resources (used for dns_prefix, naming)"
+  description = "(Deprecated) Prefix for AKS resources - no longer used for dns_prefix"
   type        = string
+  default     = ""
 }
 
 variable "tags" {

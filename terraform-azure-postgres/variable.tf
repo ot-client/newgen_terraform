@@ -168,5 +168,61 @@ variable "diagnostic_storage_account_id" {
 }
 
 variable "mode" {
-  type    = string
+  type = string
+}
+
+# Audit Storage Variables
+variable "enable_audit_storage" {
+  description = "Enable dedicated audit storage account (18 months retention)"
+  type        = bool
+  default     = false
+}
+
+variable "audit_storage_account_name" {
+  description = "Name of audit storage account"
+  type        = string
+  default     = null
+}
+
+variable "enable_logs_storage" {
+  description = "Enable dedicated logs storage account (3 months retention)"
+  type        = bool
+  default     = false
+}
+
+variable "logs_storage_account_name" {
+  description = "Name of logs storage account"
+  type        = string
+  default     = null
+}
+
+# Alert Variables
+variable "enable_alerts" {
+  description = "Enable monitoring alerts for CPU, Memory, and Storage"
+  type        = bool
+  default     = false
+}
+
+variable "action_group_id" {
+  description = "Action Group ID for alert notifications"
+  type        = string
+  default     = null
+}
+
+variable "cpu_alert_threshold" {
+  description = "CPU utilization alert threshold percentage"
+  type        = number
+  default     = 80
+}
+
+variable "memory_alert_threshold" {
+  description = "Memory utilization alert threshold percentage"
+  type        = number
+  default     = 80
+}
+
+variable "storage_alert_threshold" {
+  description = "Storage utilization alert threshold percentage"
+  type        = number
+  default     = 80
 }

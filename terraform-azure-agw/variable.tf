@@ -137,8 +137,15 @@ variable "ssl_certificate_password" {
 }
 
 variable "trusted_root_certificate_data" {
-  description = "Base64-encoded trusted root certificate (.crt) data"
+  description = "Base64-encoded trusted root certificate (.crt) data for Private CA. Leave null to use Public CA."
   type        = string
+  default     = null
+}
+
+variable "use_public_ca" {
+  description = "Use Public CA for backend HTTPS validation. Set to true for public CA, false for private CA."
+  type        = bool
+  default     = true
 }
 
 variable "log_analytics_workspace_id" {
