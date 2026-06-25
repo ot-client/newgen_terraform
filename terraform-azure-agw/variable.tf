@@ -136,18 +136,50 @@ variable "ssl_certificate_password" {
   sensitive   = true
 }
 
-variable "trusted_root_certificate_data" {
-  description = "Base64-encoded trusted root certificate (.crt) data"
+variable "ssl_policy_type" {
+  description = "SSL policy type - Predefined, Custom, or CustomV2"
+  type        = string
+  default     = "CustomV2"
+}
+
+variable "ssl_min_protocol_version" {
+  description = "Minimum TLS protocol version for the SSL policy"
+  type        = string
+  default     = "TLSv1_2"
+}
+
+variable "ssl_cipher_suites" {
+  description = "List of cipher suites to allow on the AGW listener"
+  type        = list(string)
+  default = [
+    "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
+    "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
+    "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
+    "TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256",
+    "TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384",
+    "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+  ]
+}
+
+variable "law_name" {
+  description = "Name of the Log Analytics Workspace"
   type        = string
 }
 
-variable "log_analytics_workspace_id" {
-  description = "Resource ID of the Log Analytics Workspace for diagnostics"
+variable "law_sku" {
+  description = "Log Analytics Workspace SKU"
   type        = string
+  default     = "PerGB2018"
 }
 
-variable "diag_storage_account_name" {
-  description = "Name of the storage account for AGW diagnostic logs"
+variable "diag_suffix_byte_length" {
+  description = "Byte length for the random suffix used in the diagnostics storage account name"
+  type        = number
+  default     = 4
+}
+
+variable "diag_storage_name_prefix" {
+  description = "Prefix for the diagnostics storage account name (random suffix will be appended)"
   type        = string
 }
 

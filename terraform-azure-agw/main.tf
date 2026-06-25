@@ -1,3 +1,17 @@
+resource "random_id" "diag_suffix" {
+  byte_length = var.diag_suffix_byte_length
+}
+
+resource "azurerm_log_analytics_workspace" "law" {
+  name                = var.law_name
+  location            = var.location
+  resource_group_name = var.resource_group_name
+  sku                 = var.law_sku
+  retention_in_days   = var.law_retention_days
+
+  tags = var.tags
+}
+
 resource "azurerm_public_ip" "pip" {
   name                = var.public_ip_name
   resource_group_name = var.resource_group_name
@@ -9,7 +23,7 @@ resource "azurerm_public_ip" "pip" {
 }
 
 resource "azurerm_storage_account" "diag" {
-  name                     = var.diag_storage_account_name
+  name                     = lower(substr("${var.diag_storage_name_prefix}${random_id.diag_suffix.hex}", 0, 24))
   resource_group_name      = var.resource_group_name
   location                 = var.location
   account_tier             = var.storage_account_tier
@@ -27,7 +41,6 @@ locals {
   request_routing_rule_name      = "${var.agw_name}-rqrt"
   probe_name                     = "${var.agw_name}-hp"
   ssl_cert_name                  = "${var.agw_name}-ssl-cert"
-  trusted_root_cert_name         = "${var.agw_name}-trusted-root"
 }
 
 resource "azurerm_application_gateway" "main" {
@@ -60,15 +73,16 @@ resource "azurerm_application_gateway" "main" {
     public_ip_address_id = azurerm_public_ip.pip.id
   }
 
+  ssl_policy {
+    policy_type          = var.ssl_policy_type
+    min_protocol_version = var.ssl_min_protocol_version
+    cipher_suites        = var.ssl_cipher_suites
+  }
+
   ssl_certificate {
     name     = local.ssl_cert_name
     data     = var.ssl_certificate_data
     password = var.ssl_certificate_password
-  }
-
-  trusted_root_certificate {
-    name = local.trusted_root_cert_name
-    data = var.trusted_root_certificate_data
   }
 
   backend_address_pool {
@@ -84,7 +98,7 @@ resource "azurerm_application_gateway" "main" {
     request_timeout                     = var.backend_request_timeout
     probe_name                          = local.probe_name
     pick_host_name_from_backend_address = var.pick_host_name_from_backend_address
-    trusted_root_certificate_names      = [local.trusted_root_cert_name]
+    trusted_root_certificate_names      = []
   }
 
   http_listener {
@@ -140,7 +154,7 @@ resource "azurerm_application_gateway" "main" {
 resource "azurerm_monitor_diagnostic_setting" "agw" {
   name                       = "${var.agw_name}-diag"
   target_resource_id         = azurerm_application_gateway.main.id
-  log_analytics_workspace_id = var.log_analytics_workspace_id
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.law.id
   storage_account_id         = azurerm_storage_account.diag.id
 
   dynamic "enabled_log" {

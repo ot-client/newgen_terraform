@@ -62,7 +62,6 @@ variable "network_rules_default_action" {
 variable "network_rules_bypass" {
   description = "Network rules bypass list"
   type        = list(string)
-
 }
 
 variable "allowed_subnet_ids" {
@@ -105,4 +104,22 @@ variable "log_analytics_workspace_id" {
   description = "The ID of the Log Analytics Workspace to send diagnostics to."
   type        = string
   default     = null
+}
+
+variable "archive_storage_account_id" {
+  description = "The ID of the Storage Account to archive diagnostic logs to."
+  type        = string
+  default     = null
+}
+
+variable "log_retention_enabled" {
+  description = "Whether retention policy is enabled for blob diagnostic logs."
+  type        = bool
+  default     = false
+}
+
+variable "log_retention_days" {
+  description = "Number of days to retain diagnostic logs in the archive storage account."
+  type        = number
+  default     = 90
 }

@@ -8,10 +8,19 @@ resource "azurerm_user_assigned_identity" "aks_identity" {
 
 # CHANGED: Uncommented - Grant Network Contributor role (user has Owner permission to do this via Terraform)
 resource "azurerm_role_assignment" "route_table" {
-  count                = var.identity_type == "UserAssigned" ? 1 : 0
+  count                = var.identity_type == "UserAssigned" && var.create_role_assignments ? 1 : 0
   scope                = "/subscriptions/787ff5ea-eda4-47f2-b1a6-751605952ca7/resourceGroups/Buildpiper-test/providers/Microsoft.Network/routeTables/rt-aks-subnet7"
   role_definition_name = "Network Contributor"
   principal_id         = azurerm_user_assigned_identity.aks_identity[0].principal_id
+}
+
+# Grant AcrPull role to AKS kubelet identity for ACR access
+resource "azurerm_role_assignment" "acr_pull" {
+  count                = var.acr_id != null && var.create_role_assignments ? 1 : 0
+  scope                = var.acr_id
+  role_definition_name = "AcrPull"
+  principal_id         = azurerm_kubernetes_cluster.aks.kubelet_identity[0].object_id
+  skip_service_principal_aad_check = true
 }
 
 
@@ -19,7 +28,7 @@ resource "azurerm_kubernetes_cluster" "aks" {
   name                = "${var.client_code}-AKS-${var.env}-s1-1"
   location            = var.location
   resource_group_name = var.resource_group_name
-  dns_prefix          = var.prefix
+  dns_prefix          = "${var.client_code}-AKS-${var.env}-s1-1"
 
   kubernetes_version  = var.kubernetes_version
   sku_tier            = var.sku_tier
@@ -28,7 +37,7 @@ resource "azurerm_kubernetes_cluster" "aks" {
   role_based_access_control_enabled = true
   # CHANGED: Removed automatic_upgrade_channel to disable automatic upgrades (client requirement - "none" is not valid)
   node_os_upgrade_channel           = var.node_os_upgrade_channel
-  node_resource_group               = "${var.client_code}-AKS-RG-${var.env}"
+  node_resource_group               = var.infrastructure_resource_group != "" ? var.infrastructure_resource_group : "${var.client_code}-AKS-RG-${var.env}"
   local_account_disabled            = false   
 
 
@@ -48,8 +57,11 @@ resource "azurerm_kubernetes_cluster" "aks" {
     pod_cidr       = var.network_plugin == "kubenet" ? "10.244.0.0/16" : null
   }
 
-  ingress_application_gateway {
-    gateway_id = var.ingress_application_gateway_id
+  dynamic "ingress_application_gateway" {
+    for_each = var.ingress_application_gateway_id != null ? [1] : []
+    content {
+      gateway_id = var.ingress_application_gateway_id
+    }
   }
 
 # CHANGED: Added zones to default_node_pool to match other pools

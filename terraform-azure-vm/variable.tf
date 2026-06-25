@@ -4,8 +4,6 @@ variable "vm_name" {
 }
 
 
-
-
 variable "resource_group_name" {
   description = "The name of the resource group"
   type        = string
@@ -170,4 +168,16 @@ variable "firewall_route_address_prefix" {
 variable "firewall_route_name" {
   description = "Address prefix for firewall route"
   type        = string
+}
+
+variable "public_network_access_enabled" {
+  description = "Enable public network access for managed disks (true = public, false = private)"
+  type        = bool
+  default     = false
+}
+
+variable "network_access_policy" {
+  description = "Network access policy for managed disks: AllowAll, AllowPrivate, DenyAll"
+  type        = string
+  default     = "DenyAll"
 }

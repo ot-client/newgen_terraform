@@ -105,6 +105,10 @@ resource "azurerm_managed_disk" "data_disk" {
   storage_account_type = each.value.storage_account_type
   create_option        = "Empty"
   disk_size_gb         = each.value.size_gb
+  
+  # Private disk access configuration
+  public_network_access_enabled = var.public_network_access_enabled
+  network_access_policy         = var.network_access_policy
 
   tags = var.tags
 }

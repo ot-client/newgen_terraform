@@ -86,6 +86,11 @@ variable "storage_mb" {
   default = 256000
 }
 
+variable "storage_tier" {
+  description = "Storage tier for PostgreSQL Flexible Server (P4, P6, P10, P15, P20, P30, P40, P50, P60, P70, P80)"
+  default = "P10"
+}
+
 variable "sku_name" {
   description = "sku_name"
   default = "GP_Standard_D4s_v3"

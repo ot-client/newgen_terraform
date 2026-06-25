@@ -17,3 +17,8 @@ output "diag_storage_account_id" {
   description = "The ID of the diagnostics storage account"
   value       = azurerm_storage_account.diag.id
 }
+
+output "log_analytics_workspace_id" {
+  description = "The ID of the Log Analytics Workspace"
+  value       = azurerm_log_analytics_workspace.law.id
+}

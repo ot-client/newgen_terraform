@@ -18,8 +18,9 @@ variable "cluster_name" {
 }
 
 variable "prefix" {
-  description = "(Required) Prefix for AKS resources (used for dns_prefix, naming)"
+  description = "(Deprecated) Prefix for AKS resources - no longer used for dns_prefix"
   type        = string
+  default     = ""
 }
 
 variable "tags" {
@@ -40,7 +41,6 @@ variable "sku_tier" {
 variable "node_os_upgrade_channel" {
   description = "Node OS automatic upgrade channel"
   type        = string
-  default     = "NodeImage"
 }
 
 variable "private_cluster_enabled" {
@@ -171,16 +171,28 @@ variable "observability_node_pool" {
 ##########################
 
 variable "client_code" {
-  description = "ACR resource ID to assign AcrPull role"
+  description = "Client code for naming"
   type        = string
 }
 
 variable "env" {
-  description = "ACR resource ID to assign AcrPull role"
+  description = "Environment code"
   type        = string
 }
 
 variable "acr_id" {
   description = "ACR resource ID for AcrPull role"
   type        = string
+}
+
+variable "create_role_assignments" {
+  description = "Whether to create role assignments (requires elevated permissions)"
+  type        = bool
+  default     = true
+}
+
+variable "infrastructure_resource_group" {
+  description = "Infrastructure resource group name (optional, will use default pattern if empty)"
+  type        = string
+  default     = ""
 }
