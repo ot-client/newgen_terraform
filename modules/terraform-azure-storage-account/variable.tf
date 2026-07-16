@@ -88,6 +88,47 @@ variable "containers" {
   }
 }
 
+variable "account_kind" {
+  description = "Storage account kind. StorageV2 for payg, FileStorage for provisioned_v2."
+  type        = string
+  default     = "StorageV2"
+}
+
+variable "share_retention_days" {
+  description = "Soft-delete retention days for file shares (1-365). Set to 0 to disable."
+  type        = number
+  default     = 0
+}
+
+variable "file_shares" {
+  description = <<-EOT
+    Map of file shares to create. Key is share name.
+
+    billing_model:
+      "payg"           - Standard StorageV2, billed per GB used + transactions
+      "provisioned_v2" - Premium FileStorage, manual IOPS + Throughput via AzAPI
+
+    Pay-As-You-Go (billing_model = "payg"):
+      quota_gb    = any size (min 1 GiB)
+      access_tier = Hot | Cool | TransactionOptimized
+      provisioned_iops / provisioned_bandwidth_mibps = null
+
+    Provisioned v2 (billing_model = "provisioned_v2"):
+      quota_gb    = min 100 GiB
+      access_tier = "Premium"
+      provisioned_iops            = 3000-100000 (null = Azure auto-calculates)
+      provisioned_bandwidth_mibps = 60-10240    (null = Azure auto-calculates)
+  EOT
+  type = map(object({
+    billing_model               = optional(string, "payg")
+    quota_gb                    = number
+    access_tier                 = string
+    provisioned_iops            = optional(number, null)
+    provisioned_bandwidth_mibps = optional(number, null)
+  }))
+  default = {}
+}
+
 variable "tags" {
   description = "A mapping of tags to assign to the resource."
   type        = map(string)

@@ -172,27 +172,9 @@ variable "law_sku" {
   default     = "PerGB2018"
 }
 
-variable "diag_suffix_byte_length" {
-  description = "Byte length for the random suffix used in the diagnostics storage account name"
-  type        = number
-  default     = 4
-}
-
-variable "diag_storage_name_prefix" {
-  description = "Prefix for the diagnostics storage account name (random suffix will be appended)"
+variable "diag_storage_account_id" {
+  description = "Resource ID of the existing blob storage account for diagnostics"
   type        = string
-}
-
-variable "storage_account_tier" {
-  description = "Storage account tier"
-  type        = string
-  default     = "Standard"
-}
-
-variable "storage_account_replication_type" {
-  description = "Storage account replication type"
-  type        = string
-  default     = "LRS"
 }
 
 variable "gateway_ip_configuration_name" {

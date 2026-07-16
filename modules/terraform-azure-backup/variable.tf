@@ -230,6 +230,12 @@ variable "vm_ids" {
   type        = map(string)
   default     = {}
 }
+
+variable "diag_storage_account_id" {
+  description = "Resource ID of the existing blob storage account for diagnostics"
+  type        = string
+}
+
 variable "tags" {
   type    = map(string)
   default = {}

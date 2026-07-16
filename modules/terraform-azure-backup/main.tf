@@ -174,3 +174,41 @@ resource "azurerm_site_recovery_replication_policy" "policy" {
   recovery_point_retention_in_minutes                  = var.recovery_point_retention_in_minutes
   application_consistent_snapshot_frequency_in_minutes = var.application_consistent_snapshot_frequency_in_minutes
 }
+
+resource "azurerm_monitor_diagnostic_setting" "backup" {
+  name               = "${var.vault_name}-diag"
+  target_resource_id = azurerm_recovery_services_vault.vault.id
+  storage_account_id = var.diag_storage_account_id
+
+  enabled_log {
+    category = "AzureBackupReport"
+  }
+
+  enabled_log {
+    category = "CoreAzureBackup"
+  }
+
+  enabled_log {
+    category = "AddonAzureBackupJobs"
+  }
+
+  enabled_log {
+    category = "AddonAzureBackupAlerts"
+  }
+
+  enabled_log {
+    category = "AddonAzureBackupPolicy"
+  }
+
+  enabled_log {
+    category = "AddonAzureBackupStorage"
+  }
+
+  enabled_log {
+    category = "AddonAzureBackupProtectedInstance"
+  }
+
+  enabled_metric {
+    category = "AllMetrics"
+  }
+}

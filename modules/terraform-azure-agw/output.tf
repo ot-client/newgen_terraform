@@ -15,7 +15,7 @@ output "public_ip_address" {
 
 output "diag_storage_account_id" {
   description = "The ID of the diagnostics storage account"
-  value       = azurerm_storage_account.diag.id
+  value       = var.diag_storage_account_id
 }
 
 output "log_analytics_workspace_id" {

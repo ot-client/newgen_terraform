@@ -1,7 +1,3 @@
-resource "random_id" "diag_suffix" {
-  byte_length = var.diag_suffix_byte_length
-}
-
 resource "azurerm_log_analytics_workspace" "law" {
   name                = var.law_name
   location            = var.location
@@ -18,16 +14,6 @@ resource "azurerm_public_ip" "pip" {
   location            = var.location
   allocation_method   = var.public_ip_allocation_method
   sku                 = var.public_ip_sku
-
-  tags = var.tags
-}
-
-resource "azurerm_storage_account" "diag" {
-  name                     = lower(substr("${var.diag_storage_name_prefix}${random_id.diag_suffix.hex}", 0, 24))
-  resource_group_name      = var.resource_group_name
-  location                 = var.location
-  account_tier             = var.storage_account_tier
-  account_replication_type = var.storage_account_replication_type
 
   tags = var.tags
 }
@@ -155,7 +141,7 @@ resource "azurerm_monitor_diagnostic_setting" "agw" {
   name                       = "${var.agw_name}-diag"
   target_resource_id         = azurerm_application_gateway.main.id
   log_analytics_workspace_id = azurerm_log_analytics_workspace.law.id
-  storage_account_id         = azurerm_storage_account.diag.id
+  storage_account_id         = var.diag_storage_account_id
 
   dynamic "enabled_log" {
     for_each = var.diag_log_categories
