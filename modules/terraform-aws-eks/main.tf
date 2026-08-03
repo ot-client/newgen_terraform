@@ -25,8 +25,7 @@ resource "aws_eks_cluster" "eks_cluster" {
     subnet_ids              = var.subnets
     endpoint_private_access = var.endpoint_private
     endpoint_public_access  = var.endpoint_public
-    # REMOVED: security_group_ids - this creates an additional SG
-    # We will add rules directly to the default cluster security group created by EKS
+    security_group_ids      = [aws_security_group.cluster_sg.id]
   }
   
 }
@@ -124,6 +123,22 @@ resource "aws_ec2_tag" "add_tags_into_subnet" {
   value       = "shared"
 }
 
+resource "aws_security_group" "cluster_sg" {
+  name                 = "${var.cluster_name}-cluster-sg"
+  description          = "Custom SG for EKS cluster - no default all traffic rule"
+  vpc_id               = var.vpc_id
+  revoke_rules_on_delete = true
+
+  tags = merge(
+    { Name = "${var.cluster_name}-cluster-sg" },
+    local.common_tags
+  )
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
 resource "aws_security_group_rule" "cluster_sg_rules" {
   for_each = var.cluster_sg_rules
 
@@ -133,8 +148,19 @@ resource "aws_security_group_rule" "cluster_sg_rules" {
   protocol                 = each.value.protocol
   cidr_blocks              = each.value.source_sg_id == null ? each.value.cidr_blocks : null
   source_security_group_id = each.value.source_sg_id
-  # Use the default cluster security group created by EKS instead of custom SG
-  security_group_id        = aws_eks_cluster.eks_cluster.vpc_config[0].cluster_security_group_id
+  security_group_id        = aws_security_group.cluster_sg.id
+}
+
+# Remove default all-traffic egress rule from EKS default cluster SG
+resource "aws_vpc_security_group_egress_rule" "revoke_default_egress" {
+  security_group_id = aws_eks_cluster.eks_cluster.vpc_config[0].cluster_security_group_id
+  ip_protocol       = "-1"
+  cidr_ipv4         = "127.0.0.1/32"
+  description       = "Placeholder to override default all-traffic egress"
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 resource "aws_eks_addon" "addons" {

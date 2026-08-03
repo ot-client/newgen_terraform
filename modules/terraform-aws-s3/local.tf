@@ -1,7 +1,7 @@
 locals {
   create_bucket     = var.create_bucket
   create_bucket_acl = var.acl != null && var.acl != "null"
-  attach_policy     = var.attach_elb_log_delivery_policy || var.attach_lb_log_delivery_policy || var.attach_iam_policy || var.attach_cloudtrail_policy
+  attach_policy     = var.attach_elb_log_delivery_policy || var.attach_lb_log_delivery_policy || var.attach_iam_policy || var.attach_cloudtrail_policy || var.bucket_policy != null
   cors_rules        = var.cors_rules
 
   # base_name is derived from the "Name" key in var.tags (set per-resource in tfvars)

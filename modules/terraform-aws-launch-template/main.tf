@@ -21,8 +21,12 @@ resource "aws_launch_template" "template" {
     }
   }
   tag_specifications {
-  resource_type = "instance"
+    resource_type = "instance"
+    tags          = var.tags
+  }
 
-   tags = var.tags
-}
+  tag_specifications {
+    resource_type = "volume"
+    tags          = merge(var.tags, { Name = var.volume_name })
+  }
 }

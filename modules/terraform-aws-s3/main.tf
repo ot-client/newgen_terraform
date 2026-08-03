@@ -46,7 +46,8 @@ data "aws_iam_policy_document" "combined" {
     var.attach_lb_log_delivery_policy ? data.aws_iam_policy_document.lb_log_delivery[0].json : "",
     var.attach_iam_policy ? var.iam_policy : "",
     var.attach_iam_policy ? data.aws_iam_policy_document.s3denyssl[0].json : "",
-    var.attach_cloudtrail_policy ? data.aws_iam_policy_document.cloudtrail[0].json : ""
+    var.attach_cloudtrail_policy ? data.aws_iam_policy_document.cloudtrail[0].json : "",
+    var.bucket_policy != null ? var.bucket_policy : ""
   ])
 }
 

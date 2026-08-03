@@ -109,6 +109,12 @@ variable "iam_policy" {
   default     = ""
 }
 
+variable "bucket_policy" {
+  description = "Custom bucket policy JSON string. Set to null to skip."
+  type        = string
+  default     = null
+}
+
 variable "object_ownership" {
   type    = string
   default = "BucketOwnerEnforced"
@@ -288,7 +294,8 @@ variable "s3_buckets" {
         kms_master_key_id = optional(string)
       })
     }))
-    tags = map(string)
+    bucket_policy = optional(string)
+    tags          = map(string)
   }))
   default = {}
 }

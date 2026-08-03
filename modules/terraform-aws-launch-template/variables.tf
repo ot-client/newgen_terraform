@@ -67,6 +67,12 @@ variable "throughput" {
   default     = 128
 }
 
+variable "volume_name" {
+  type        = string
+  description = "Name tag for EBS volumes"
+  default     = ""
+}
+
 variable "tags" {
   description = "Tags to apply to AWS resources"
   type        = map(string)
