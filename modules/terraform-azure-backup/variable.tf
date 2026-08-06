@@ -240,3 +240,15 @@ variable "tags" {
   type    = map(string)
   default = {}
 }
+
+
+#new line added 
+variable "backup_policy_selection" {
+  description = "Select backup policy for VM"
+  type        = string
+
+  validation {
+    condition     = contains(["dev", "prod"], var.backup_policy_selection)
+    error_message = "Allowed values are dev or prod."
+  }
+}

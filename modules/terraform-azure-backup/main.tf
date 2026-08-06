@@ -92,7 +92,7 @@ resource "azurerm_backup_protected_vm" "vm" {
   resource_group_name = var.resource_group_name
   recovery_vault_name = azurerm_recovery_services_vault.vault.name
   source_vm_id        = each.value
-  backup_policy_id    = azurerm_backup_policy_vm.vm_policy.id
+  backup_policy_id    = var.backup_policy_selection == "prod" ? azurerm_backup_policy_vm.prod_policy[0].id : azurerm_backup_policy_vm.vm_policy.id
 }
 
 # -----------------------------------------------------------------------
