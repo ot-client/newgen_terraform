@@ -88,6 +88,14 @@ variable "containers" {
   }
 }
 
+variable "blob_lifecycle_rules" {
+  description = "Container wise blob retention policy"
+  type = map(object({
+    retention_days = number
+  }))
+  default = {}
+}
+
 variable "account_kind" {
   description = "Storage account kind. StorageV2 for payg, FileStorage for provisioned_v2."
   type        = string
