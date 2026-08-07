@@ -38,6 +38,14 @@ variable "sku_tier" {
   type        = string
 }
 
+# new line added 
+
+variable "automatic_upgrade_channel" {
+  description = "AKS automatic upgrade channel"
+  type        = string
+  default     = null
+}
+
 variable "node_os_upgrade_channel" {
   description = "Node OS automatic upgrade channel"
   type        = string

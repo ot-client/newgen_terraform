@@ -16,10 +16,10 @@ resource "azurerm_role_assignment" "route_table" {
 
 # Grant AcrPull role to AKS kubelet identity for ACR access
 resource "azurerm_role_assignment" "acr_pull" {
-  count                = var.acr_id != null && var.create_role_assignments ? 1 : 0
-  scope                = var.acr_id
-  role_definition_name = var.acr_role_definition_name
-  principal_id         = azurerm_kubernetes_cluster.aks.kubelet_identity[0].object_id
+  count                            = var.acr_id != null && var.create_role_assignments ? 1 : 0
+  scope                            = var.acr_id
+  role_definition_name             = var.acr_role_definition_name
+  principal_id                     = azurerm_kubernetes_cluster.aks.kubelet_identity[0].object_id
   skip_service_principal_aad_check = true
 }
 
@@ -30,20 +30,22 @@ resource "azurerm_kubernetes_cluster" "aks" {
   resource_group_name = var.resource_group_name
   dns_prefix          = var.dns_prefix != "" ? var.dns_prefix : "${var.client_code}-aks-${var.env}-s1-1"
 
-  kubernetes_version  = var.kubernetes_version
-  sku_tier            = var.sku_tier
+  kubernetes_version = var.kubernetes_version
+  sku_tier           = var.sku_tier
 
   private_cluster_enabled           = var.private_cluster_enabled
   role_based_access_control_enabled = true
   # CHANGED: Removed automatic_upgrade_channel to disable automatic upgrades (client requirement - "none" is not valid)
-  node_os_upgrade_channel           = var.node_os_upgrade_channel
-  node_resource_group               = var.infrastructure_resource_group != "" ? var.infrastructure_resource_group : "${var.client_code}-AKS-RG-${var.env}"
-  local_account_disabled            = false   
+  #line added 
+  automatic_upgrade_channel = var.automatic_upgrade_channel
+  node_os_upgrade_channel   = var.node_os_upgrade_channel
+  node_resource_group       = var.infrastructure_resource_group != "" ? var.infrastructure_resource_group : "${var.client_code}-AKS-RG-${var.env}"
+  local_account_disabled    = false
 
 
   # CHANGED: Using UserAssigned identity because subnet has custom route table attached
   identity {
-    type = var.identity_type
+    type         = var.identity_type
     identity_ids = var.identity_type == "UserAssigned" ? [azurerm_user_assigned_identity.aks_identity[0].id] : null
   }
 
@@ -64,7 +66,7 @@ resource "azurerm_kubernetes_cluster" "aks" {
     }
   }
 
-# CHANGED: Added zones to default_node_pool to match other pools
+  # CHANGED: Added zones to default_node_pool to match other pools
   default_node_pool {
     name                 = var.system_node_pool.name
     vm_size              = var.system_node_pool.vm_size
@@ -88,7 +90,7 @@ resource "azurerm_kubernetes_cluster" "aks" {
 # CHANGED: Added zones and node_labels to user node pool, made conditional
 resource "azurerm_kubernetes_cluster_node_pool" "userpool" {
   count = var.user_node_pool != null ? 1 : 0
-  
+
   name                  = var.user_node_pool.name
   kubernetes_cluster_id = azurerm_kubernetes_cluster.aks.id
 
@@ -112,7 +114,7 @@ resource "azurerm_kubernetes_cluster_node_pool" "userpool" {
 # CHANGED: Added zones to observability node pool, made conditional
 resource "azurerm_kubernetes_cluster_node_pool" "observability" {
   count = var.observability_node_pool != null ? 1 : 0
-  
+
   name                  = var.observability_node_pool.name
   kubernetes_cluster_id = azurerm_kubernetes_cluster.aks.id
 
@@ -126,3 +128,5 @@ resource "azurerm_kubernetes_cluster_node_pool" "observability" {
   node_taints          = var.observability_node_pool.taints
   mode                 = "User"
 }
+
+
