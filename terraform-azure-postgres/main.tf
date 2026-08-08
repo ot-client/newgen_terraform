@@ -4,10 +4,9 @@ resource "azurerm_private_dns_zone" "private_dns" {
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "private_dns_zone_virtual_network_link" {
-  name                  = var.private_dns_zone_virtual_network_link_name
-  private_dns_zone_name = azurerm_private_dns_zone.private_dns.name
-  virtual_network_id    = var.virtual_network_id
-  resource_group_name   = var.resource_group_name
+  name               = var.private_dns_zone_virtual_network_link_name
+  private_dns_zone_id = azurerm_private_dns_zone.private_dns.id
+  virtual_network_id = var.virtual_network_id
 }
 
 
@@ -145,9 +144,8 @@ resource "azurerm_monitor_diagnostic_setting" "postgres_diag" {
     }
   }
 
-  metric {
+  enabled_metric {
     category = "AllMetrics"
-    enabled  = true
   }
 }
 
@@ -224,9 +222,8 @@ resource "azurerm_monitor_diagnostic_setting" "postgres_audit" {
     category = "PostgreSQLLogs"
   }
 
-  metric {
+  enabled_metric {
     category = "AllMetrics"
-    enabled  = true
   }
 }
 
@@ -244,9 +241,8 @@ resource "azurerm_monitor_diagnostic_setting" "postgres_all_logs" {
     }
   }
 
-  metric {
+  enabled_metric {
     category = "AllMetrics"
-    enabled  = true
   }
 }
 
