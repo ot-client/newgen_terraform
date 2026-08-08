@@ -3,12 +3,11 @@ resource "azurerm_recovery_services_vault" "vault" {
   location            = var.location
   resource_group_name = var.resource_group_name
   sku                 = var.vault_sku
-  soft_delete_enabled = var.soft_delete_enabled
   storage_mode_type   = var.storage_mode_type
-  
+
   # Enable cross-region restore (requires GeoRedundant storage)
   cross_region_restore_enabled = var.cross_region_restore_enabled && var.storage_mode_type == "GeoRedundant"
-  
+
   tags = var.tags
 }
 
