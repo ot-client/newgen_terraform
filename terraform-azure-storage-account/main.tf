@@ -30,14 +30,12 @@ resource "azurerm_monitor_diagnostic_setting" "storage_diagnostics" {
   log_analytics_workspace_id = var.log_analytics_workspace_id
   storage_account_id         = var.archive_storage_account_id
 
-  metric {
+  enabled_metric {
     category = "Transaction"
-    enabled  = true
   }
 
-  metric {
+  enabled_metric {
     category = "Capacity"
-    enabled  = true
   }
 }
 
@@ -60,9 +58,8 @@ resource "azurerm_monitor_diagnostic_setting" "blob_diagnostics" {
     category = "StorageDelete"
   }
 
-  metric {
+  enabled_metric {
     category = "Transaction"
-    enabled  = true
   }
 }
 
