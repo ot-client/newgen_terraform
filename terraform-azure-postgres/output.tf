@@ -32,10 +32,9 @@ output "private_dns_zone_details" {
 output "private_dns_vnet_link_details" {
   description = "Private DNS Zone Virtual Network Link details"
   value = {
-    vnet_link_id              = azurerm_private_dns_zone_virtual_network_link.private_dns_zone_virtual_network_link.id
-    vnet_link_name            = azurerm_private_dns_zone_virtual_network_link.private_dns_zone_virtual_network_link.name
+    vnet_link_id                 = azurerm_private_dns_zone_virtual_network_link.private_dns_zone_virtual_network_link.id
+    vnet_link_name               = azurerm_private_dns_zone_virtual_network_link.private_dns_zone_virtual_network_link.name
     vnet_link_virtual_network_id = azurerm_private_dns_zone_virtual_network_link.private_dns_zone_virtual_network_link.virtual_network_id
-    vnet_link_resource_group  = azurerm_private_dns_zone_virtual_network_link.private_dns_zone_virtual_network_link.resource_group_name
   }
 }
 
