@@ -40,8 +40,9 @@ variable "tags" {
 variable "georeplications" {
   description = "List of geo-replication locations. Only supported with Premium SKU."
   type = list(object({
-    location                = string
-    zone_redundancy_enabled = optional(bool, false)
+    location                        = string
+    zone_redundancy_enabled         = optional(bool, false)
+    global_endpoint_routing_enabled = optional(bool, false)
   }))
   default = []
 }
