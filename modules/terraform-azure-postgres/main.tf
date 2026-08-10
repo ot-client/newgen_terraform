@@ -56,9 +56,11 @@ resource "azurerm_postgresql_flexible_server" "default" {
   )
 }
 
-# Diagnostic Settings: sends logs & metrics to both Log Analytics and Storage Account
-# Client requirement: logs in Log Analytics + Storage Account
-# Enabled only when enable_diagnostic_settings = true in tfvars
+## Diagnostic Settings: sends logs and metrics to
+# Log Analytics Workspace and Storage Account
+
+# Enabled only when enable_diagnostic_settings = true
+
 resource "azurerm_monitor_diagnostic_setting" "postgres_diag" {
   count                      = var.enable_diagnostic_settings ? 1 : 0
   name                       = var.name
@@ -66,10 +68,21 @@ resource "azurerm_monitor_diagnostic_setting" "postgres_diag" {
   log_analytics_workspace_id = var.log_analytics_workspace_id
   storage_account_id         = var.diagnostic_storage_account_id
 
+  # Diagnostic log categories
   dynamic "enabled_log" {
     for_each = var.diagnostic_log_categories
+
     content {
       category = enabled_log.value
+    }
+  }
+
+  # Enable all PostgreSQL metrics
+  dynamic "enabled_metric" {
+    for_each = var.enable_all_metrics ? [1] : []
+
+    content {
+      category = "AllMetrics"
     }
   }
 }

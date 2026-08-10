@@ -16,11 +16,11 @@ variable "resource_group_name" {
 }
 
 variable "virtual_network_name" {
-  description =  "vnet name"
+  description = "vnet name"
 }
 
 variable "subnet_id" {
-  type = string
+  type        = string
   description = "subnet id."
 }
 
@@ -30,12 +30,12 @@ variable "virtual_network_id" {
 
 variable "db_username" {
   description = "PSQL DB USername"
-  default = "username"
+  default     = "username"
 }
 
 variable "db_password" {
   description = "PSQL DB Password"
-  default = "P@ssw0rd"
+  default     = "P@ssw0rd"
 }
 
 variable "security_rule" {
@@ -55,50 +55,50 @@ variable "security_rule" {
 
 variable "service_endpoints" {
   description = "service endpoint"
-  default = ["Microsoft.Storage"]
+  default     = ["Microsoft.Storage"]
 }
 
 
 variable "delegation_name" {
   description = "delegation_name"
-  default = "affs"
+  default     = "affs"
 }
 
 variable "service_delegation" {
   description = "service_delegation"
-  default = "Microsoft.DBforPostgreSQL/flexibleServers"
+  default     = "Microsoft.DBforPostgreSQL/flexibleServers"
 }
 
 variable "action" {
   description = "action"
   default = [
-        "Microsoft.Network/virtualNetworks/subnets/join/action",
-      ]
+    "Microsoft.Network/virtualNetworks/subnets/join/action",
+  ]
 }
 
 variable "posgressversion" {
   description = ""
-  default = "12"
+  default     = "12"
 }
 
 variable "storage_mb" {
   description = "strorage_mb"
-  default = 256000
+  default     = 256000
 }
 
 variable "storage_tier" {
   description = "Storage tier for PostgreSQL Flexible Server (P4, P6, P10, P15, P20, P30, P40, P50, P60, P70, P80)"
-  default = "P10"
+  default     = "P10"
 }
 
 variable "sku_name" {
   description = "sku_name"
-  default = "GP_Standard_D4s_v3"
+  default     = "GP_Standard_D4s_v3"
 }
 
 variable "backup_retention_days" {
   description = "backup_retention_days"
-  default = 7
+  default     = 7
 }
 
 variable "tags" {
@@ -107,7 +107,7 @@ variable "tags" {
 
 variable "public_network_access_enabled" {
   description = "public_network_access_enabled"
-  default = "false"
+  default     = "false"
 }
 
 variable "private_dns_zone_name" {
@@ -160,6 +160,14 @@ variable "diagnostic_log_categories" {
   default     = ["PostgreSQLLogs", "PostgreSQLFlexDatabaseXacts"]
 }
 
+#for all metrics 
+
+variable "enable_all_metrics" {
+  description = "Enable all available PostgreSQL Flexible Server metrics"
+  type        = bool
+  default     = false
+}
+
 # Log Analytics Workspace ID - fetched from AGW remote state in wrapper
 variable "log_analytics_workspace_id" {
   description = "Resource ID of the Log Analytics Workspace"
@@ -173,5 +181,5 @@ variable "diagnostic_storage_account_id" {
 }
 
 variable "mode" {
-  type    = string
+  type = string
 }
