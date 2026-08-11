@@ -151,16 +151,22 @@ resource "aws_security_group_rule" "cluster_sg_rules" {
   security_group_id        = aws_security_group.cluster_sg.id
 }
 
-# Remove default all-traffic egress rule from EKS default cluster SG
-resource "aws_vpc_security_group_egress_rule" "revoke_default_egress" {
-  security_group_id = aws_eks_cluster.eks_cluster.vpc_config[0].cluster_security_group_id
-  ip_protocol       = "-1"
-  cidr_ipv4         = "127.0.0.1/32"
-  description       = "Placeholder to override default all-traffic egress"
-
-  lifecycle {
-    create_before_destroy = true
+# Remove default all-traffic egress rule from EKS-managed default cluster SG
+resource "null_resource" "revoke_default_egress" {
+  triggers = {
+    cluster_sg_id = aws_eks_cluster.eks_cluster.vpc_config[0].cluster_security_group_id
   }
+
+  provisioner "local-exec" {
+    command = <<-EOT
+      aws ec2 revoke-security-group-egress \
+        --region ${var.region} \
+        --group-id ${aws_eks_cluster.eks_cluster.vpc_config[0].cluster_security_group_id} \
+        --ip-permissions '[{"IpProtocol":"-1","IpRanges":[{"CidrIp":"0.0.0.0/0"}]}]' 2>/dev/null || true
+    EOT
+  }
+
+  depends_on = [aws_eks_cluster.eks_cluster]
 }
 
 resource "aws_eks_addon" "addons" {
