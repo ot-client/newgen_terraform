@@ -5,7 +5,8 @@ locals {
 resource "azurerm_network_security_group" "nsg" {
   for_each = var.nsg_rules
 
-  name                = each.key
+  #name                = each.key
+   name               = lookup(each.value, "nsg_name", each.key)
   location            = var.resource_group_location
   resource_group_name = var.resource_group_name
   tags = merge(var.tags, {
