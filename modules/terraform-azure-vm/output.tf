@@ -2,6 +2,15 @@ output "vm_id" {
   description = "The ID of the virtual machine"
   value       = one(concat(azurerm_linux_virtual_machine.vm.*.id, azurerm_windows_virtual_machine.vm.*.id))
 }
+#name 
+
+output "vm_name" {
+  description = "The name of the virtual machine"
+  value       = one(concat(
+    azurerm_linux_virtual_machine.vm.*.name,
+    azurerm_windows_virtual_machine.vm.*.name
+  ))
+}
 
 output "nic_id" {
   description = "The ID of the network interface"
