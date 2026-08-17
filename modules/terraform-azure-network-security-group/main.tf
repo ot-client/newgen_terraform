@@ -5,12 +5,14 @@ locals {
 resource "azurerm_network_security_group" "nsg" {
   for_each = var.nsg_rules
 
-  #name                = each.key
-   name               = lookup(each.value, "nsg_name", each.key)
+  name                = coalesce(try(each.value.name, null), each.key)
   location            = var.resource_group_location
   resource_group_name = var.resource_group_name
   tags = merge(var.tags, {
-    "Name" = "${var.tags["Customer-Code"]}-${each.key}-${var.tags["Environment"]}-S1-1"
+    "Name" = coalesce(
+      try(each.value.name, null),
+      "${var.tags["Customer-Code"]}-${each.key}-${var.tags["Environment"]}-S1-1"
+    )
   })
 }
 
@@ -82,7 +84,6 @@ data "azurerm_log_analytics_workspace" "law" {
 }
 
 # VNet Flow Logs (replaces deprecated NSG Flow Logs)
-# Note: VNet Flow Logs capture traffic at VNet level, providing same functionality as NSG Flow Logs
 resource "azurerm_network_watcher_flow_log" "vnet_flow_log" {
   for_each = var.enable_flow_logs ? toset([var.vnet_id]) : toset([])
 
@@ -99,7 +100,6 @@ resource "azurerm_network_watcher_flow_log" "vnet_flow_log" {
     days    = var.flow_log_retention_days
   }
 
-  # Traffic Analytics (requires Log Analytics Workspace)
   dynamic "traffic_analytics" {
     for_each = var.flow_log_workspace_id != null ? [1] : []
     content {
