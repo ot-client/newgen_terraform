@@ -9,16 +9,16 @@ output "agw_name" {
 }
 
 output "public_ip_address" {
-  description = "The public IP address of the AGW"
+  description = "The public IP address"
   value       = azurerm_public_ip.pip.ip_address
 }
 
 output "diag_storage_account_id" {
-  description = "The ID of the diagnostics storage account"
+  description = "The diagnostics storage account ID"
   value       = var.diag_storage_account_id
 }
 
 output "log_analytics_workspace_id" {
-  description = "The ID of the Log Analytics Workspace"
+  description = "The Log Analytics Workspace ID"
   value       = azurerm_log_analytics_workspace.law.id
 }

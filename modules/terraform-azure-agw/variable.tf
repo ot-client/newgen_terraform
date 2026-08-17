@@ -59,28 +59,48 @@ variable "autoscale_max_capacity" {
   default     = 10
 }
 
-variable "backend_ips" {
-  description = "List of backend IP addresses"
-  type        = list(string)
+# ==================================================
+# BACKEND POOLS
+# ==================================================
+
+variable "backend_pools" {
+  description = "Backend pools with backend HTTP settings and health probes"
+
+  type = map(object({
+
+    ips = list(string)
+
+    port = number
+
+    protocol = string
+
+    request_timeout = number
+
+    cookie_based_affinity = string
+
+    pick_host_name_from_backend_address = bool
+
+    probe = object({
+      path = string
+
+      interval = number
+
+      timeout = number
+
+      unhealthy_threshold = number
+
+      status_codes = list(string)
+
+      pick_host_name_from_backend_http_settings = bool
+
+      host = optional(string)
+    })
+  }))
 }
 
-variable "backend_port" {
-  description = "Backend port"
-  type        = number
-  default     = 443
-}
-
-variable "backend_protocol" {
-  description = "Backend protocol - Http or Https"
-  type        = string
-  default     = "Https"
-}
-
-variable "backend_request_timeout" {
-  description = "Backend request timeout in seconds"
-  type        = number
-  default     = 320
-}
+# ==================================================
+# FRONTEND
+# ==================================================
 
 variable "frontend_port" {
   description = "Frontend listener port"
@@ -89,80 +109,122 @@ variable "frontend_port" {
 }
 
 variable "listener_protocol" {
-  description = "Listener protocol - Http or Https"
+  description = "Listener protocol"
   type        = string
   default     = "Https"
 }
 
-variable "probe_path" {
-  description = "Health probe path"
-  type        = string
-  default     = "/"
-}
-
-variable "probe_interval" {
-  description = "Health probe interval in seconds"
-  type        = number
-  default     = 30
-}
-
-variable "probe_timeout" {
-  description = "Health probe timeout in seconds"
-  type        = number
-  default     = 30
-}
-
-variable "probe_unhealthy_threshold" {
-  description = "Health probe unhealthy threshold count"
-  type        = number
-  default     = 3
-}
-
-variable "probe_status_codes" {
-  description = "Accepted health probe status codes"
-  type        = list(string)
-  default     = ["200-399"]
-}
+# ==================================================
+# SSL
+# ==================================================
 
 variable "ssl_certificate_data" {
-  description = "Base64-encoded PFX certificate data"
+  description = "Base64 encoded PFX certificate data"
   type        = string
   sensitive   = true
 }
 
 variable "ssl_certificate_password" {
-  description = "Password for the PFX SSL certificate"
+  description = "Password for PFX certificate"
   type        = string
   sensitive   = true
 }
 
 variable "ssl_policy_type" {
-  description = "SSL policy type - Predefined, Custom, or CustomV2"
+  description = "SSL policy type"
   type        = string
   default     = "CustomV2"
 }
 
 variable "ssl_min_protocol_version" {
-  description = "Minimum TLS protocol version for the SSL policy"
+  description = "Minimum TLS protocol version"
   type        = string
   default     = "TLSv1_2"
 }
 
 variable "ssl_cipher_suites" {
-  description = "List of cipher suites to allow on the AGW listener"
+  description = "Allowed SSL cipher suites"
   type        = list(string)
+
   default = [
     "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
     "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
     "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
     "TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256",
     "TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384",
-    "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+    "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
   ]
 }
 
+# ==================================================
+# ROUTING
+# ==================================================
+
+variable "routing_rule_type" {
+  description = "Routing rule type"
+  type        = string
+  default     = "PathBasedRouting"
+}
+
+variable "routing_rule_priority" {
+  description = "Routing rule priority"
+  type        = number
+  default     = 1
+}
+
+variable "url_path_rules" {
+  description = "URL path rules mapped to backend pools"
+
+  type = map(object({
+    paths        = list(string)
+    backend_pool = string
+  }))
+}
+
+# ==================================================
+# MULTIPLE FQDN / HOST RULES
+# ==================================================
+
+variable "host_rules" {
+  description = "Optional multiple FQDN host rules. Leave empty when FQDN-based routing is not required."
+
+  type = map(object({
+
+    host_name = string
+
+    routing_rule_type = string
+
+    priority = number
+
+    default_backend_pool = string
+
+    url_path_rules = map(object({
+      paths        = list(string)
+      backend_pool = string
+    }))
+  }))
+
+  default = {}
+}
+
+
+
+# ==================================================
+# GATEWAY
+# ==================================================
+
+variable "gateway_ip_configuration_name" {
+  description = "Gateway IP configuration name"
+  type        = string
+  default     = "appGatewayIpConfig"
+}
+
+# ==================================================
+# DIAGNOSTICS
+# ==================================================
+
 variable "law_name" {
-  description = "Name of the Log Analytics Workspace"
+  description = "Log Analytics Workspace name"
   type        = string
 }
 
@@ -172,63 +234,15 @@ variable "law_sku" {
   default     = "PerGB2018"
 }
 
-variable "diag_storage_account_id" {
-  description = "Resource ID of the existing blob storage account for diagnostics"
-  type        = string
-}
-
-variable "gateway_ip_configuration_name" {
-  description = "Name of the gateway IP configuration"
-  type        = string
-  default     = "appGatewayIpConfig"
-}
-
-variable "cookie_based_affinity" {
-  description = "Cookie based affinity - Enabled or Disabled"
-  type        = string
-  default     = "Disabled"
-}
-
-variable "pick_host_name_from_backend_address" {
-  description = "Pick hostname from backend address"
-  type        = bool
-  default     = false
-}
-
-variable "routing_rule_type" {
-  description = "Routing rule type - Basic or PathBasedRouting"
-  type        = string
-  default     = "PathBasedRouting"
-}
-
-variable "url_path_rules" {
-  description = "List of URL paths for path-based routing rule"
-  type        = list(string)
-  default     = ["/test/*"]
-}
-
-variable "url_path_rule_name" {
-  description = "Name of the URL path rule"
-  type        = string
-  default     = "default-path-rule"
-}
-
-variable "routing_rule_priority" {
-  description = "Routing rule priority"
+variable "law_retention_days" {
+  description = "Log Analytics retention"
   type        = number
-  default     = 1
+  default     = 30
 }
 
-variable "probe_pick_host_name_from_backend" {
-  description = "Pick hostname from backend HTTP settings for probe"
-  type        = bool
-  default     = false
-}
-
-variable "probe_host" {
-  description = "Explicit hostname for health probe, used when probe_pick_host_name_from_backend is false"
+variable "diag_storage_account_id" {
+  description = "Storage account ID for diagnostics"
   type        = string
-  default     = null
 }
 
 variable "diag_metric_category" {
@@ -238,19 +252,22 @@ variable "diag_metric_category" {
 }
 
 variable "diag_log_categories" {
-  description = "List of diagnostic log categories to enable"
+  description = "Diagnostic log categories"
   type        = list(string)
-  default     = ["ApplicationGatewayAccessLog", "ApplicationGatewayPerformanceLog", "ApplicationGatewayFirewallLog"]
+
+  default = [
+    "ApplicationGatewayAccessLog",
+    "ApplicationGatewayPerformanceLog",
+    "ApplicationGatewayFirewallLog"
+  ]
 }
 
-variable "law_retention_days" {
-  description = "Log Analytics Workspace retention in days"
-  type        = number
-  default     = 30
-}
+# ==================================================
+# TAGS
+# ==================================================
 
 variable "tags" {
-  description = "A mapping of tags to assign to the resource"
+  description = "Resource tags"
   type        = map(string)
   default     = {}
 }
