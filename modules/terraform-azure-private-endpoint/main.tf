@@ -1,8 +1,8 @@
 
+
 resource "azurerm_private_endpoint" "pe" {
   for_each = var.private_endpoints
 
-  # PE name will come from the actual service name
   name                = each.value.name
   location            = var.location
   resource_group_name = var.resource_group_name
