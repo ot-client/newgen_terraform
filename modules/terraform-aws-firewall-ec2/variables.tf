@@ -95,6 +95,12 @@ variable "create_new_eip" {
   default     = true
 }
 
+variable "existing_eip_allocation_id" {
+  description = "Existing EIP allocation ID to associate with the firewall EC2 instance. Leave empty to skip existing EIP association."
+  type        = string
+  default     = ""
+}
+
 variable "termination_protection" {
   description = "Whether API termination protection is enabled."
   type        = bool
