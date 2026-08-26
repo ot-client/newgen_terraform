@@ -22,3 +22,11 @@ output "elastic_ips" {
   }
 }
 
+output "elastic_ip_ids" {
+  description = "Elastic IP allocation IDs"
+  value = {
+    for k, v in aws_eip.eip :
+    k => v.id
+  }
+}
+

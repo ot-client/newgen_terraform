@@ -98,8 +98,7 @@ resource "aws_eip" "eip" {
     k => v if v.enable_eip
   }
 
-  instance = aws_instance.ec2[each.key].id
-  domain   = "vpc"
+  domain = "vpc"
 
   tags = merge(
     {
@@ -107,6 +106,20 @@ resource "aws_eip" "eip" {
     },
     local.common_tags
   )
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+resource "aws_eip_association" "eip_assoc" {
+  for_each = {
+    for k, v in var.ec2_instances :
+    k => v if v.enable_eip
+  }
+
+  instance_id   = aws_instance.ec2[each.key].id
+  allocation_id = aws_eip.eip[each.key].id
 }
 
 ############################################
