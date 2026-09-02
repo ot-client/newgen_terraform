@@ -7,5 +7,13 @@ output "vault_name" {
 }
 
 output "vm_policy_id" {
-  value = azurerm_backup_policy_vm.vm_policy.id
+  value = local.selected_backup_policy_id
+}
+
+output "backup_policy_id" {
+  value = local.selected_backup_policy_id
+}
+
+output "backup_policy_name" {
+  value = local.selected_backup_policy_name
 }

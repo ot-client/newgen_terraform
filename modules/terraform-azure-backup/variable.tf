@@ -197,6 +197,24 @@ variable "prod_retention_yearly_include_last_days" {
   default = false
 }
 
+variable "backup_policy_name" {
+  description = "Name of the VM backup policy to attach to protected VMs. When null, backup_policy_selection is used."
+  type        = string
+  default     = null
+
+  validation {
+    condition = (
+      var.backup_policy_name == null ||
+      var.backup_policy_name == var.vm_policy_name ||
+      (
+        var.prod_policy_name != null &&
+        var.backup_policy_name == var.prod_policy_name
+      )
+    )
+    error_message = "backup_policy_name must match vm_policy_name or prod_policy_name."
+  }
+}
+
 # -----------------------------------------------------------------------
 # AZURE SITE RECOVERY
 # -----------------------------------------------------------------------
@@ -244,7 +262,7 @@ variable "tags" {
 
 #new line added 
 variable "backup_policy_selection" {
-  description = "Select backup policy for VM"
+  description = "Select backup policy for VM when backup_policy_name is null."
   type        = string
 
   validation {

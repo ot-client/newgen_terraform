@@ -8,6 +8,17 @@ resource "azurerm_recovery_services_vault" "vault" {
   tags                         = var.tags
 }
 
+locals {
+  selected_backup_policy_name = coalesce(
+    var.backup_policy_name,
+    var.backup_policy_selection == "prod" ? var.prod_policy_name : var.vm_policy_name
+  )
+
+  selected_backup_policy_id = local.selected_backup_policy_name == var.vm_policy_name ? azurerm_backup_policy_vm.vm_policy.id : (
+    local.selected_backup_policy_name == var.prod_policy_name ? azurerm_backup_policy_vm.prod_policy[0].id : null
+  )
+}
+
 # Backup Policy for VMs
 resource "azurerm_backup_policy_vm" "vm_policy" {
   name                           = var.vm_policy_name
@@ -92,7 +103,7 @@ resource "azurerm_backup_protected_vm" "vm" {
   resource_group_name = var.resource_group_name
   recovery_vault_name = azurerm_recovery_services_vault.vault.name
   source_vm_id        = each.value
-  backup_policy_id    = var.backup_policy_selection == "prod" ? azurerm_backup_policy_vm.prod_policy[0].id : azurerm_backup_policy_vm.vm_policy.id
+  backup_policy_id    = local.selected_backup_policy_id
 }
 
 # -----------------------------------------------------------------------
