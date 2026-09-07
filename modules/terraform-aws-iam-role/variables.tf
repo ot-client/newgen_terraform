@@ -9,6 +9,7 @@ variable "roles" {
     custom_policy_names = list(string)
     custom_trust_policy = optional(string, null)
   }))
+  default = {}
 
   validation {
     condition = alltrue([
@@ -27,6 +28,7 @@ variable "custom_policies" {
     description = string
     policy_json = string
   }))
+  default = {}
 }
 
 variable "assume_role_service" {
