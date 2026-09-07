@@ -51,3 +51,36 @@ resource "aws_iam_instance_profile" "this" {
   name = each.key
   role = each.value.name
 }
+
+resource "aws_iam_role" "custom_trust_roles" {
+  for_each = var.custom_trust_policy_roles
+
+  name               = each.key
+  assume_role_policy = each.value.custom_trust_policy
+
+  tags = merge(
+    { Name = each.key },
+    local.common_tags
+  )
+}
+
+resource "aws_iam_role_policy_attachment" "custom_trust_managed" {
+  for_each = local.custom_trust_managed_attachments_map
+
+  role       = aws_iam_role.custom_trust_roles[each.value.role].name
+  policy_arn = each.value.arn
+}
+
+resource "aws_iam_role_policy_attachment" "custom_trust_custom" {
+  for_each = local.custom_trust_custom_attachments_map
+
+  role       = aws_iam_role.custom_trust_roles[each.value.role].name
+  policy_arn = aws_iam_policy.custom[each.value.policy].arn
+}
+
+resource "aws_iam_instance_profile" "custom_trust" {
+  for_each = aws_iam_role.custom_trust_roles
+
+  name = each.key
+  role = each.value.name
+}

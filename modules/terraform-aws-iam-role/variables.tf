@@ -28,3 +28,13 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "custom_trust_policy_roles" {
+  description = "Map of IAM roles with a fully custom trust policy JSON"
+  type = map(object({
+    custom_trust_policy = string
+    managed_policy_arns = list(string)
+    custom_policy_names = list(string)
+  }))
+  default = {}
+}

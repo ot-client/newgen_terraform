@@ -44,4 +44,34 @@ locals {
 
   # common_tags strips the "Name" key so each resource can set its own Name tag
   common_tags = { for k, v in var.tags : k => v if k != "Name" }
+
+  custom_trust_managed_attachments = flatten([
+    for role, data in var.custom_trust_policy_roles : [
+      for arn in data.managed_policy_arns : {
+        key  = "${role}:${arn}"
+        role = role
+        arn  = arn
+      }
+    ]
+  ])
+
+  custom_trust_managed_attachments_map = {
+    for item in local.custom_trust_managed_attachments :
+    item.key => item
+  }
+
+  custom_trust_custom_attachments = flatten([
+    for role, data in var.custom_trust_policy_roles : [
+      for policy in data.custom_policy_names : {
+        key    = "${role}:${policy}"
+        role   = role
+        policy = policy
+      }
+    ]
+  ])
+
+  custom_trust_custom_attachments_map = {
+    for item in local.custom_trust_custom_attachments :
+    item.key => item
+  }
 }

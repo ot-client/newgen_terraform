@@ -28,3 +28,19 @@ output "role_all_policy_arns" {
     )
   }
 }
+
+output "custom_trust_role_arns" {
+  description = "Map of custom trust role names to their ARNs"
+  value = {
+    for k, r in aws_iam_role.custom_trust_roles :
+    k => r.arn
+  }
+}
+
+output "custom_trust_instance_profiles" {
+  description = "Map of custom trust role instance profile names"
+  value = {
+    for k, v in aws_iam_instance_profile.custom_trust :
+    k => v.name
+  }
+}
