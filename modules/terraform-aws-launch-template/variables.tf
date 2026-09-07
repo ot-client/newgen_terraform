@@ -67,6 +67,12 @@ variable "throughput" {
   default     = 128
 }
 
+variable "iops" {
+  type        = number
+  description = "IOPS for gp3/io1/io2 volumes"
+  default     = null
+}
+
 variable "volume_name" {
   type        = string
   description = "Name tag for EBS volumes"
@@ -74,8 +80,13 @@ variable "volume_name" {
 }
 
 variable "tags" {
-  description = "Tags to apply to AWS resources"
+  description = "Tags to apply to instance"
   type        = map(string)
+  default     = {}
+}
 
-  default = {}
+variable "volume_tags" {
+  description = "Additional tags to apply to the volume (merged with tags)"
+  type        = map(string)
+  default     = {}
 }

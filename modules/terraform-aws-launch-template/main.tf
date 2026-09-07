@@ -18,6 +18,7 @@ resource "aws_launch_template" "template" {
       delete_on_termination = var.delete_on_termination
       encrypted             = var.encrypted
       throughput            = var.throughput
+      iops                  = var.iops
     }
   }
   tag_specifications {
@@ -27,6 +28,6 @@ resource "aws_launch_template" "template" {
 
   tag_specifications {
     resource_type = "volume"
-    tags          = merge(var.tags, { Name = var.volume_name })
+    tags          = merge(var.tags, { Name = var.volume_name }, var.volume_tags)
   }
 }
