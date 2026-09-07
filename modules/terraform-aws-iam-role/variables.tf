@@ -9,6 +9,16 @@ variable "roles" {
     custom_policy_names = list(string)
     custom_trust_policy = optional(string, null)
   }))
+
+  validation {
+    condition = alltrue([
+      for role, data in var.roles : alltrue([
+        for arn in data.managed_policy_arns :
+        !can(regex("arn:aws:iam::aws:policy/aws-service-role/", arn))
+      ])
+    ])
+    error_message = "managed_policy_arns in 'roles' contains an AWS reserved service-linked policy (aws-service-role/). These cannot be attached to custom roles."
+  }
 }
 
 variable "custom_policies" {
@@ -22,6 +32,7 @@ variable "custom_policies" {
 variable "assume_role_service" {
   description = "Service principal for assume role policy"
   type        = string
+  default     = null
 }
 
 variable "tags" {
@@ -38,4 +49,14 @@ variable "custom_trust_policy_roles" {
     custom_policy_names = list(string)
   }))
   default = {}
+
+  validation {
+    condition = alltrue([
+      for role, data in var.custom_trust_policy_roles : alltrue([
+        for arn in data.managed_policy_arns :
+        !can(regex("arn:aws:iam::aws:policy/aws-service-role/", arn))
+      ])
+    ])
+    error_message = "managed_policy_arns in 'custom_trust_policy_roles' contains an AWS reserved service-linked policy (aws-service-role/). These cannot be attached to custom roles."
+  }
 }
