@@ -61,28 +61,90 @@ resource "azurerm_postgresql_flexible_server" "default" {
 
 # Enabled only when enable_diagnostic_settings = true
 
-resource "azurerm_monitor_diagnostic_setting" "postgres_diag" {
+# CIS #4 - Short-term diagnostic setting: all logs → 3 months retention (alllogs storage account)
+resource "azurerm_monitor_diagnostic_setting" "postgres_diag_short" {
   count                      = var.enable_diagnostic_settings ? 1 : 0
-  name                       = var.name
+  name                       = "${var.name}-diag-short"
   target_resource_id         = azurerm_postgresql_flexible_server.default.id
   log_analytics_workspace_id = var.log_analytics_workspace_id
   storage_account_id         = var.diagnostic_storage_account_id
 
-  # Diagnostic log categories
   dynamic "enabled_log" {
     for_each = var.diagnostic_log_categories
-
     content {
       category = enabled_log.value
     }
   }
 
-  # Enable all PostgreSQL metrics
   dynamic "enabled_metric" {
     for_each = var.enable_all_metrics ? [1] : []
-
     content {
       category = "AllMetrics"
     }
+  }
+}
+
+# CIS #4 - Long-term audit diagnostic setting: audit logs → 18 months / 8 years retention (audit storage account)
+resource "azurerm_monitor_diagnostic_setting" "postgres_diag_audit" {
+  count              = var.enable_diagnostic_settings && var.audit_storage_account_id != null ? 1 : 0
+  name               = "${var.name}-diag-audit"
+  target_resource_id = azurerm_postgresql_flexible_server.default.id
+  storage_account_id = var.audit_storage_account_id
+
+  dynamic "enabled_log" {
+    for_each = var.diagnostic_log_categories
+    content {
+      category = enabled_log.value
+    }
+  }
+}
+
+resource "azurerm_postgresql_flexible_server_configuration" "db_params" {
+  for_each   = var.db_parameters
+  server_id  = azurerm_postgresql_flexible_server.default.id
+  name       = each.key
+  value      = each.value
+}
+
+# CIS #10 - Metric alerts for CPU, Memory and Storage
+resource "azurerm_monitor_metric_alert" "postgres_alerts" {
+  for_each            = var.enable_alerts && var.alert_action_group_id != null ? var.alert_rules : {}
+  name                = "${var.name}-alert-${each.key}"
+  resource_group_name = var.resource_group_name
+  scopes              = [azurerm_postgresql_flexible_server.default.id]
+  description         = each.value.description
+  severity            = each.value.severity
+  frequency           = each.value.frequency
+  window_size         = each.value.window_size
+
+  criteria {
+    metric_namespace = "Microsoft.DBforPostgreSQL/flexibleServers"
+    metric_name      = each.value.metric_name
+    aggregation      = each.value.aggregation
+    operator         = "GreaterThan"
+    threshold        = each.value.threshold
+  }
+
+  action {
+    action_group_id = var.alert_action_group_id
+  }
+}
+
+# DB service up/down - activity log alert on server start and stop events
+resource "azurerm_monitor_activity_log_alert" "postgres_service_health" {
+  count               = var.enable_service_health_alert && var.alert_action_group_id != null ? 1 : 0
+  name                = "${var.name}-service-health"
+  resource_group_name = var.resource_group_name
+  scopes              = [azurerm_postgresql_flexible_server.default.id]
+  description         = "Alert on PostgreSQL Flexible Server start and stop events"
+
+  criteria {
+    resource_id    = azurerm_postgresql_flexible_server.default.id
+    operation_name = "Microsoft.DBforPostgreSQL/flexibleServers/restart/action"
+    category       = "Administrative"
+  }
+
+  action {
+    action_group_id = var.alert_action_group_id
   }
 }

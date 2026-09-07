@@ -176,10 +176,94 @@ variable "log_analytics_workspace_id" {
 
 # Storage Account ID - fetched from AGW remote state in wrapper
 variable "diagnostic_storage_account_id" {
-  description = "Resource ID of the Storage Account for diagnostic logs"
+  description = "Resource ID of the Storage Account for short-term logs (3 months / all logs)"
   default     = null
+}
+
+variable "audit_storage_account_id" {
+  description = "Resource ID of the Storage Account for long-term audit logs (18 months / 8 years)"
+  default     = null
+}
+
+variable "enable_alerts" {
+  description = "Enable metric alerts for CPU, Memory and Storage"
+  type        = bool
+  default     = false
+}
+
+variable "alert_action_group_id" {
+  description = "Action group ID to notify on alerts"
+  type        = string
+  default     = null
+}
+
+variable "enable_service_health_alert" {
+  description = "Enable activity log alert for DB service up/down (start/stop events)"
+  type        = bool
+  default     = false
+}
+
+variable "alert_rules" {
+  description = "Map of metric alert rules for PostgreSQL (CPU, Memory, Storage)"
+  type = map(object({
+    description = string
+    metric_name = string
+    aggregation = string
+    threshold   = number
+    severity    = number
+    frequency   = string
+    window_size = string
+  }))
+  default = {
+    cpu = {
+      description = "CPU utilization above threshold"
+      metric_name = "cpu_percent"
+      aggregation = "Average"
+      threshold   = 80
+      severity    = 2
+      frequency   = "PT5M"
+      window_size = "PT15M"
+    }
+    memory = {
+      description = "Memory utilization above threshold"
+      metric_name = "memory_percent"
+      aggregation = "Average"
+      threshold   = 80
+      severity    = 2
+      frequency   = "PT5M"
+      window_size = "PT15M"
+    }
+    storage = {
+      description = "Storage utilization above threshold"
+      metric_name = "storage_percent"
+      aggregation = "Average"
+      threshold   = 80
+      severity    = 2
+      frequency   = "PT5M"
+      window_size = "PT15M"
+    }
+  }
 }
 
 variable "mode" {
   type = string
+}
+
+variable "db_parameters" {
+  description = "PostgreSQL server configuration parameters"
+  type        = map(string)
+  default = {
+    log_connections                = "on"
+    log_disconnections             = "on"
+    log_duration                   = "on"
+    log_min_duration_statement     = "500"
+    log_statement                  = "mod"
+    shared_preload_libraries       = "pg_cron,pg_stat_statements,pgaudit"
+    "pg_stat_statements.max"       = "2147483646"
+    "pg_stat_statements.track"     = "top"
+    "pg_stat_statements.track_utility" = "on"
+    log_line_prefix                = "%t [%p]: [%l-1] user=%u,db=%d,app=%a,client=%h "
+    "azure.extensions"             = "pgaudit,amcheck"
+    "pgaudit.log_client"           = "on"
+  }
 }
