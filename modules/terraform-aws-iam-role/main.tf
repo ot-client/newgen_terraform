@@ -15,7 +15,7 @@ resource "aws_iam_role" "roles" {
 
   name = local.role_names[each.key]
 
-  assume_role_policy = jsonencode({
+  assume_role_policy = each.value.custom_trust_policy != null ? each.value.custom_trust_policy : jsonencode({
     Version = "2012-10-17"
     Statement = [{
       Effect = "Allow"

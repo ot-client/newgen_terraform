@@ -7,6 +7,7 @@ variable "roles" {
   type = map(object({
     managed_policy_arns = list(string)
     custom_policy_names = list(string)
+    custom_trust_policy = optional(string, null)
   }))
 }
 
