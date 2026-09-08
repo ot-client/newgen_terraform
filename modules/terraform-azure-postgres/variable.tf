@@ -203,6 +203,12 @@ variable "enable_service_health_alert" {
   default     = false
 }
 
+variable "activity_log_alert_location" {
+  description = "Location for activity log alert. Azure only supports global, westeurope, northeurope, eastus2euap"
+  type        = string
+  default     = "global"
+}
+
 variable "alert_rules" {
   description = "Map of metric alert rules for PostgreSQL (CPU, Memory, Storage)"
   type = map(object({

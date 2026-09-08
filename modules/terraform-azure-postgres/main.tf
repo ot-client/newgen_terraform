@@ -135,6 +135,7 @@ resource "azurerm_monitor_activity_log_alert" "postgres_service_health" {
   count               = var.enable_service_health_alert && var.alert_action_group_id != null ? 1 : 0
   name                = "${var.name}-service-health"
   resource_group_name = var.resource_group_name
+  location            = var.activity_log_alert_location
   scopes              = [azurerm_postgresql_flexible_server.default.id]
   description         = "Alert on PostgreSQL Flexible Server start and stop events"
 
