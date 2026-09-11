@@ -88,6 +88,16 @@ variable "client_name" {
   type        = string
 }
 
+variable "role_based_access_control_enabled" {
+  description = "Enable Kubernetes RBAC"
+  type        = bool
+}
+
+variable "local_account_disabled" {
+  description = "Disable local Kubernetes accounts"
+  type        = bool
+}
+
 ##########################
 # Network
 ##########################
@@ -136,6 +146,7 @@ variable "system_node_pool" {
   description = "Configuration for system node pool"
   type = object({
     name                = string
+    mode                = string
     vm_size             = string
     node_count          = number
     min_count           = number
@@ -143,6 +154,8 @@ variable "system_node_pool" {
     enable_auto_scaling = bool
     availability_zones  = list(string)
     max_pods            = number
+    os_sku              = string
+    taints              = list(string)
   })
 }
 
@@ -150,6 +163,7 @@ variable "user_node_pool" {
   description = "Configuration for user node pool"
   type = object({
     name                = string
+    mode                = string
     vm_size             = string
     node_count          = number
     min_count           = number
@@ -157,20 +171,27 @@ variable "user_node_pool" {
     enable_auto_scaling = bool
     availability_zones  = list(string)
     max_pods            = number
+    os_sku              = string
     labels              = map(string)
+    taints              = list(string)
   })
 }
 
 variable "observability_node_pool" {
   description = "Configuration for observability node pool"
   type = object({
-    name               = string
-    vm_size            = string
-    node_count         = number
-    availability_zones = list(string)
-    max_pods           = number
-    labels             = map(string)
-    taints             = list(string)
+    name                = string
+    mode                = string
+    vm_size             = string
+    node_count          = number
+    min_count           = number
+    max_count           = number
+    enable_auto_scaling = bool
+    availability_zones  = list(string)
+    max_pods            = number
+    os_sku              = string
+    labels              = map(string)
+    taints              = list(string)
   })
 }
 
