@@ -123,7 +123,7 @@ resource "azurerm_kubernetes_cluster_node_pool" "observability" {
 
   vm_size              = var.observability_node_pool.vm_size
   node_count           = var.observability_node_pool.node_count
-  auto_scaling_enabled = false
+  auto_scaling_enabled = var.observability_node_pool.enable_auto_scaling
   zones                = var.observability_node_pool.availability_zones
   vnet_subnet_id       = var.subnet_id
   max_pods             = var.observability_node_pool.max_pods
