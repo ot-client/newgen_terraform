@@ -34,13 +34,13 @@ resource "azurerm_kubernetes_cluster" "aks" {
   sku_tier           = var.sku_tier
 
   private_cluster_enabled           = var.private_cluster_enabled
-  role_based_access_control_enabled = true
+  role_based_access_control_enabled = var.role_based_access_control_enabled
   # CHANGED: Removed automatic_upgrade_channel to disable automatic upgrades (client requirement - "none" is not valid)
   #line added 
   automatic_upgrade_channel = var.automatic_upgrade_channel
   node_os_upgrade_channel   = var.node_os_upgrade_channel
   node_resource_group       = var.infrastructure_resource_group != "" ? var.infrastructure_resource_group : "${var.client_code}-AKS-RG-${var.env}"
-  local_account_disabled    = false
+  local_account_disabled = var.local_account_disabled
 
 
   # CHANGED: Using UserAssigned identity because subnet has custom route table attached
@@ -78,6 +78,8 @@ resource "azurerm_kubernetes_cluster" "aks" {
     vnet_subnet_id       = var.subnet_id
     max_pods             = var.system_node_pool.max_pods
     type                 = var.default_node_pool_type
+    os_sku               = var.system_node_pool.os_sku
+    node_taints          = var.system_node_pool.taints
   }
 
   tags = var.tags
@@ -104,7 +106,9 @@ resource "azurerm_kubernetes_cluster_node_pool" "userpool" {
   vnet_subnet_id       = var.subnet_id
   max_pods             = var.user_node_pool.max_pods
   node_labels          = var.user_node_pool.labels
-  mode                 = "User"
+  mode                 = var.user_node_pool.mode
+  os_sku               = var.user_node_pool.os_sku
+  node_taints          = var.user_node_pool.taints
 }
 
 # -------------------------------
@@ -126,7 +130,8 @@ resource "azurerm_kubernetes_cluster_node_pool" "observability" {
   max_pods             = var.observability_node_pool.max_pods
   node_labels          = var.observability_node_pool.labels
   node_taints          = var.observability_node_pool.taints
-  mode                 = "User"
+  mode                 = var.observability_node_pool.mode
+  os_sku               = var.observability_node_pool.os_sku
 }
 
 
