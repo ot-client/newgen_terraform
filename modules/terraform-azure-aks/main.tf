@@ -79,7 +79,6 @@ resource "azurerm_kubernetes_cluster" "aks" {
     max_pods             = var.system_node_pool.max_pods
     type                 = var.default_node_pool_type
     os_sku               = var.system_node_pool.os_sku
-    node_taints          = var.system_node_pool.taints
   }
 
   tags = var.tags
