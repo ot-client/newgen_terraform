@@ -4,6 +4,8 @@ locals {
   attach_policy     = var.attach_elb_log_delivery_policy || var.attach_lb_log_delivery_policy || var.attach_iam_policy || var.attach_cloudtrail_policy || var.bucket_policy != null
   cors_rules        = var.cors_rules
 
+  versioning_status = var.versioning.enabled ? "Enabled" : "Suspended"
+
   # base_name is derived from the "Name" key in var.tags (set per-resource in tfvars)
   base_name = lookup(var.tags, "Name", "")
 

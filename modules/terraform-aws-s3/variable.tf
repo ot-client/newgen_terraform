@@ -171,14 +171,10 @@ variable "logging" {
 variable "versioning" {
   description = "Versioning configuration"
   type = object({
-    enabled    = bool
-    status     = string
-    mfa_delete = bool
+    enabled = bool
   })
   default = {
-    enabled    = false
-    status     = "Suspended"
-    mfa_delete = false
+    enabled = false
   }
 }
 
@@ -283,9 +279,7 @@ variable "s3_buckets" {
     ignore_public_acls       = bool
     restrict_public_buckets  = bool
     versioning = object({
-      enabled    = bool
-      status     = string
-      mfa_delete = bool
+      enabled = bool
     })
     server_side_encryption_configuration = list(object({
       bucket_key_enabled = optional(bool)

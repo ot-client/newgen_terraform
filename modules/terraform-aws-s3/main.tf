@@ -239,8 +239,8 @@ resource "aws_s3_bucket_versioning" "versioning" {
   bucket                = aws_s3_bucket.main[0].id
   expected_bucket_owner = data.aws_caller_identity.current.account_id
   versioning_configuration {
-    status     = var.versioning.status
-    mfa_delete = var.versioning.mfa_delete ? "Enabled" : "Disabled"
+    status     = local.versioning_status
+    mfa_delete = "Disabled"
   }
 }
 
