@@ -9,6 +9,8 @@ resource "azurerm_log_analytics_workspace" "law" {
 }
 
 resource "azurerm_public_ip" "pip" {
+  count = contains(["Public", "Both"], var.frontend_ip_type) ? 1 : 0
+
   name                = var.public_ip_name
   resource_group_name = var.resource_group_name
   location            = var.location
