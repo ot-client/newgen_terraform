@@ -29,6 +29,16 @@ variable "public_ip_allocation_method" {
   default     = "Static"
 }
 
+variable "frontend_ip_type" {
+  description = "Frontend IP configuration type: Public, Private, or Both"
+  type        = string
+
+  validation {
+    condition     = contains(["Public", "Private", "Both"], var.frontend_ip_type)
+    error_message = "frontend_ip_type must be Public, Private, or Both."
+  }
+}
+
 variable "public_ip_sku" {
   description = "Public IP SKU"
   type        = string
