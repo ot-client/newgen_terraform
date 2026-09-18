@@ -1,10 +1,11 @@
 resource "azurerm_local_network_gateway" "lng" {
+  count               = var.existing_lng_id == null ? 1 : 0
   name                = var.local_network_gateway_name
   resource_group_name = var.resource_group_name
   location            = var.location
   gateway_address     = var.local_gateway_address
   address_space       = var.local_address_space
-  
+
   tags = var.tags
 }
 
@@ -15,7 +16,7 @@ resource "azurerm_virtual_network_gateway_connection" "connection" {
 
   type                            = "IPsec"
   virtual_network_gateway_id      = var.virtual_network_gateway_id
-  local_network_gateway_id        = azurerm_local_network_gateway.lng.id
+  local_network_gateway_id        = var.existing_lng_id != null ? var.existing_lng_id : azurerm_local_network_gateway.lng[0].id
   shared_key                      = var.shared_key
   
   connection_mode                 = var.connection_mode

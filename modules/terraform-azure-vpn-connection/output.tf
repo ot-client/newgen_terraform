@@ -5,5 +5,5 @@ output "connection_id" {
 
 output "lng_id" {
   description = "The ID of the local network gateway."
-  value       = azurerm_local_network_gateway.lng.id
+  value       = var.existing_lng_id != null ? var.existing_lng_id : azurerm_local_network_gateway.lng[0].id
 }

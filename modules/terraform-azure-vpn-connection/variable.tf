@@ -1,6 +1,13 @@
+variable "existing_lng_id" {
+  description = "ID of an existing Local Network Gateway. If provided, skips LNG creation."
+  type        = string
+  default     = null
+}
+
 variable "local_network_gateway_name" {
   description = "The name of the local network gateway."
   type        = string
+  default     = null
 }
 
 variable "resource_group_name" {
