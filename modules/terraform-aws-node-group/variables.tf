@@ -1,27 +1,24 @@
 variable "node_groups" {
-  description = "Paramters which are required for creating node group"
+  description = "Parameters required for creating node group"
   type = map(object({
-    subnets            = list(string)
-    instance_type      = list(string)
-    disk_size          = number
-    desired_capacity   = number
-    max_capacity       = number
-    min_capacity       = number
-    security_group_ids = list(string)
-    labels             = map(string)
-    capacity_type      = string
-    ami_type           = string
-    taints             = optional(any, {})
+    subnets                     = list(string)
+    instance_type                = list(string)
+    disk_size                    = number
+    desired_capacity              = number
+    max_capacity                  = number
+    min_capacity                  = number
+    security_group_ids            = list(string)
+    labels                         = map(string)
+    capacity_type                  = string
+    ami_type                       = string
+    taints                         = optional(any, {})
+    launch_template_id             = string   # moved inside — per node group
+    node_role_arn                  = string   # moved inside — per node group
   }))
 }
 
 variable "cluster_name" {
   description = "Name of parent cluster"
-  type        = string
-}
-
-variable "node_role_arn" {
-  description = "IAM Role ARN for node groups"
   type        = string
 }
 
@@ -36,7 +33,4 @@ variable "force_update_version" {
   default     = false
 }
 
-variable "launch_template_id" {
-  description = "Launch template ID from remote state"
-  type        = string
-}
+# node_role_arn aur launch_template_id top-level se hata diye — ab node_groups map ke andar per-entry hain

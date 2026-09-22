@@ -1,12 +1,13 @@
 resource "aws_eks_node_group" "node_groups" {
-  for_each     = var.create_node_group ? var.node_groups : {}
-  cluster_name = var.cluster_name
-  node_group_name      = each.key
-  node_role_arn        = var.node_role_arn
-  subnet_ids           = each.value.subnets
-  
-   launch_template {
-    id      = var.launch_template_id
+  for_each        = var.create_node_group ? var.node_groups : {}
+  cluster_name    = var.cluster_name
+  node_group_name = each.key
+  node_role_arn   = each.value.node_role_arn        # ✅ per-entry, was var.node_role_arn
+  subnet_ids      = each.value.subnets
+  ami_type        = each.value.ami_type              # ✅ bug fix — was missing, never applied
+
+  launch_template {
+    id      = each.value.launch_template_id          # ✅ per-entry, was var.launch_template_id
     version = "$Latest"
   }
 
@@ -32,9 +33,7 @@ resource "aws_eks_node_group" "node_groups" {
 
   lifecycle {
     create_before_destroy = true
-    prevent_destroy       = false
-    ignore_changes        = [scaling_config.0.desired_size]
-
+    prevent_destroy        = false
+    ignore_changes         = [scaling_config[0].desired_size]
   }
-
 }

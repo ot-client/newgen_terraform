@@ -3,6 +3,7 @@ resource "aws_eks_cluster" "eks_cluster" {
   enabled_cluster_log_types = var.enabled_cluster_log_types
   role_arn                  = aws_iam_role.cluster_role.arn
   version                   = var.eks_cluster_version
+  deletion_protection       = var.deletion_protection
 
   access_config {
     authentication_mode = var.access_mode
@@ -11,32 +12,53 @@ resource "aws_eks_cluster" "eks_cluster" {
   upgrade_policy {
     support_type = var.support_type
   }
+
   tags = merge(
-    {
-      Name = format("%s-cluster", var.cluster_name)
-    },
+    { Name = format("%s-cluster", var.cluster_name) },
     local.common_tags
   )
+
   depends_on = [
-    aws_iam_role_policy_attachment.eks-AmazonEKSClusterPolicy,
+    aws_iam_role_policy_attachment.cluster_managed_policies
   ]
 
   vpc_config {
     subnet_ids              = var.subnets
     endpoint_private_access = var.endpoint_private
     endpoint_public_access  = var.endpoint_public
-    security_group_ids      = [aws_security_group.cluster_sg.id]
+    public_access_cidrs     = var.public_access_cidrs
+    security_group_ids      = concat([aws_security_group.cluster_sg.id], var.additional_security_group_ids)
   }
-  
+
+  kubernetes_network_config {
+    ip_family = var.ip_family
+  }
+
+  dynamic "encryption_config" {
+    for_each = var.kms_key_arn != null ? [1] : []
+    content {
+      provider {
+        key_arn = var.kms_key_arn
+      }
+      resources = ["secrets"]
+    }
+  }
+
+  zonal_shift_config {
+    enabled = var.zonal_shift_enabled
+  }
 }
 
 module "node_group" {
   source            = "git::https://github.com/ot-client/newgen_terraform.git//modules/terraform-aws-node-group?ref=main"
   create_node_group = var.create_node_group
   cluster_name      = aws_eks_cluster.eks_cluster.id
-  node_role_arn     = aws_iam_role.node_group_role.arn
-  node_groups       = var.node_groups
-  launch_template_id = var.launch_template_id
+
+  node_groups = {
+    for ng_key, ng in var.node_groups : ng_key => merge(ng, {
+      node_role_arn = aws_iam_role.node_group_role[ng_key].arn
+    })
+  }
 
   depends_on = [
     aws_iam_role_policy_attachment.node_managed_policies,
@@ -45,75 +67,82 @@ module "node_group" {
 }
 
 resource "aws_iam_role" "cluster_role" {
-  name = "${var.cluster_name}-cluster-role"
+  name = coalesce(var.cluster_role_name, "${var.cluster_name}-cluster-role")
+
   assume_role_policy = <<POLICY
 {
   "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Principal": {
-        "Service": "eks.amazonaws.com"
-      },
-      "Action": "sts:AssumeRole"
-    }
-  ]
+  "Statement": [{
+    "Effect": "Allow",
+    "Principal": { "Service": "eks.amazonaws.com" },
+    "Action": "sts:AssumeRole"
+  }]
 }
 POLICY
+
   tags = merge(
-    {
-      Name = format("%s-cluster_iam_role", var.cluster_name)
-    },
+    { Name = coalesce(var.cluster_role_name, "${var.cluster_name}-cluster-role") },
     local.common_tags
   )
 }
 
-resource "aws_iam_role_policy_attachment" "eks-AmazonEKSClusterPolicy" {
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
-  role       = aws_iam_role.cluster_role.name
-}
-
-resource "aws_iam_role_policy_attachment" "eks-AmazonEKSServicePolicy" {
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSServicePolicy"
+resource "aws_iam_role_policy_attachment" "cluster_managed_policies" {
+  for_each   = toset(var.cluster_managed_policies)
+  policy_arn = each.value
   role       = aws_iam_role.cluster_role.name
 }
 
 resource "aws_iam_role" "node_group_role" {
-  name = "${var.cluster_name}-node-role"
+  for_each = var.node_groups
+  name     = each.value.iam_node_group_role_name
 
   assume_role_policy = jsonencode({
-    Statement = [{
-      Action = "sts:AssumeRole"
-      Effect = "Allow"
-      Principal = {
-        Service = "ec2.amazonaws.com"
-      }
-    }]
     Version = "2012-10-17"
+    Statement = [{
+      Action    = "sts:AssumeRole"
+      Effect    = "Allow"
+      Principal = { Service = "ec2.amazonaws.com" }
+    }]
   })
+
   tags = merge(
-    {
-      Name = format("%s-node_group_iam_role", var.eks_node_group_name)
-    },
+    { Name = "${each.value.iam_node_group_role_name}-iam-role" },
     local.common_tags
   )
 }
 
-# Attach AWS managed policies to node group role
 resource "aws_iam_role_policy_attachment" "node_managed_policies" {
-  for_each = toset(var.node_group_managed_policies)
-  
-  policy_arn = each.value
-  role       = aws_iam_role.node_group_role.name
+  for_each = {
+    for pair in flatten([
+      for ng_key, ng in var.node_groups : [
+        for policy_arn in ng.node_group_managed_policies : {
+          key        = "${ng_key}-${md5(policy_arn)}"
+          role_name  = aws_iam_role.node_group_role[ng_key].name
+          policy_arn = policy_arn
+        }
+      ]
+    ]) : pair.key => pair
+  }
+  role       = each.value.role_name
+  policy_arn = each.value.policy_arn
 }
 
-# Attach custom inline policies to node group role
 resource "aws_iam_role_policy" "node_inline_policies" {
-  for_each = var.node_group_inline_policies
-  
-  name   = each.key
-  role   = aws_iam_role.node_group_role.name
-  policy = each.value
+  for_each = {
+    for pair in flatten([
+      for ng_key, _ in var.node_groups : [
+        for policy_name, policy_json in var.node_group_inline_policies : {
+          key         = "${ng_key}-${policy_name}"
+          role_name   = aws_iam_role.node_group_role[ng_key].name
+          policy_name = policy_name
+          policy_json = policy_json
+        }
+      ]
+    ]) : pair.key => pair
+  }
+  name   = each.value.policy_name
+  role   = each.value.role_name
+  policy = each.value.policy_json
 }
 
 resource "aws_ec2_tag" "add_tags_into_subnet" {
@@ -124,10 +153,10 @@ resource "aws_ec2_tag" "add_tags_into_subnet" {
 }
 
 resource "aws_security_group" "cluster_sg" {
-  name                 = "${var.cluster_name}-cluster-sg"
-  description          = "Custom SG for EKS cluster - no default all traffic rule"
-  vpc_id               = var.vpc_id
-  revoke_rules_on_delete = true
+  name                    = "${var.cluster_name}-cluster-sg"
+  description             = "Custom SG for EKS cluster - no default all traffic rule"
+  vpc_id                  = var.vpc_id
+  revoke_rules_on_delete  = true
 
   tags = merge(
     { Name = "${var.cluster_name}-cluster-sg" },
@@ -151,7 +180,6 @@ resource "aws_security_group_rule" "cluster_sg_rules" {
   security_group_id        = aws_security_group.cluster_sg.id
 }
 
-# Remove default all-traffic egress rule from EKS-managed default cluster SG
 resource "null_resource" "revoke_default_egress" {
   triggers = {
     cluster_sg_id = aws_eks_cluster.eks_cluster.vpc_config[0].cluster_security_group_id
@@ -175,12 +203,11 @@ resource "aws_eks_addon" "addons" {
   addon_name    = var.eks_addons[count.index].name
   addon_version = var.eks_addons[count.index].version
 
-  tags = merge({
-    Name        = "${var.cluster_name}-${var.eks_addons[count.index].name}-addon"
-  },
-   local.common_tags
+  tags = merge(
+    { Name = "${var.cluster_name}-${var.eks_addons[count.index].name}-addon" },
+    local.common_tags
   )
-  depends_on = [aws_eks_cluster.eks_cluster ]
+  depends_on = [aws_eks_cluster.eks_cluster]
 }
 
 resource "aws_eks_access_entry" "sso_role" {
@@ -201,7 +228,6 @@ resource "aws_eks_access_policy_association" "sso_role_policy" {
   }
 }
 
-# Additional IAM roles granted cluster access via access_entries variable
 resource "aws_eks_access_entry" "additional" {
   for_each      = var.access_entries
   cluster_name  = aws_eks_cluster.eks_cluster.name

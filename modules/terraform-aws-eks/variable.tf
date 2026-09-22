@@ -5,33 +5,23 @@ variable "cluster_name" {
 }
 
 variable "cluster_autoscaler" {
-  description = "For Cluster Cluster Autoscalling"
-  default     = true
-  type        = bool
+  default = true
+  type    = bool
 }
 
 variable "metrics_server" {
-  description = "For Metrics Server"
-  default     = true
-  type        = bool
+  default = true
+  type    = bool
 }
 
 variable "k8s-spot-termination-handler" {
-  description = "For Spot Instance termination handler"
-  default     = true
-  type        = bool
-}
-
-variable "eks_node_group_name" {
-  description = "Node group name for EKS"
-  default     = "eks-node-group"
-  type        = string
+  default = true
+  type    = bool
 }
 
 variable "region" {
-  description = "AWS region"
-  default     = "us-east-1"
-  type        = string
+  default = "us-east-1"
+  type    = string
 }
 
 variable "subnets" {
@@ -40,98 +30,52 @@ variable "subnets" {
 }
 
 variable "eks_cluster_version" {
-  description = "Kubernetes cluster version in EKS"
-  type        = string
-}
-
-variable "disk_size" {
-  description = "Disk size of workers"
-  type        = number
-  default     = 20
-}
-
-variable "scale_min_size" {
-  description = "Minimum count of workers"
-  type        = number
-  default     = 2
-}
-
-variable "scale_max_size" {
-  description = "Maximum count of workers"
-  type        = number
-  default     = 5
-}
-
-variable "scale_desired_size" {
-  description = "Desired count of workers"
-  type        = number
-  default     = 3
+  type = string
 }
 
 variable "tags" {
-  description = "A map of tags to add to all resources"
-  type        = map(string)
-  default     = {}
-}
-
-variable "cluster_tags_only" {
-  description = "A map of tags to add to EKS cluster only"
-  type        = map(string)
-  default     = {}
+  type    = map(string)
+  default = {}
 }
 
 variable "config_output_path" {
-  description = "kubeconfig output path"
-  type        = string
+  type = string
 }
 
 variable "kubeconfig_name" {
-  description = "Name of kubeconfig file"
-  type        = string
+  type = string
 }
 
 variable "endpoint_private" {
-  description = "endpoint private"
-  type        = bool
+  type    = bool
   default = true
 }
+
 variable "endpoint_public" {
-  description = "endpoint public"
-  type        = bool
+  type    = bool
   default = false
 }
 
 variable "slackUrl" {
-  description = "Slack Web hook URL"
-  type        = string
-  default     = ""
+  type    = string
+  default = ""
 }
 
 variable "vpc_id" {
-  description = "VPC ID"
-  type        = string
+  type = string
 }
 
 variable "create_node_group" {
-  description = "Create node group or not"
-  type        = bool
-  default     = true
-}
-
-variable "allow_eks_cidr" {
-  description = "allow eks cidr"
-  type        = list(string)
-  default     = ["0.0.0.0/32"]
+  type    = bool
+  default = true
 }
 
 variable "force_update_version" {
-  type        = bool
-  description = "Force version update if existing pods are unable to be drained due to a pod disruption budget issue."
-  default     = false
+  type    = bool
+  default = false
 }
 
 variable "cluster_sg_rules" {
-  description = "Map of security group rules for EKS cluster SG"
   type = map(object({
     type         = string
     from_port    = number
@@ -143,82 +87,102 @@ variable "cluster_sg_rules" {
   default = {}
 }
 
-
-
 variable "enabled_cluster_log_types" {
-  description = "List of the desired control plane logging to enable"
-  type        = list(string)
-  default     = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
+  type    = list(string)
+  default = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
 }
 
 variable "eks_addons" {
-  description = "List of EKS addons to install"
   type = list(object({
     name    = string
     version = string
   }))
 }
 
-
-
 variable "support_type" {
-  description = "Support type for EKS"
-  type        = string
+  type = string
 }
 
-variable access_mode {
-  description = "access mode for EKS"
-  type        = string
+variable "access_mode" {
+  type = string
 }
 
 variable "aws_sso_role_arn" {
-  description = "AWS SSO role ARN that needs access to the EKS cluster"
- type        = string
-  default     = null
+  type    = string
+  default = null
 }
 
 variable "access_entries" {
-  description = "Map of additional IAM role ARNs to grant EKS cluster access with AmazonEKSClusterAdminPolicy"
-  type        = map(string)
-  default     = {}
+  type    = map(string)
+  default = {}
 }
 
 variable "node_groups" {
   description = "Parameters required for creating node groups"
   type = map(object({
-    subnets            = list(string)
-    instance_type      = list(string)
-    disk_size          = number
-    desired_capacity   = number
-    max_capacity       = number
-    min_capacity       = number
-    security_group_ids = list(string)
-    labels             = map(string)
-    capacity_type      = string
-    ami_type           = string
-    taints             = optional(any, {})
+    subnets                     = list(string)
+    instance_type                = list(string)
+    disk_size                    = number
+    desired_capacity              = number
+    max_capacity                  = number
+    min_capacity                  = number
+    security_group_ids            = list(string)
+    labels                         = map(string)
+    capacity_type                  = string
+    ami_type                       = string
+    taints                         = optional(any, {})
+    launch_template_id             = optional(string)
+    iam_node_group_role_name       = string
+    node_group_managed_policies    = list(string)
   }))
   default = {}
 }
 
-variable "launch_template_id" {
-  description = "Launch template ID"
+variable "node_group_inline_policies" {
+  type    = map(string)
+  default = {}
+}
+
+variable "cluster_role_name" {
+  description = "IAM role name for the EKS control plane"
   type        = string
   default     = null
 }
 
-variable "node_group_managed_policies" {
-  description = "List of AWS managed policy ARNs to attach to node group role"
-  type        = list(string)
+variable "cluster_managed_policies" {
+  type = list(string)
   default = [
-    "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy",
-    "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy",
-    "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
+    "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy",
+    "arn:aws:iam::aws:policy/AmazonEKSServicePolicy"
   ]
 }
 
-variable "node_group_inline_policies" {
-  description = "Map of inline policy names to policy JSON documents for node group role"
-  type        = map(string)
-  default     = {}
+variable "additional_security_group_ids" {
+  type    = list(string)
+  default = []
+}
+
+variable "public_access_cidrs" {
+  type    = list(string)
+  default = ["0.0.0.0/0"]
+}
+
+variable "ip_family" {
+  type    = string
+  default = "ipv4"
+}
+
+variable "kms_key_arn" {
+  type    = string
+  default = null
+}
+
+variable "deletion_protection" {
+  type    = bool
+  default = false
+}
+
+variable "zonal_shift_enabled" {
+  type    = bool
+  default = false
 }
