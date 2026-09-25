@@ -279,7 +279,8 @@ variable "replication_rules" {
     # Replica modification sync - replicate metadata changes from destination back to source
     replica_modification_sync = optional(bool) # true | false
   }))
-  default = []
+  default   = []
+  nullable  = false
 }
 
 variable "lifecycle_rules" {
@@ -329,7 +330,8 @@ variable "lifecycle_rules" {
     expired_object_delete_marker           = optional(bool)
     abort_incomplete_multipart_upload_days = optional(number)
   }))
-  default = []
+  default  = []
+  nullable = false
 }
 
 
