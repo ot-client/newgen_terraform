@@ -270,7 +270,7 @@ resource "aws_s3_bucket_website_configuration" "website" {
 }
 
 resource "aws_iam_role" "replication" {
-  count = local.create_bucket && length([for r in var.replication_rules : r if r.enabled]) > 0 ? 1 : 0
+  count = local.create_replication_role ? 1 : 0
   name  = "s3-replication-${var.name}"
 
   assume_role_policy = jsonencode({
@@ -284,7 +284,7 @@ resource "aws_iam_role" "replication" {
 }
 
 resource "aws_iam_role_policy" "replication" {
-  count = local.create_bucket && length([for r in var.replication_rules : r if r.enabled]) > 0 ? 1 : 0
+  count = local.create_replication_role ? 1 : 0
   name  = "s3-replication-policy-${var.name}"
   role  = aws_iam_role.replication[0].id
 
@@ -322,9 +322,9 @@ resource "aws_iam_role_policy" "replication" {
 }
 
 resource "aws_s3_bucket_replication_configuration" "replication" {
-  count  = local.create_bucket && length([for r in var.replication_rules : r if r.enabled]) > 0 ? 1 : 0
+  count  = local.create_bucket && length(local.enabled_replication_rules) > 0 ? 1 : 0
   bucket = aws_s3_bucket.main[0].id
-  role   = aws_iam_role.replication[0].arn
+  role   = local.provided_iam_role_arn != null ? local.provided_iam_role_arn : aws_iam_role.replication[0].arn
 
   depends_on = [aws_s3_bucket_versioning.versioning]
 

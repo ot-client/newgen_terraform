@@ -11,4 +11,9 @@ locals {
 
   # common_tags strips the "Name" key so each resource can set its own Name tag
   common_tags = { for k, v in var.tags : k => v if k != "Name" }
+
+  # Replication
+  enabled_replication_rules = [for r in var.replication_rules : r if r.enabled]
+  provided_iam_role_arn     = length(local.enabled_replication_rules) > 0 ? try(local.enabled_replication_rules[0].iam_role_arn, null) : null
+  create_replication_role   = local.create_bucket && length(local.enabled_replication_rules) > 0 && local.provided_iam_role_arn == null
 }
