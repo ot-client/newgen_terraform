@@ -10,7 +10,7 @@ output "agw_name" {
 
 output "public_ip_address" {
   description = "The public IP address"
-  value       = azurerm_public_ip.pip.ip_address
+  value       = length(azurerm_public_ip.pip) > 0 ? azurerm_public_ip.pip[0].ip_address : null
 }
 
 output "diag_storage_account_id" {

@@ -61,7 +61,8 @@ resource "azurerm_application_gateway" "main" {
 
   frontend_ip_configuration {
     name                 = local.frontend_ip_configuration_name
-    public_ip_address_id = azurerm_public_ip.pip.id
+    public_ip_address_id = length(azurerm_public_ip.pip) > 0 ? azurerm_public_ip.pip[0].id : null
+
   }
 
   # --------------------------------------------------

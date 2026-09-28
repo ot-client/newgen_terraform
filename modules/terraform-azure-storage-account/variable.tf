@@ -172,3 +172,9 @@ variable "log_retention_days" {
   type        = number
   default     = 90
 }
+
+variable "provisioned_billing_model_version" {
+  description = "Provisioned billing model version for the storage account. Set to 'V2' to enable Provisioned v2 (required for provisioned_v2 file shares). Changing this forces recreation of the storage account."
+  type        = string
+  default     = null
+}

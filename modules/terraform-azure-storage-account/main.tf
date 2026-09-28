@@ -9,6 +9,7 @@ resource "azurerm_storage_account" "storage_account" {
   public_network_access_enabled = var.public_network_access_enabled
   min_tls_version               = var.min_tls_version
   is_hns_enabled                = var.is_hns_enabled
+  provisioned_billing_model_version  = var.provisioned_billing_model_version
 
   network_rules {
     default_action             = var.network_rules_default_action
@@ -227,16 +228,16 @@ resource "azurerm_storage_container" "container" {
 
 
 resource "azurerm_storage_share" "file_share" {
-
-  for_each = var.file_shares
-
+  for_each = {
+    for k, v in var.file_shares : k => v
+    if v.billing_model != "provisioned_v2"
+  }
 
   name               = each.key
   storage_account_id = azurerm_storage_account.storage_account.id
   quota              = each.value.quota_gb
 
   access_tier = var.account_kind != "FileStorage" ? each.value.access_tier : null
-
 }
 
 
@@ -244,39 +245,30 @@ resource "azurerm_storage_share" "file_share" {
 
 # Provisioned v2 File Share IOPS / Throughput
 
-resource "azapi_update_resource" "file_share_provisioned_v2" {
-
+resource "azapi_resource" "file_share_provisioned_v2" {
   for_each = {
     for k, v in var.file_shares : k => v
-    if v.billing_model == "provisioned_v2" &&
-    (v.provisioned_iops != null || v.provisioned_bandwidth_mibps != null)
+    if v.billing_model == "provisioned_v2"
   }
 
-
-  type = "Microsoft.Storage/storageAccounts/fileServices/shares@2024-01-01"
-
-
-  resource_id = "${azurerm_storage_account.storage_account.id}/fileServices/default/shares/${each.key}"
-
-
+  type      = "Microsoft.Storage/storageAccounts/fileServices/shares@2025-08-01"
+  name      = each.key
+  parent_id = "${azurerm_storage_account.storage_account.id}/fileServices/default"
 
   body = {
-
     properties = {
-
-      shareQuota = each.value.quota_gb
-
-      provisionedIops = each.value.provisioned_iops
-
-      provisionedBandwidthMibps = each.value.provisioned_bandwidth_mibps
-
+      shareQuota                 = each.value.quota_gb
+      provisionedIops            = each.value.provisioned_iops
+      provisionedBandwidthMibps  = each.value.provisioned_bandwidth_mibps
+      enabledProtocols           = "SMB"
+      # accessTier is not supported on Premium/Provisioned v2 shares (AccessTierNotSupported)
     }
-
   }
 
+  # Omit null IOPS/bandwidth so Azure auto-calculates them from shareQuota
+  ignore_null_property = true
 
   depends_on = [
-    azurerm_storage_share.file_share
+    azurerm_storage_account.storage_account
   ]
-
 }

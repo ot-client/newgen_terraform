@@ -47,3 +47,24 @@ variable "exclude_subnets" {
   type        = list(string)
   default     = []
 }
+
+variable "route_table" {
+  description = <<-EOT
+    Single shared route table attached only to the listed subnet keys.
+    When null (default), one route table is created per subnet (legacy behaviour).
+      name    = route table name
+      subnets = subnet keys from var.subnets to associate (e.g. ["subnet3", "subnet4", "subnet6"])
+  EOT
+  type = object({
+    name    = string
+    subnets = list(string)
+  })
+  default = null
+
+  validation {
+    condition = var.route_table == null || alltrue([
+      for k in try(var.route_table.subnets, []) : contains(keys(var.subnets), k) && k != "gateway"
+    ])
+    error_message = "route_table.subnets must be keys of var.subnets and must not include gateway."
+  }
+}
