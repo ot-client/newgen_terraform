@@ -16,7 +16,20 @@ resource "aws_s3_bucket" "main" {
 }
 
 
-resource "aws_s3_bucket_accelerate_configuration" "acceleration" {
+resource "aws_s3_bucket_object_lock_configuration" "object_lock" {
+  count  = local.create_bucket && var.object_lock_enabled && var.object_lock != null && try(var.object_lock.default_retention_enabled, false) ? 1 : 0
+  bucket = aws_s3_bucket.main[0].id
+
+  rule {
+    default_retention {
+      mode  = var.object_lock.mode
+      years = try(var.object_lock.years, null)
+      days  = try(var.object_lock.days, null)
+    }
+  }
+}
+
+
   count  = local.create_bucket && var.enable_transfer_acceleration ? 1 : 0
   bucket = aws_s3_bucket.main[count.index].bucket
   status = var.enable_transfer_acceleration ? "Enabled" : "Suspended"

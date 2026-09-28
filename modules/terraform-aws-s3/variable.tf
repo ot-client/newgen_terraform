@@ -22,9 +22,35 @@ variable "force_destroy" {
 }
 
 variable "object_lock_enabled" {
-  description = "Enable object lock for the bucket"
+  description = "Enable object lock for the bucket (cannot be disabled after creation)"
   type        = bool
   default     = false
+}
+
+variable "object_lock" {
+  description = "Object Lock configuration (AWS Console -> S3 -> Object Lock)"
+  type = object({
+    # Default retention
+    # Disable -> default_retention_enabled = false
+    # Enable  -> default_retention_enabled = true
+    default_retention_enabled = optional(bool)
+
+    # Default retention mode
+    # GOVERNANCE  -> Users with specific IAM permissions can overwrite or delete protected objects
+    # COMPLIANCE  -> No users can overwrite or delete protected objects
+    mode = optional(string) # GOVERNANCE | COMPLIANCE
+
+    # Default retention type
+    # Fixed retention    -> set years or days (not both)
+    # Variable retention -> set event_hold_duration_days (+ optionally years/days for extra protection)
+    years = optional(number) # Fixed retention period in years
+    days  = optional(number) # Fixed retention period in days
+
+    # Variable retention with event hold
+    # event_hold_duration_days -> duration after event hold is turned off
+    event_hold_duration_days = optional(number)
+  })
+  default = null
 }
 
 variable "enable_transfer_acceleration" {
