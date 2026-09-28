@@ -29,7 +29,7 @@ resource "aws_s3_bucket_object_lock_configuration" "object_lock" {
   }
 }
 
-
+resource "aws_s3_bucket_accelerate_configuration" "acceleration" {
   count  = local.create_bucket && var.enable_transfer_acceleration ? 1 : 0
   bucket = aws_s3_bucket.main[count.index].bucket
   status = var.enable_transfer_acceleration ? "Enabled" : "Suspended"
