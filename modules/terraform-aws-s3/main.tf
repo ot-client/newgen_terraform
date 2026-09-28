@@ -368,8 +368,16 @@ resource "aws_s3_bucket_replication_configuration" "replication" {
       destination {
         bucket        = "arn:aws:s3:::${rule.value.destination_bucket}"
         storage_class = try(rule.value.change_storage_class, false) ? try(rule.value.destination_storage_class, null) : null
-        # Cross-account: specify destination account ID so AWS verifies bucket ownership
-        account = try(rule.value.cross_account_replication, false) ? try(rule.value.destination_account_id, null) : null
+        # Account ID: required when replicating to a different account
+        account = try(rule.value.destination_account_id, null)
+
+        # Change object ownership to destination bucket owner
+        dynamic "access_control_translation" {
+          for_each = try(rule.value.change_object_ownership, false) ? [1] : []
+          content {
+            owner = "Destination"
+          }
+        }
 
         # ── Encryption ──────────────────────────────────────────────────────────
         dynamic "encryption_configuration" {

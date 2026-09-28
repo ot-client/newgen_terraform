@@ -243,16 +243,21 @@ variable "replication_rules" {
 
     # ── Destination ───────────────────────────────────────────────────────────
     # Bucket name that will receive replicated objects
-    destination_bucket = string # Destination bucket name (same or different account)
+    destination_bucket = string
 
-    # Cross-account replication
-    # cross_account_replication = false -> same account (destination_account_id ignored)
-    # cross_account_replication = true  -> different account (destination_account_id required)
-    cross_account_replication = optional(bool)   # true | false
-    destination_account_id    = optional(string) # Destination AWS account ID (required if cross_account_replication = true)
+    # Destination AWS account ID
+    # Same account -> set to null
+    # Other account -> set to the destination AWS account ID e.g. "987654321012"
+    destination_account_id = optional(string)
+
+    # Change object ownership to destination bucket owner
+    # false -> replicated objects are owned by the source account
+    # true  -> replicated objects are owned by the destination bucket owner
+    #          (required when replicating to a different account)
+    change_object_ownership = optional(bool)
 
     # IAM role ARN for replication permissions
-    # iam_role_arn = "Create new role" -> leave null to auto-create, or provide ARN
+    # leave null to auto-create, or provide an existing ARN
     iam_role_arn = optional(string)
 
     # ── Encryption ────────────────────────────────────────────────────────────
