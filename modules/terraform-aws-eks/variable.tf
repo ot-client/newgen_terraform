@@ -131,7 +131,8 @@ variable "node_groups" {
     capacity_type                  = string
     ami_type                       = string
     taints                         = optional(any, {})
-    launch_template_id             = optional(string)
+    launch_template_id             = string
+    node_role_arn                  = optional(string)
     iam_node_group_role_name       = string
     node_group_managed_policies    = list(string)
   }))
