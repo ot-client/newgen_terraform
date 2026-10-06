@@ -3,7 +3,7 @@ locals {
   common_tags = { for k, v in var.tags : k => v if k != "Name" }
 
   kubeconfig = templatefile("${path.module}/templates/kubeconfig.tpl", {
-    kubeconfig_name     = var.kubeconfig_name
+    kubeconfig_name     = coalesce(var.kubeconfig_name, var.cluster_name)
     cluster_name        = var.cluster_name
     endpoint            = aws_eks_cluster.eks_cluster.endpoint
     cluster_auth_base64 = aws_eks_cluster.eks_cluster.certificate_authority[0].data

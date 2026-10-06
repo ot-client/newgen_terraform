@@ -39,11 +39,15 @@ variable "tags" {
 }
 
 variable "config_output_path" {
-  type = string
+  description = "Path to write the kubeconfig file; leave null to skip creating it"
+  type        = string
+  default     = null
 }
 
 variable "kubeconfig_name" {
-  type = string
+  description = "Name used inside the kubeconfig; defaults to cluster_name"
+  type        = string
+  default     = null
 }
 
 variable "endpoint_private" {
