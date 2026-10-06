@@ -12,8 +12,8 @@ variable "node_groups" {
     capacity_type                  = string
     ami_type                       = string
     taints                         = optional(any, {})
-    launch_template_id             = string   # moved inside — per node group
-    node_role_arn                  = string   # moved inside — per node group
+    launch_template_id             = optional(string)
+    node_role_arn                  = optional(string)
   }))
 }
 
