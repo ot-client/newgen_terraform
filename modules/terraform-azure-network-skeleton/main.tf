@@ -40,44 +40,76 @@ resource "azurerm_subnet" "subnets" {
 
 
 
-# Legacy mode (route_table = null): one route table per subnet,
-# except gateway and exclude_subnets.
-resource "azurerm_route_table" "rt" {
-  for_each = var.route_table == null ? {
-    for k, v in var.subnets :
-    k => v if k != "gateway" && !contains(var.exclude_subnets, k)
-  } : {}
+# Route tables are fully driven by var.route_tables (one entry = one route table
+# with its own routes and subnet associations). The default 0.0.0.0/0 -> firewall
+# route is NOT defined here; it is added by the firewall VM module via route table name.
+locals {
+  route_table_routes = merge([
+    for rt_key, rt in var.route_tables : {
+      for r_key, r in rt.routes : "${rt_key}-${r_key}" => merge(r, {
+        rt_key = rt_key
+        name   = r_key
+      })
+    }
+  ]...)
 
-  name                = coalesce(each.value.rt_name, "${each.value.name}-rt")
-  location            = var.location
-  resource_group_name = var.resource_group_name
+  route_table_associations = merge([
+    for rt_key, rt in var.route_tables : {
+      for s_key in rt.subnets : "${rt_key}-${s_key}" => {
+        rt_key = rt_key
+        subnet = s_key
+      }
+    }
+  ]...)
+}
+
+resource "azurerm_route_table" "rt" {
+  for_each = var.route_tables
+
+  name                          = each.value.name
+  location                      = var.location
+  resource_group_name           = var.resource_group_name
+  bgp_route_propagation_enabled = each.value.bgp_route_propagation_enabled
 
   tags = var.tags
+}
+
+resource "azurerm_route" "routes" {
+  for_each = local.route_table_routes
+
+  name                   = each.value.name
+  resource_group_name    = var.resource_group_name
+  route_table_name       = azurerm_route_table.rt[each.value.rt_key].name
+  address_prefix         = each.value.address_prefix
+  next_hop_type          = each.value.next_hop_type
+  next_hop_in_ip_address = each.value.next_hop_in_ip_address
 }
 
 resource "azurerm_subnet_route_table_association" "association" {
-  for_each = azurerm_route_table.rt
+  for_each = local.route_table_associations
 
-  subnet_id      = azurerm_subnet.subnets[each.key].id
-  route_table_id = each.value.id
+  subnet_id      = azurerm_subnet.subnets[each.value.subnet].id
+  route_table_id = azurerm_route_table.rt[each.value.rt_key].id
 }
 
-# Shared mode (route_table set): a single route table attached only to
-# the listed subnet keys. Routes (e.g. 0.0.0.0/0 -> firewall) are added
-# by the firewall VM module via route table name.
-resource "azurerm_route_table" "shared" {
-  count = var.route_table != null ? 1 : 0
-
-  name                = var.route_table.name
-  location            = var.location
-  resource_group_name = var.resource_group_name
-
-  tags = var.tags
+# Migration from the old single shared route table (route_table variable).
+# Assumes the existing table is now defined under the key "main" in route_tables.
+moved {
+  from = azurerm_route_table.shared[0]
+  to   = azurerm_route_table.rt["main"]
 }
 
-resource "azurerm_subnet_route_table_association" "shared" {
-  for_each = var.route_table != null ? toset(var.route_table.subnets) : toset([])
+moved {
+  from = azurerm_subnet_route_table_association.shared["subnet3"]
+  to   = azurerm_subnet_route_table_association.association["main-subnet3"]
+}
 
-  subnet_id      = azurerm_subnet.subnets[each.key].id
-  route_table_id = azurerm_route_table.shared[0].id
+moved {
+  from = azurerm_subnet_route_table_association.shared["subnet4"]
+  to   = azurerm_subnet_route_table_association.association["main-subnet4"]
+}
+
+moved {
+  from = azurerm_subnet_route_table_association.shared["subnet6"]
+  to   = azurerm_subnet_route_table_association.association["main-subnet6"]
 }

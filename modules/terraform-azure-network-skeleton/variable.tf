@@ -42,29 +42,51 @@ variable "tags" {
   description = "Common tags applied to resources"
 }
 
-variable "exclude_subnets" {
-  description = "List of subnet keys to exclude from route table association"
-  type        = list(string)
-  default     = []
-}
-
-variable "route_table" {
+variable "route_tables" {
   description = <<-EOT
-    Single shared route table attached only to the listed subnet keys.
-    When null (default), one route table is created per subnet (legacy behaviour).
-      name    = route table name
-      subnets = subnet keys from var.subnets to associate (e.g. ["subnet3", "subnet4", "subnet6"])
+    Map of route tables to create. Key = logical name of the route table.
+      name                          = route table name
+      subnets                       = subnet keys from var.subnets to associate (not "gateway")
+      bgp_route_propagation_enabled = default true
+      routes                        = map of routes (key = route name)
+        address_prefix         = destination CIDR
+        next_hop_type          = VirtualNetworkGateway | VnetLocal | Internet | VirtualAppliance | None
+        next_hop_in_ip_address = required only for VirtualAppliance
   EOT
-  type = object({
-    name    = string
-    subnets = list(string)
-  })
-  default = null
+  type = map(object({
+    name                          = string
+    subnets                       = optional(list(string), [])
+    bgp_route_propagation_enabled = optional(bool, true)
+    routes = optional(map(object({
+      address_prefix         = string
+      next_hop_type          = string
+      next_hop_in_ip_address = optional(string)
+    })), {})
+  }))
+  default = {}
 
   validation {
-    condition = var.route_table == null || alltrue([
-      for k in try(var.route_table.subnets, []) : contains(keys(var.subnets), k) && k != "gateway"
-    ])
-    error_message = "route_table.subnets must be keys of var.subnets and must not include gateway."
+    condition = alltrue(flatten([
+      for rt in values(var.route_tables) : [
+        for k in rt.subnets : contains(keys(var.subnets), k) && k != "gateway"
+      ]
+    ]))
+    error_message = "route_tables[*].subnets must be keys of var.subnets and must not include gateway."
+  }
+
+  validation {
+    condition     = length(flatten([for rt in values(var.route_tables) : rt.subnets])) == length(distinct(flatten([for rt in values(var.route_tables) : rt.subnets])))
+    error_message = "A subnet can be associated with only one route table."
+  }
+
+  validation {
+    condition = alltrue(flatten([
+      for rt in values(var.route_tables) : [
+        for r in values(rt.routes) :
+        contains(["VirtualNetworkGateway", "VnetLocal", "Internet", "VirtualAppliance", "None"], r.next_hop_type)
+        && (r.next_hop_type == "VirtualAppliance") == (r.next_hop_in_ip_address != null)
+      ]
+    ]))
+    error_message = "Route next_hop_type must be a valid type, and next_hop_in_ip_address must be set only (and always) for VirtualAppliance."
   }
 }

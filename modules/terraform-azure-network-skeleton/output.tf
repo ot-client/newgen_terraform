@@ -26,18 +26,21 @@ output "subnet_names" {
 
 output "route_table_ids" {
   description = "Map of subnet key => associated route table ID"
-  value = var.route_table != null ? {
-    for k in var.route_table.subnets : k => azurerm_route_table.shared[0].id
-    } : {
-    for k, v in azurerm_route_table.rt : k => v.id
+  value = {
+    for k, a in local.route_table_associations : a.subnet => azurerm_route_table.rt[a.rt_key].id
   }
 }
 
 output "route_table_names" {
   description = "Map of subnet key => associated route table name"
-  value = var.route_table != null ? {
-    for k in var.route_table.subnets : k => azurerm_route_table.shared[0].name
-    } : {
-    for k, v in azurerm_route_table.rt : k => v.name
+  value = {
+    for k, a in local.route_table_associations : a.subnet => azurerm_route_table.rt[a.rt_key].name
+  }
+}
+
+output "route_tables" {
+  description = "Map of route table key => id and name"
+  value = {
+    for k, v in azurerm_route_table.rt : k => { id = v.id, name = v.name }
   }
 }
