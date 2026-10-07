@@ -2,8 +2,8 @@ variable "node_groups" {
   description = "Parameters required for creating node group"
   type = map(object({
     subnets                     = list(string)
-    instance_type                = list(string)
-    disk_size                    = number
+    instance_type                = optional(list(string))
+    disk_size                    = optional(number)
     desired_capacity              = number
     max_capacity                  = number
     min_capacity                  = number
