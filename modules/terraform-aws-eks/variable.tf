@@ -69,11 +69,6 @@ variable "vpc_id" {
   type = string
 }
 
-variable "create_node_group" {
-  type    = bool
-  default = true
-}
-
 variable "force_update_version" {
   type    = bool
   default = false
@@ -151,15 +146,6 @@ variable "node_group_inline_policies" {
 variable "cluster_role_name" {
   description = "IAM role name for the EKS control plane"
   type        = string
-  default     = null
-}
-
-variable "cluster_managed_policies" {
-  type = list(string)
-  default = [
-    "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy",
-    "arn:aws:iam::aws:policy/AmazonEKSServicePolicy"
-  ]
 }
 
 variable "additional_security_group_ids" {

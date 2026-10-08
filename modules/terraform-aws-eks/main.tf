@@ -1,7 +1,16 @@
+data "aws_iam_role" "cluster_role" {
+  name = var.cluster_role_name
+}
+
+data "aws_iam_role" "node_group_role" {
+  for_each = var.node_groups
+  name     = each.value.iam_node_group_role_name
+}
+
 resource "aws_eks_cluster" "eks_cluster" {
   name                      = var.cluster_name
   enabled_cluster_log_types = var.enabled_cluster_log_types
-  role_arn                  = aws_iam_role.cluster_role.arn
+  role_arn                  = data.aws_iam_role.cluster_role.arn
   version                   = var.eks_cluster_version
   deletion_protection       = var.deletion_protection
 
@@ -19,7 +28,7 @@ resource "aws_eks_cluster" "eks_cluster" {
   )
 
   depends_on = [
-    aws_iam_role_policy_attachment.cluster_managed_policies
+    data.aws_iam_role.cluster_role
   ]
 
   vpc_config {
@@ -50,99 +59,18 @@ resource "aws_eks_cluster" "eks_cluster" {
 }
 
 module "node_group" {
-  source            = "../terraform-aws-node-group"
-  create_node_group = var.create_node_group
-  cluster_name      = aws_eks_cluster.eks_cluster.id
+  source       = "../terraform-aws-node-group"
+  cluster_name = aws_eks_cluster.eks_cluster.id
 
   node_groups = {
     for ng_key, ng in var.node_groups : ng_key => merge(ng, {
-      node_role_arn = aws_iam_role.node_group_role[ng_key].arn
+      node_role_arn = data.aws_iam_role.node_group_role[ng_key].arn
     })
   }
 
   depends_on = [
-    aws_iam_role_policy_attachment.node_managed_policies,
-    aws_iam_role_policy.node_inline_policies
+    data.aws_iam_role.node_group_role
   ]
-}
-
-resource "aws_iam_role" "cluster_role" {
-  name = coalesce(var.cluster_role_name, "${var.cluster_name}-cluster-role")
-
-  assume_role_policy = <<POLICY
-{
-  "Version": "2012-10-17",
-  "Statement": [{
-    "Effect": "Allow",
-    "Principal": { "Service": "eks.amazonaws.com" },
-    "Action": "sts:AssumeRole"
-  }]
-}
-POLICY
-
-  tags = merge(
-    { Name = coalesce(var.cluster_role_name, "${var.cluster_name}-cluster-role") },
-    local.common_tags
-  )
-}
-
-resource "aws_iam_role_policy_attachment" "cluster_managed_policies" {
-  for_each   = toset(var.cluster_managed_policies)
-  policy_arn = each.value
-  role       = aws_iam_role.cluster_role.name
-}
-
-resource "aws_iam_role" "node_group_role" {
-  for_each = var.node_groups
-  name     = each.value.iam_node_group_role_name
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Action    = "sts:AssumeRole"
-      Effect    = "Allow"
-      Principal = { Service = "ec2.amazonaws.com" }
-    }]
-  })
-
-  tags = merge(
-    { Name = "${each.value.iam_node_group_role_name}-iam-role" },
-    local.common_tags
-  )
-}
-
-resource "aws_iam_role_policy_attachment" "node_managed_policies" {
-  for_each = {
-    for pair in flatten([
-      for ng_key, ng in var.node_groups : [
-        for policy_arn in ng.node_group_managed_policies : {
-          key        = "${ng_key}-${md5(policy_arn)}"
-          role_name  = aws_iam_role.node_group_role[ng_key].name
-          policy_arn = policy_arn
-        }
-      ]
-    ]) : pair.key => pair
-  }
-  role       = each.value.role_name
-  policy_arn = each.value.policy_arn
-}
-
-resource "aws_iam_role_policy" "node_inline_policies" {
-  for_each = {
-    for pair in flatten([
-      for ng_key, _ in var.node_groups : [
-        for policy_name, policy_json in var.node_group_inline_policies : {
-          key         = "${ng_key}-${policy_name}"
-          role_name   = aws_iam_role.node_group_role[ng_key].name
-          policy_name = policy_name
-          policy_json = policy_json
-        }
-      ]
-    ]) : pair.key => pair
-  }
-  name   = each.value.policy_name
-  role   = each.value.role_name
-  policy = each.value.policy_json
 }
 
 resource "aws_ec2_tag" "add_tags_into_subnet" {

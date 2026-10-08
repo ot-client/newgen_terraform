@@ -12,7 +12,7 @@ locals {
   })
 
   configmap_roles = [
-    for ng_key, role in aws_iam_role.node_group_role : {
+    for ng_key, role in data.aws_iam_role.node_group_role : {
       rolearn  = role.arn
       username = "system:node:{{EC2PrivateDNSName}}"
       groups   = ["system:bootstrappers", "system:nodes"]

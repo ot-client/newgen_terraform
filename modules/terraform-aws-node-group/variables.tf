@@ -22,11 +22,6 @@ variable "cluster_name" {
   type        = string
 }
 
-variable "create_node_group" {
-  description = "Create node group or not"
-  type        = bool
-}
-
 variable "force_update_version" {
   type        = bool
   description = "Force version update if existing pods are unable to be drained due to a pod disruption budget issue."

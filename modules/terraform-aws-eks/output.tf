@@ -4,11 +4,11 @@ output "endpoint" {
 
 output "node_iam_role_arn" {
   description = "Per-node-group IAM Role ARNs"
-  value       = { for k, r in aws_iam_role.node_group_role : k => r.arn }
+  value       = { for k, r in data.aws_iam_role.node_group_role : k => r.arn }
 }
 
 output "cluster_iam_role_arn" {
-  value = aws_iam_role.cluster_role.arn
+  value = data.aws_iam_role.cluster_role.arn
 }
 
 output "node_groups_arn" {
