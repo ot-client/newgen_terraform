@@ -133,7 +133,6 @@ variable "node_groups" {
     launch_template_id             = string
     node_role_arn                  = optional(string)
     iam_node_group_role_name       = string
-    node_group_managed_policies    = list(string)
   }))
   default = {}
 }
