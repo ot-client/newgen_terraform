@@ -4,11 +4,6 @@ variable "cluster_name" {
   type        = string
 }
 
-variable "cluster_autoscaler" {
-  default = true
-  type    = bool
-}
-
 variable "metrics_server" {
   default = true
   type    = bool
