@@ -11,7 +11,11 @@ variable "node_groups" {
     labels                         = map(string)
     capacity_type                  = string
     ami_type                       = string
-    taints                         = optional(any, {})
+    taints = optional(list(object({
+      key    = string
+      value  = optional(string)
+      effect = string
+    })), [])
     launch_template_id             = optional(string)
     node_role_arn                  = optional(string)
   }))
