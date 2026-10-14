@@ -14,14 +14,6 @@ variable "internet_gateway_name" {
   default     = ""
 }
 
-variable "igw_rt" {
-  type = string
-}
-
-variable "destination_cidr_block" {
-  type = string
-}
-
 variable "vpc_cidr" {
   type        = string
   description = "CIDR block for the VPC"
@@ -78,35 +70,6 @@ variable "public_subnet_indexes" {
 
 ######################## Route Tables ########################
 
-variable "public_rt_cidr_block" {
-  type        = string
-  description = "CIDR for public route table"
-  default = "0.0.0.0/0"
-}
-
-variable "private_rt_cidr_block" {
-  type        = string
-  description = "CIDR for private route table (typically 0.0.0.0/0)"
-  default = "0.0.0.0/0"
-}
-
-variable "route_table_subnet_map" {
-  description = "Mapping of route tables to subnet indexes"
-  type        = map(list(number))
-}
-
-variable "route_table_igw_cidr" {
-  description = "CIDR for IGW route"
-  type        = string
-  default     = "0.0.0.0/0"
-}
-
-variable "route_table_names" {
-  description = "List of route table names"
-  type        = list(string)
-  default     = []
-}
-
 ########################## NAT ######################################
 variable "create_nat_gateway" {
   type        = bool
@@ -128,29 +91,6 @@ variable "vgw_name" {
 
 ########################## NACL ###########################
 
-variable "create_nacl" {
-  type        = bool
-  description = "Enable creation of custom network ACLs"
-  default     = true
-}
-
-variable "nacl_names" {
-  type        = list(string)
-  description = "List of NACL names"
-  default     = ["public", "private", "application", "database"]
-
-}
-
-variable "nacl_rules" {
-  type        = any
-  description = "Map of NACL rules (ingress/egress)"
-  default     = {}
-}
-
-variable "nacl_subnet_map" {
-  description = "Mapping of NACLs to subnet indexes"
-  type        = map(list(number))
-}
 ########################## Route53 ###########################
 
 variable "create_route53" {

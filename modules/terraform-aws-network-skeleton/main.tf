@@ -45,12 +45,6 @@ resource "aws_internet_gateway" "igw" {
   )
 }
 
-resource "aws_route" "public_igw" {
-  route_table_id         = aws_route_table.rt[var.igw_rt].id
-  destination_cidr_block = var.destination_cidr_block
-  gateway_id             = aws_internet_gateway.igw.id
-}
-
 ######################################
 # Virtual Gateway
 ######################################
@@ -101,75 +95,6 @@ resource "aws_nat_gateway" "nat_gateway" {
 }
 
 
-
-######################################
-# Route Tables
-######################################
-resource "aws_route_table" "rt" {
-  for_each = local.route_tables
-  vpc_id   = aws_vpc.vpc.id
-
-  # Name tag uses the route table key (from route_table_names); all other common tags are merged in
-  tags = merge(
-    { Name = each.key },
-    local.common_tags
-  )
-}
-
-#############################
-# RT Association
-############################
-resource "aws_route_table_association" "rt_assoc" {
-  count = length(local.route_table_associations)
-
-  route_table_id = aws_route_table.rt[
-    local.route_table_associations[count.index].rt_name
-  ].id
-
-  subnet_id = aws_subnet.subnets[
-    local.route_table_associations[count.index].subnet_index
-  ].id
-}
-
-######################################
-# NACLs
-######################################
-resource "aws_network_acl" "nacls" {
-  for_each = var.create_nacl ? local.nacl_config : {}
-
-  vpc_id     = aws_vpc.vpc.id
-  subnet_ids = each.value.subnet_ids
-
-  # Name tag uses the NACL name from nacl_names; all other common tags are merged in
-  tags = merge(
-    { Name = each.value.name },
-    local.common_tags
-  )
-
-  dynamic "ingress" {
-    for_each = each.value.ingress
-    content {
-      protocol   = ingress.value.protocol
-      rule_no    = ingress.value.rule_no
-      action     = ingress.value.action
-      cidr_block = ingress.value.cidr_block
-      from_port  = ingress.value.from_port
-      to_port    = ingress.value.to_port
-    }
-  }
-
-  dynamic "egress" {
-    for_each = each.value.egress
-    content {
-      protocol   = egress.value.protocol
-      rule_no    = egress.value.rule_no
-      action     = egress.value.action
-      cidr_block = egress.value.cidr_block
-      from_port  = egress.value.from_port
-      to_port    = egress.value.to_port
-    }
-  }
-}
 
 ######################################
 # Flow Logs

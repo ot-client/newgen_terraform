@@ -68,10 +68,6 @@ output "public_subnet_ids" {
   value       = local.all_subnet_ids
 }
 
-output "route_table_names" {
-  value = var.route_table_names
-}
-
 output "application_subnet_ids" {
   description = "List of application subnet IDs"
   value       = local.application_subnet_ids
