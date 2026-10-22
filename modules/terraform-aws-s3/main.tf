@@ -270,15 +270,15 @@ resource "aws_s3_bucket_metric" "metrics" {
 
 
 resource "aws_s3_bucket_website_configuration" "website" {
-  count  = local.create_bucket ? 1 : 0
+  count  = local.create_bucket && var.website != null && try(var.website.enabled, false) ? 1 : 0
   bucket = aws_s3_bucket.main[0].id
 
   index_document {
-    suffix = "index.html"
+    suffix = try(var.website.index_document, "index.html")
   }
 
   error_document {
-    key = "error.html"
+    key = try(var.website.error_document, "error.html")
   }
 }
 
