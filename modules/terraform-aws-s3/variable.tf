@@ -314,6 +314,16 @@ variable "replication_rules" {
   nullable  = false
 }
 
+variable "website" {
+  description = "Static website hosting configuration"
+  type = object({
+    enabled        = optional(bool, false)
+    index_document = optional(string, "index.html")
+    error_document = optional(string, "error.html")
+  })
+  default = null
+}
+
 variable "lifecycle_rules" {
   description = "List of lifecycle rules for the bucket"
   type = list(object({
