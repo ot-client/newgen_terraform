@@ -9,6 +9,12 @@ variable "name" {
   type        = string
 }
 
+variable "region" {
+  description = "AWS region to create the bucket (and all its sub-resources) in. null = provider region. Requires AWS provider >= 6.0"
+  type        = string
+  default     = null
+}
+
 variable "bucket_prefix" {
   description = "Prefix to prepend to the bucket name"
   type        = string
@@ -264,7 +270,7 @@ variable "replication_rules" {
     # ── Choose a rule scope ───────────────────────────────────────────────────
     # "Apply to all objects in the bucket" -> set prefix and tags to null
     # "Limit the scope using one or more filters" -> set prefix or tags below
-    prefix = optional(string) # Prefix filter
+    prefix = optional(string)      # Prefix filter
     tags   = optional(map(string)) # Object tags filter
 
     # ── Destination ───────────────────────────────────────────────────────────
@@ -288,13 +294,13 @@ variable "replication_rules" {
 
     # ── Encryption ────────────────────────────────────────────────────────────
     # Replicate objects encrypted with AWS KMS (SSE-KMS / DSSE-KMS)
-    replicate_kms_encrypted_objects = optional(bool) # true | false
+    replicate_kms_encrypted_objects = optional(bool)   # true | false
     kms_key_id                      = optional(string) # Destination KMS key ARN (required if replicate_kms_encrypted_objects = true)
 
     # ── Destination storage class ─────────────────────────────────────────────
     # Change the storage class for the replicated objects
     # true = change storage class | false = keep same as source
-    change_storage_class  = optional(bool)
+    change_storage_class      = optional(bool)
     destination_storage_class = optional(string) # STANDARD | STANDARD_IA | ONEZONE_IA | INTELLIGENT_TIERING | GLACIER | DEEP_ARCHIVE
 
     # ── Additional replication options ────────────────────────────────────────
@@ -310,16 +316,28 @@ variable "replication_rules" {
     # Replica modification sync - replicate metadata changes from destination back to source
     replica_modification_sync = optional(bool) # true | false
   }))
-  default   = []
-  nullable  = false
+  default  = []
+  nullable = false
 }
 
 variable "website" {
-  description = "Static website hosting configuration"
+  description = "Static website hosting configuration (AWS Console -> S3 -> Properties -> Static website hosting)"
   type = object({
-    enabled        = optional(bool, false)
+    # Disable -> enabled = false
+    # Enable  -> enabled = true
+    enabled = optional(bool, false)
+
+    # Hosting type "Host a static website"
     index_document = optional(string, "index.html")
-    error_document = optional(string, "error.html")
+    error_document = optional(string, "error.html") # set to null to skip
+    routing_rules  = optional(string)               # Redirection rules as a JSON array string
+
+    # Hosting type "Redirect requests for an object"
+    # When set, index_document / error_document / routing_rules are ignored
+    redirect_all_requests_to = optional(object({
+      host_name = string           # e.g. "www.example.com"
+      protocol  = optional(string) # http | https (null = same as original request)
+    }))
   })
   default = null
 }
