@@ -46,8 +46,7 @@ resource "aws_internet_gateway" "igw" {
 }
 
 resource "aws_route" "public_igw" {
-  count = length(var.route_table_names) > 0 && contains(var.route_table_names, var.igw_rt) ? 1 : 0
-
+  count                  = length(var.route_table_names) > 0 ? 1 : 0
   route_table_id         = aws_route_table.rt[var.igw_rt].id
   destination_cidr_block = var.destination_cidr_block
   gateway_id             = aws_internet_gateway.igw.id
