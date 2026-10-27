@@ -1,10 +1,13 @@
 data "aws_caller_identity" "current" {}
-data "aws_region" "current" {}
+data "aws_region" "current" {
+  region = var.region
+}
 data "aws_partition" "current" {}
 
 
 resource "aws_s3_bucket" "main" {
   count               = local.create_bucket ? 1 : 0
+  region              = var.region
   bucket              = lower(var.name)
   bucket_prefix       = var.name == null ? var.bucket_prefix : null
   force_destroy       = var.force_destroy
@@ -18,6 +21,7 @@ resource "aws_s3_bucket" "main" {
 
 resource "aws_s3_bucket_object_lock_configuration" "object_lock" {
   count  = local.create_bucket && var.object_lock_enabled && var.object_lock != null && try(var.object_lock.default_retention_enabled, false) ? 1 : 0
+  region = var.region
   bucket = aws_s3_bucket.main[0].id
 
   rule {
@@ -31,12 +35,14 @@ resource "aws_s3_bucket_object_lock_configuration" "object_lock" {
 
 resource "aws_s3_bucket_accelerate_configuration" "acceleration" {
   count  = local.create_bucket && var.enable_transfer_acceleration ? 1 : 0
+  region = var.region
   bucket = aws_s3_bucket.main[count.index].bucket
   status = var.enable_transfer_acceleration ? "Enabled" : "Suspended"
 }
 
 resource "aws_s3_bucket_public_access_block" "public_access_block" {
   count                   = local.create_bucket && var.attach_public_policy ? 1 : 0
+  region                  = var.region
   bucket                  = aws_s3_bucket.main[0].id
   block_public_acls       = var.block_public_acls
   block_public_policy     = var.block_public_policy
@@ -46,6 +52,7 @@ resource "aws_s3_bucket_public_access_block" "public_access_block" {
 
 resource "aws_s3_bucket_policy" "bucket_policy" {
   count      = local.create_bucket && local.attach_policy ? 1 : 0
+  region     = var.region
   bucket     = aws_s3_bucket.main[0].id
   policy     = data.aws_iam_policy_document.combined[0].json
   depends_on = [aws_s3_bucket_public_access_block.public_access_block]
@@ -180,6 +187,7 @@ data "aws_iam_policy_document" "lb_log_delivery" {
 
 resource "aws_s3_bucket_ownership_controls" "ownership_controls" {
   count  = local.create_bucket && var.control_object_ownership ? 1 : 0
+  region = var.region
   bucket = local.attach_policy ? aws_s3_bucket_policy.bucket_policy[0].id : aws_s3_bucket.main[0].id
   rule {
     object_ownership = var.object_ownership
@@ -192,7 +200,8 @@ resource "aws_s3_bucket_ownership_controls" "ownership_controls" {
 }
 
 resource "aws_s3_bucket_acl" "bucket_acl" {
-  count = local.create_bucket && local.create_bucket_acl && var.object_ownership != "BucketOwnerEnforced" ? 1 : 0
+  count  = local.create_bucket && local.create_bucket_acl && var.object_ownership != "BucketOwnerEnforced" ? 1 : 0
+  region = var.region
 
   bucket                = aws_s3_bucket.main[0].id
   expected_bucket_owner = data.aws_caller_identity.current.account_id
@@ -203,6 +212,7 @@ resource "aws_s3_bucket_acl" "bucket_acl" {
 
 resource "aws_s3_bucket_cors_configuration" "cors" {
   count                 = local.create_bucket && local.create_bucket_acl && var.object_ownership != "BucketOwnerEnforced" ? 1 : 0
+  region                = var.region
   bucket                = aws_s3_bucket.main[0].id
   expected_bucket_owner = data.aws_caller_identity.current.account_id
   dynamic "cors_rule" {
@@ -220,6 +230,7 @@ resource "aws_s3_bucket_cors_configuration" "cors" {
 
 resource "aws_s3_bucket_server_side_encryption_configuration" "encryption" {
   count  = local.create_bucket && length(var.server_side_encryption_configuration) > 0 ? 1 : 0
+  region = var.region
   bucket = aws_s3_bucket.main[0].id
   dynamic "rule" {
     for_each = var.server_side_encryption_configuration
@@ -239,6 +250,7 @@ resource "aws_s3_bucket_logging" "logging" {
     try(var.logging["target_bucket"], "") != ""
   ) ? 1 : 0
 
+  region        = var.region
   bucket        = aws_s3_bucket.main[0].id
   target_bucket = var.logging["target_bucket"]
   target_prefix = try(var.logging["target_prefix"], "")
@@ -248,6 +260,7 @@ resource "aws_s3_bucket_logging" "logging" {
 
 resource "aws_s3_bucket_versioning" "versioning" {
   count  = local.create_bucket && var.versioning.enabled ? 1 : 0
+  region = var.region
   bucket = aws_s3_bucket.main[0].id
   versioning_configuration {
     status     = local.versioning_status
@@ -257,6 +270,7 @@ resource "aws_s3_bucket_versioning" "versioning" {
 
 resource "aws_s3_bucket_metric" "metrics" {
   for_each = { for metric in var.metric_configuration : metric.id => metric }
+  region   = var.region
   bucket   = aws_s3_bucket.main[0].id
   name     = each.value.name
   dynamic "filter" {
@@ -271,14 +285,34 @@ resource "aws_s3_bucket_metric" "metrics" {
 
 resource "aws_s3_bucket_website_configuration" "website" {
   count  = local.create_bucket && var.website != null && try(var.website.enabled, false) ? 1 : 0
+  region = var.region
   bucket = aws_s3_bucket.main[0].id
 
-  index_document {
-    suffix = try(var.website.index_document, "index.html")
+  # ── Hosting type: "Host a static website" ─────────────────────────────────
+  dynamic "index_document" {
+    for_each = try(var.website.redirect_all_requests_to, null) == null ? [1] : []
+    content {
+      suffix = var.website.index_document
+    }
   }
 
-  error_document {
-    key = try(var.website.error_document, "error.html")
+  dynamic "error_document" {
+    for_each = try(var.website.redirect_all_requests_to, null) == null && try(var.website.error_document, null) != null ? [1] : []
+    content {
+      key = var.website.error_document
+    }
+  }
+
+  # Redirection rules (JSON array, same format as the AWS Console editor)
+  routing_rules = try(var.website.redirect_all_requests_to, null) == null ? try(var.website.routing_rules, null) : null
+
+  # ── Hosting type: "Redirect requests for an object" ───────────────────────
+  dynamic "redirect_all_requests_to" {
+    for_each = try(var.website.redirect_all_requests_to, null) != null ? [var.website.redirect_all_requests_to] : []
+    content {
+      host_name = redirect_all_requests_to.value.host_name
+      protocol  = try(redirect_all_requests_to.value.protocol, null)
+    }
   }
 }
 
@@ -317,7 +351,9 @@ resource "aws_iam_role_policy" "replication" {
         Action = [
           "s3:GetObjectVersionForReplication",
           "s3:GetObjectVersionAcl",
-          "s3:GetObjectVersionTagging"
+          "s3:GetObjectVersionTagging",
+          "s3:GetObjectRetention", # required when source bucket has Object Lock
+          "s3:GetObjectLegalHold"
         ]
         Resource = "${aws_s3_bucket.main[0].arn}/*"
       },
@@ -336,6 +372,7 @@ resource "aws_iam_role_policy" "replication" {
 
 resource "aws_s3_bucket_replication_configuration" "replication" {
   count  = local.create_bucket && length(local.enabled_replication_rules) > 0 ? 1 : 0
+  region = var.region
   bucket = aws_s3_bucket.main[0].id
   role   = local.provided_iam_role_arn != null ? local.provided_iam_role_arn : aws_iam_role.replication[0].arn
 
@@ -444,6 +481,7 @@ resource "aws_s3_bucket_replication_configuration" "replication" {
 
 resource "aws_s3_bucket_lifecycle_configuration" "lifecycle" {
   count  = local.create_bucket && length([for r in var.lifecycle_rules : r if r.enabled]) > 0 ? 1 : 0
+  region = var.region
   bucket = aws_s3_bucket.main[0].id
 
   dynamic "rule" {
