@@ -180,7 +180,7 @@ resource "aws_network_acl" "nacls" {
 resource "aws_cloudwatch_log_group" "flow_log_cw" {
   count             = var.flow_log_cw_enabled ? 1 : 0
   name              = var.flow_log_cw_log_group_name
-  retention_in_days = 0
+  retention_in_days = var.flow_log_retention_in_days
 }
 
 resource "aws_flow_log" "flow_log_cw" {
