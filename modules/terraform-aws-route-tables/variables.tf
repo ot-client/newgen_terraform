@@ -19,13 +19,13 @@ variable "subnet_ids" {
   type        = list(string)
 }
 
-variable "igw_rt" {
-  type = string
-}
-
-variable "destination_cidr_block" {
-  type    = string
-  default = "0.0.0.0/0"
+variable "igw_routes" {
+  description = "Map of IGW routes"
+  type = map(object({
+    route_table_name       = string
+    destination_cidr_block = string
+  }))
+  default = {}
 }
 
 variable "tags" {

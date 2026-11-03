@@ -6,9 +6,12 @@ resource "aws_route_table" "rt" {
   tags = merge(var.tags, { Name = each.key })
 }
 
-resource "aws_route" "igw_route" {
-  route_table_id         = aws_route_table.rt[var.igw_rt].id
-  destination_cidr_block = var.destination_cidr_block
+# IGW routes
+resource "aws_route" "igw_routes" {
+  for_each = var.igw_routes
+
+  route_table_id         = aws_route_table.rt[each.value.route_table_name].id
+  destination_cidr_block = each.value.destination_cidr_block
   gateway_id             = var.igw_id
 }
 
