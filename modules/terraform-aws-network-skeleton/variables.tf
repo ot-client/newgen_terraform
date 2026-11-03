@@ -173,6 +173,12 @@ variable "route53_zone" {
 
 ###################### VPC Flow Logs #########################
 
+variable "flow_log_retention_in_days" {
+  description = "Retention period in days for CloudWatch flow log group"
+  type        = number
+  default     = 7
+}
+
 variable "flow_log_cw_enabled" {
   type        = bool
   description = "Enable CloudWatch flow log"
