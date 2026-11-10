@@ -103,7 +103,7 @@ data "aws_iam_policy_document" "elb_log_delivery" {
   count = var.create_bucket && var.attach_elb_log_delivery_policy ? 1 : 0
 
   dynamic "statement" {
-    for_each = { for k, v in var.elb_service_accounts : k => v if k == data.aws_region.current.id }
+    for_each = { for k, v in var.elb_service_accounts : k => v if k == data.aws_region.current.name }
 
     content {
       sid = format("ELBRegion%s", title(statement.key))
