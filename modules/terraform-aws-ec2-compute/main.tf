@@ -178,6 +178,8 @@ resource "aws_route" "private_default_to_firewall" {
   route_table_id         = each.value
   destination_cidr_block = "0.0.0.0/0"
   network_interface_id   = aws_instance.ec2[one([for k, v in var.ec2_instances : k if !v.source_dest_check])].primary_network_interface_id
+
+  depends_on = [aws_instance.ec2]
 }
 
 #################################
