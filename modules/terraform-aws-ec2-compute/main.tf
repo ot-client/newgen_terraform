@@ -8,7 +8,7 @@ resource "aws_instance" "ec2" {
   ami           = each.value.ami_id
   instance_type = each.value.instance_type
   subnet_id     = each.value.subnet_id
-  vpc_security_group_ids = [
+  vpc_security_group_ids = length(each.value.security_group_ids) > 0 ? each.value.security_group_ids : [
     for sg_name in each.value.security_groups :
     aws_security_group.sg[sg_name].id
   ]
@@ -19,6 +19,16 @@ resource "aws_instance" "ec2" {
   disable_api_termination = each.value.termination_protection
   source_dest_check       = each.value.source_dest_check
 
+  dynamic "metadata_options" {
+    for_each = each.value.metadata_options != null ? [each.value.metadata_options] : []
+    content {
+      http_endpoint               = metadata_options.value.http_endpoint
+      http_tokens                 = metadata_options.value.http_tokens
+      http_put_response_hop_limit = metadata_options.value.http_put_response_hop_limit
+      instance_metadata_tags      = metadata_options.value.instance_metadata_tags
+    }
+  }
+
   # Updated to use root_block_device object
   root_block_device {
     volume_size           = each.value.root_block_device.size
@@ -27,6 +37,12 @@ resource "aws_instance" "ec2" {
     iops                  = each.value.root_block_device.iops
     encrypted             = each.value.root_block_device.encrypted
     delete_on_termination = each.value.root_block_device.delete_on_termination
+    tags = merge(
+      {
+        Name = each.value.root_block_device.name != null ? each.value.root_block_device.name : "${each.key}-root"
+      },
+      local.common_tags
+    )
   }
 
   tags = merge(
@@ -50,6 +66,7 @@ resource "aws_ebs_volume" "additional" {
         for idx, vol in instance_value.additional_volumes : {
           key               = "${instance_key}-vol-${idx}"
           instance_key      = instance_key
+          vol_name          = vol.name != null ? vol.name : "${instance_key}-vol-${idx}"
           device_name       = vol.device_name
           size              = vol.size
           type              = vol.type
@@ -71,7 +88,7 @@ resource "aws_ebs_volume" "additional" {
 
   tags = merge(
     {
-      Name = each.key
+      Name       = each.value.vol_name
       DeviceName = each.value.device_name
     },
     local.common_tags
@@ -110,7 +127,7 @@ resource "aws_eip" "eip" {
 }
 
 ############################################
-# Security Groups
+# Security Groups (only when not using centralized SG module)
 ############################################
 
 resource "aws_security_group" "sg" {
@@ -132,7 +149,7 @@ resource "aws_security_group" "sg" {
 }
 
 resource "aws_security_group_rule" "security_rules" {
-  for_each = {
+  for_each = length(var.security_groups) > 0 ? {
     for pair in flatten([
       for rule_key, rule_value in var.security_group_ports : [
         for sg_key, sg_val in aws_security_group.sg : {
@@ -144,7 +161,7 @@ resource "aws_security_group_rule" "security_rules" {
         if can(regex(rule_value.name_regex, sg_key))
       ]
     ]) : "${pair.rule_name}-${pair.sg_key}" => pair
-  }
+  } : {}
 
   type                     = each.value.rule.type
   from_port                = each.value.rule.from_port
