@@ -53,13 +53,8 @@ variable "vpc_id" {
   default     = ""
 }
 
-variable "route_table_names" {
+variable "route_table_ids" {
   type = list(string)
-}
-
-variable "firewall_instance_key" {
-  description = "Key name of firewall EC2 instance"
-  type        = string
 }
 
 variable "security_group_ports" {
