@@ -14,7 +14,13 @@ resource "aws_instance" "ec2" {
   ]
   associate_public_ip_address = each.value.public_ip
   key_name                    = each.value.create_key ? aws_key_pair.instance_keys[each.key].key_name : each.value.key_name
-  iam_instance_profile        = lookup(each.value, "iam_instance_profile", null)
+
+  dynamic "iam_instance_profile" {
+    for_each = each.value.iam_instance_profile != null ? [each.value.iam_instance_profile] : []
+    content {
+      name = iam_instance_profile.value
+    }
+  }
 
   disable_api_termination = each.value.termination_protection
   source_dest_check       = each.value.source_dest_check
