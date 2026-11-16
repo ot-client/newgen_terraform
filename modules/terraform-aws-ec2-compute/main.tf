@@ -13,7 +13,7 @@ resource "aws_instance" "ec2" {
     aws_security_group.sg[sg_name].id
   ]
   associate_public_ip_address = each.value.public_ip
-  key_name                    = aws_key_pair.instance_keys[each.key].key_name
+  key_name                    = each.value.create_key ? aws_key_pair.instance_keys[each.key].key_name : each.value.key_name
   iam_instance_profile        = lookup(each.value, "iam_instance_profile", null)
 
   disable_api_termination = each.value.termination_protection
@@ -22,10 +22,10 @@ resource "aws_instance" "ec2" {
   dynamic "metadata_options" {
     for_each = each.value.metadata_options != null ? [each.value.metadata_options] : []
     content {
-      http_endpoint               = metadata_options.value.http_endpoint
-      http_tokens                 = metadata_options.value.http_tokens
-      http_put_response_hop_limit = metadata_options.value.http_put_response_hop_limit
-      instance_metadata_tags      = metadata_options.value.instance_metadata_tags
+      http_endpoint               = "enabled"
+      http_tokens                 = metadata_options.value.http_tokens == "v1+v2" ? "optional" : "required"
+      http_put_response_hop_limit = 1
+      instance_metadata_tags      = "disabled"
     }
   }
 
@@ -38,10 +38,8 @@ resource "aws_instance" "ec2" {
     encrypted             = each.value.root_block_device.encrypted
     delete_on_termination = each.value.root_block_device.delete_on_termination
     tags = merge(
-      {
-        Name = each.value.root_block_device.name != null ? each.value.root_block_device.name : "${each.key}-root"
-      },
-      local.common_tags
+      local.common_tags,
+      each.value.root_block_device.tags
     )
   }
 
@@ -66,13 +64,13 @@ resource "aws_ebs_volume" "additional" {
         for idx, vol in instance_value.additional_volumes : {
           key               = "${instance_key}-vol-${idx}"
           instance_key      = instance_key
-          vol_name          = vol.name != null ? vol.name : "${instance_key}-vol-${idx}"
           device_name       = vol.device_name
           size              = vol.size
           type              = vol.type
           throughput        = vol.throughput
           iops              = vol.iops
           encrypted         = vol.encrypted
+          tags              = vol.tags
           availability_zone = aws_instance.ec2[instance_key].availability_zone
         }
       ]
@@ -87,18 +85,16 @@ resource "aws_ebs_volume" "additional" {
   encrypted         = each.value.encrypted
 
   tags = merge(
-    {
-      Name       = each.value.vol_name
-      DeviceName = each.value.device_name
-    },
-    local.common_tags
+    { DeviceName = each.value.device_name },
+    local.common_tags,
+    each.value.tags
   )
 }
 
 resource "aws_volume_attachment" "additional" {
   for_each = aws_ebs_volume.additional
 
-  device_name = each.value.tags_all["DeviceName"]  # Store device_name in tags for reference
+  device_name = each.value.tags_all["DeviceName"]
   volume_id   = each.value.id
   instance_id = aws_instance.ec2[split("-vol-", each.key)[0]].id
 
@@ -189,14 +185,14 @@ resource "aws_route" "private_default_to_firewall" {
 #################################
 
 resource "tls_private_key" "instance_keys" {
-  for_each = var.ec2_instances
+  for_each = { for k, v in var.ec2_instances : k => v if v.create_key }
 
   algorithm = "RSA"
   rsa_bits  = 4096
 }
 
 resource "aws_key_pair" "instance_keys" {
-  for_each = var.ec2_instances
+  for_each = { for k, v in var.ec2_instances : k => v if v.create_key }
 
   key_name   = each.value.key_name
   public_key = tls_private_key.instance_keys[each.key].public_key_openssh
@@ -210,7 +206,7 @@ resource "aws_key_pair" "instance_keys" {
 }
 
 resource "local_file" "pem_files" {
-  for_each = var.ec2_instances
+  for_each = { for k, v in var.ec2_instances : k => v if v.create_key }
 
   filename        = "${path.root}/${each.value.key_name}.pem"
   content         = tls_private_key.instance_keys[each.key].private_key_pem

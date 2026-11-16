@@ -8,35 +8,33 @@ variable "ec2_instances" {
     # When provided, these are used directly on the instance instead of the
     # internally-created aws_security_group.sg resources.
     security_group_ids     = optional(list(string), [])
-    public_ip              = bool
+    public_ip              = optional(bool, false)
     key_name               = string
+    create_key             = optional(bool, true)
     root_block_device      = object({
-      name                  = optional(string, null)
       size                  = number
       type                  = string
       throughput            = number
       iops                  = number
       encrypted             = bool
       delete_on_termination = bool
+      tags                  = optional(map(string), {})
     })
     additional_volumes     = list(object({
-      name        = optional(string, null)
       device_name = string
       size        = number
       type        = string
       throughput  = number
       iops        = number
       encrypted   = bool
+      tags        = optional(map(string), {})
     }))
     enable_eip             = bool
     source_dest_check      = bool
     termination_protection = bool
     iam_instance_profile   = optional(string)
     metadata_options       = optional(object({
-      http_endpoint               = optional(string, "enabled")
-      http_tokens                 = optional(string, "optional")
-      http_put_response_hop_limit = optional(number, 1)
-      instance_metadata_tags      = optional(string, "disabled")
+      http_tokens = optional(string, "v1+v2")  # v1+v2 | IMDSv2 only
     }), {})
     tags                   = map(string)
   }))
