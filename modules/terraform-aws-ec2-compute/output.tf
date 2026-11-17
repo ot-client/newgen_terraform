@@ -22,3 +22,10 @@ output "elastic_ips" {
   }
 }
 
+output "instance_eni_ids" {
+  description = "Primary network interface IDs of EC2 instances"
+  value = {
+    for k, v in aws_instance.ec2 :
+    k => v.primary_network_interface_id
+  }
+}
