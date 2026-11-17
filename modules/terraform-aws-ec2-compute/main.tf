@@ -56,6 +56,11 @@ resource "aws_instance" "ec2" {
 # Additional Volumes (Dynamic based on additional_volumes list)
 ############################################################
 
+data "aws_subnet" "az_lookup" {
+  for_each = { for k, v in var.ec2_instances : k => v.subnet_id }
+  id       = each.value
+}
+
 resource "aws_ebs_volume" "additional" {
   # Flatten to create one resource per instance per volume
   for_each = {
@@ -71,7 +76,7 @@ resource "aws_ebs_volume" "additional" {
           iops              = vol.iops
           encrypted         = vol.encrypted
           tags              = vol.tags
-          availability_zone = aws_instance.ec2[instance_key].availability_zone
+          availability_zone = data.aws_subnet.az_lookup[instance_key].availability_zone
         }
       ]
     ]) : item.key => item
