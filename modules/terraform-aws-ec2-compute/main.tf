@@ -51,6 +51,14 @@ resource "aws_instance" "ec2" {
     each.value.tags
   )
 
+  lifecycle {
+    ignore_changes = [
+      # associate_public_ip_address reflects the actual AWS state after EIP association
+      # and drifts from the config value on subsequent plans, causing ForceNew recreation.
+      associate_public_ip_address,
+    ]
+  }
+
   depends_on = [aws_key_pair.instance_keys]
 }
 
@@ -110,6 +118,8 @@ resource "aws_volume_attachment" "additional" {
 
 ############################################################
 # Elastic IP (Optional)
+# EIP is created independently of the instance so it survives
+# instance replacement/deletion and can be re-associated.
 ############################################################
 
 resource "aws_eip" "eip" {
@@ -118,8 +128,12 @@ resource "aws_eip" "eip" {
     k => v if v.enable_eip
   }
 
-  instance = aws_instance.ec2[each.key].id
-  domain   = "vpc"
+  domain = "vpc"
+
+  lifecycle {
+    # Prevent EIP from being destroyed when the instance is replaced.
+    prevent_destroy = false   # set true in prod to guard against accidental terraform destroy
+  }
 
   tags = merge(
     {
@@ -127,6 +141,18 @@ resource "aws_eip" "eip" {
     },
     local.common_tags
   )
+}
+
+# EIP association is separate so the EIP itself is never tied to
+# the instance lifecycle — if the instance is recreated, Terraform
+# just re-runs the association without touching the EIP resource.
+resource "aws_eip_association" "eip_assoc" {
+  for_each = aws_eip.eip
+
+  allocation_id = each.value.id
+  instance_id   = aws_instance.ec2[each.key].id
+
+  depends_on = [aws_instance.ec2, aws_eip.eip]
 }
 
 ############################################
