@@ -13,7 +13,7 @@ resource "aws_instance" "ec2" {
     aws_security_group.sg[sg_name].id
   ]
   associate_public_ip_address = each.value.public_ip
-  key_name                    = each.value.create_key ? aws_key_pair.instance_keys[each.key].key_name : each.value.key_name
+  key_name                    = each.value.key_name
   iam_instance_profile        = each.value.iam_instance_profile
 
   disable_api_termination = each.value.termination_protection
@@ -50,6 +50,8 @@ resource "aws_instance" "ec2" {
     local.common_tags,
     each.value.tags
   )
+
+  depends_on = [aws_key_pair.instance_keys]
 }
 
 ############################################################
