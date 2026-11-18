@@ -8,6 +8,9 @@ variable "ec2_instances" {
     # When provided, these are used directly on the instance instead of the
     # internally-created aws_security_group.sg resources.
     security_group_ids     = optional(list(string), [])
+    # Set to true when passing pre-resolved security_group_ids from remote state.
+    # Avoids using length() on an unknown list which causes provider plan errors.
+    use_external_sg_ids    = optional(bool, false)
     public_ip              = optional(bool, false)
     key_name               = string
     create_key             = optional(bool, true)

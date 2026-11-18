@@ -8,7 +8,7 @@ resource "aws_instance" "ec2" {
   ami           = each.value.ami_id
   instance_type = each.value.instance_type
   subnet_id     = each.value.subnet_id
-  vpc_security_group_ids = length(each.value.security_group_ids) > 0 ? each.value.security_group_ids : [
+  vpc_security_group_ids = each.value.use_external_sg_ids ? each.value.security_group_ids : [
     for sg_name in each.value.security_groups :
     aws_security_group.sg[sg_name].id
   ]
