@@ -177,12 +177,20 @@ resource "aws_security_group_rule" "security_rules" {
 # RT Attach to ENI
 ##############################
 
+locals {
+  # Only resolve the firewall instance key when route_table_ids is non-empty.
+  # Evaluating primary_network_interface_id on a not-yet-created instance
+  # triggers the "couldn't find resource" provider error, so we guard it here.
+  _fw_keys        = length(var.route_table_ids) > 0 ? [for k, v in var.ec2_instances : k if !v.source_dest_check] : []
+  fw_instance_key = length(local._fw_keys) > 0 ? local._fw_keys[0] : ""
+}
+
 resource "aws_route" "private_default_to_firewall" {
   for_each = toset(var.route_table_ids)
 
   route_table_id         = each.value
   destination_cidr_block = "0.0.0.0/0"
-  network_interface_id   = aws_instance.ec2[one([for k, v in var.ec2_instances : k if !v.source_dest_check])].primary_network_interface_id
+  network_interface_id   = aws_instance.ec2[local.fw_instance_key].primary_network_interface_id
 
   depends_on = [aws_instance.ec2]
 }
