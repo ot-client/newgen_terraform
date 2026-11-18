@@ -16,6 +16,7 @@ variable "endpoints" {
     subnet_ids         = optional(list(string))
     security_group_ids = optional(list(string))
     private_dns        = optional(bool)
+    policy             = optional(string)   # IAM resource policy JSON; null = full access
     tags               = optional(map(string))
   }))
 }
