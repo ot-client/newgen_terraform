@@ -116,46 +116,6 @@ resource "aws_volume_attachment" "additional" {
   depends_on = [aws_ebs_volume.additional]
 }
 
-############################################################
-# Elastic IP (Optional)
-# EIP is created independently of the instance so it survives
-# instance replacement/deletion and can be re-associated.
-############################################################
-
-resource "aws_eip" "eip" {
-  for_each = {
-    for k, v in var.ec2_instances :
-    k => v if v.enable_eip
-  }
-
-  domain = "vpc"
-
-  lifecycle {
-    # EIP must survive terraform destroy — same public IP retained across
-    # instance replacements and full stack teardowns (e.g. FW instance).
-    prevent_destroy = true
-  }
-
-  tags = merge(
-    {
-      Name = "${each.key}-eip"
-    },
-    local.common_tags
-  )
-}
-
-# EIP association is separate so the EIP itself is never tied to
-# the instance lifecycle — if the instance is recreated, Terraform
-# just re-runs the association without touching the EIP resource.
-resource "aws_eip_association" "eip_assoc" {
-  for_each = aws_eip.eip
-
-  allocation_id = each.value.id
-  instance_id   = aws_instance.ec2[each.key].id
-
-  depends_on = [aws_instance.ec2, aws_eip.eip]
-}
-
 ############################################
 # Security Groups (only when not using centralized SG module)
 ############################################

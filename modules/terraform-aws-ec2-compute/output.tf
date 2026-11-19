@@ -14,14 +14,6 @@ output "instance_arns" {
   }
 }
 
-output "elastic_ips" {
-  description = "Elastic IPs (if enabled)"
-  value = {
-    for k, v in aws_eip.eip :
-    k => v.public_ip
-  }
-}
-
 output "instance_eni_ids" {
   description = "Primary network interface IDs of EC2 instances"
   value = {
