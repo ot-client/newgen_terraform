@@ -131,8 +131,9 @@ resource "aws_eip" "eip" {
   domain = "vpc"
 
   lifecycle {
-    # Prevent EIP from being destroyed when the instance is replaced.
-    prevent_destroy = false   # set true in prod to guard against accidental terraform destroy
+    # EIP must survive terraform destroy — same public IP retained across
+    # instance replacements and full stack teardowns (e.g. FW instance).
+    prevent_destroy = true
   }
 
   tags = merge(
