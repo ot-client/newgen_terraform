@@ -4,34 +4,19 @@ variable "cluster_name" {
   type        = string
 }
 
-variable "cluster_autoscaler" {
-  description = "For Cluster Cluster Autoscalling"
-  default     = true
-  type        = bool
-}
-
 variable "metrics_server" {
-  description = "For Metrics Server"
-  default     = true
-  type        = bool
+  default = true
+  type    = bool
 }
 
 variable "k8s-spot-termination-handler" {
-  description = "For Spot Instance termination handler"
-  default     = true
-  type        = bool
-}
-
-variable "eks_node_group_name" {
-  description = "Node group name for EKS"
-  default     = "eks-node-group"
-  type        = string
+  default = true
+  type    = bool
 }
 
 variable "region" {
-  description = "AWS region"
-  default     = "us-east-1"
-  type        = string
+  default = "us-east-1"
+  type    = string
 }
 
 variable "subnets" {
@@ -40,185 +25,275 @@ variable "subnets" {
 }
 
 variable "eks_cluster_version" {
-  description = "Kubernetes cluster version in EKS"
-  type        = string
-}
-
-variable "disk_size" {
-  description = "Disk size of workers"
-  type        = number
-  default     = 20
-}
-
-variable "scale_min_size" {
-  description = "Minimum count of workers"
-  type        = number
-  default     = 2
-}
-
-variable "scale_max_size" {
-  description = "Maximum count of workers"
-  type        = number
-  default     = 5
-}
-
-variable "scale_desired_size" {
-  description = "Desired count of workers"
-  type        = number
-  default     = 3
+  type = string
 }
 
 variable "tags" {
-  description = "A map of tags to add to all resources"
-  type        = map(string)
-  default     = {}
-}
-
-variable "cluster_tags_only" {
-  description = "A map of tags to add to EKS cluster only"
-  type        = map(string)
-  default     = {}
+  type    = map(string)
+  default = {}
 }
 
 variable "config_output_path" {
-  description = "kubeconfig output path"
+  description = "Path to write the kubeconfig file; leave null to skip creating it"
   type        = string
+  default     = null
 }
 
 variable "kubeconfig_name" {
-  description = "Name of kubeconfig file"
+  description = "Name used inside the kubeconfig; defaults to cluster_name"
   type        = string
+  default     = null
 }
 
 variable "endpoint_private" {
-  description = "endpoint private"
-  type        = bool
+  type    = bool
   default = true
 }
+
 variable "endpoint_public" {
-  description = "endpoint public"
-  type        = bool
+  type    = bool
   default = false
 }
 
 variable "slackUrl" {
-  description = "Slack Web hook URL"
-  type        = string
-  default     = ""
+  type    = string
+  default = ""
 }
 
 variable "vpc_id" {
-  description = "VPC ID"
-  type        = string
-}
-
-variable "create_node_group" {
-  description = "Create node group or not"
-  type        = bool
-  default     = true
-}
-
-variable "allow_eks_cidr" {
-  description = "allow eks cidr"
-  type        = list(string)
-  default     = ["0.0.0.0/32"]
+  type = string
 }
 
 variable "force_update_version" {
-  type        = bool
-  description = "Force version update if existing pods are unable to be drained due to a pod disruption budget issue."
-  default     = false
+  type    = bool
+  default = false
 }
 
 variable "cluster_sg_rules" {
-  description = "Map of security group rules for EKS cluster SG"
+  description = "Map of security group rules for the EKS cluster SG. Set exactly one of cidr_blocks / source_sg_id per rule."
   type = map(object({
     type         = string
     from_port    = number
     to_port      = number
     protocol     = string
+    description  = optional(string)
     cidr_blocks  = optional(list(string))
     source_sg_id = optional(string)
   }))
   default = {}
+
+  validation {
+    condition     = alltrue([for r in values(var.cluster_sg_rules) : contains(["ingress", "egress"], r.type)])
+    error_message = "cluster_sg_rules[*].type must be 'ingress' or 'egress'."
+  }
+
+  validation {
+    condition     = alltrue([for r in values(var.cluster_sg_rules) : (r.cidr_blocks != null) != (r.source_sg_id != null)])
+    error_message = "Each cluster_sg_rules entry must set exactly one of cidr_blocks or source_sg_id."
+  }
 }
 
-
-
 variable "enabled_cluster_log_types" {
-  description = "List of the desired control plane logging to enable"
-  type        = list(string)
-  default     = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
+  type    = list(string)
+  default = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
 }
 
 variable "eks_addons" {
-  description = "List of EKS addons to install"
   type = list(object({
     name    = string
     version = string
   }))
 }
 
-
-
 variable "support_type" {
-  description = "Support type for EKS"
-  type        = string
+  type = string
 }
 
-variable access_mode {
-  description = "access mode for EKS"
-  type        = string
+variable "access_mode" {
+  type = string
 }
 
 variable "aws_sso_role_arn" {
-  description = "AWS SSO role ARN that needs access to the EKS cluster"
- type        = string
-  default     = null
+  type    = string
+  default = null
 }
 
 variable "access_entries" {
-  description = "Map of additional IAM role ARNs to grant EKS cluster access with AmazonEKSClusterAdminPolicy"
-  type        = map(string)
-  default     = {}
+  description = <<-EOT
+    Map of EKS access entries (key = logical name).
+      principal_arn     - IAM role/user ARN
+      type              - STANDARD | EC2 | EC2_LINUX | EC2_WINDOWS | FARGATE_LINUX | HYBRID_LINUX
+      user_name         - optional, STANDARD only
+      kubernetes_groups - optional, STANDARD only (RBAC groups)
+      policies          - map of access policy associations (STANDARD / EC2 only):
+                            policy     = AmazonEKSAdminPolicy | AmazonEKSClusterAdminPolicy | AmazonEKSEditPolicy | AmazonEKSViewPolicy | ... (name or full ARN)
+                            scope      = cluster | namespace
+                            namespaces = list of namespaces (required when scope = namespace)
+  EOT
+  type = map(object({
+    principal_arn     = string
+    type              = optional(string, "STANDARD")
+    user_name         = optional(string)
+    kubernetes_groups = optional(list(string), [])
+    policies = optional(map(object({
+      policy     = string
+      scope      = optional(string, "cluster")
+      namespaces = optional(list(string), [])
+    })), {})
+  }))
+  default = {}
+
+  validation {
+    condition = alltrue([
+      for e in values(var.access_entries) :
+      contains(["STANDARD", "EC2", "EC2_LINUX", "EC2_WINDOWS", "FARGATE_LINUX", "HYBRID_LINUX"], e.type)
+    ])
+    error_message = "access_entries[*].type must be one of STANDARD, EC2, EC2_LINUX, EC2_WINDOWS, FARGATE_LINUX, HYBRID_LINUX."
+  }
+
+  validation {
+    condition = alltrue([
+      for e in values(var.access_entries) :
+      e.type == "STANDARD" || (e.user_name == null && length(e.kubernetes_groups) == 0)
+    ])
+    error_message = "user_name and kubernetes_groups can only be set on STANDARD access entries."
+  }
+
+  validation {
+    condition = alltrue([
+      for e in values(var.access_entries) :
+      contains(["STANDARD", "EC2"], e.type) || length(e.policies) == 0
+    ])
+    error_message = "Access policies can only be associated with STANDARD or EC2 access entries (EC2_LINUX / EC2_WINDOWS / FARGATE_LINUX / HYBRID_LINUX get permissions automatically)."
+  }
+
+  validation {
+    condition = alltrue(flatten([
+      for e in values(var.access_entries) : [
+        for p in values(e.policies) :
+        contains(["cluster", "namespace"], p.scope) && (p.scope == "cluster" || length(p.namespaces) > 0)
+      ]
+    ]))
+    error_message = "Policy scope must be 'cluster' or 'namespace'; namespace scope requires a non-empty namespaces list."
+  }
 }
 
 variable "node_groups" {
   description = "Parameters required for creating node groups"
   type = map(object({
-    subnets            = list(string)
-    instance_type      = list(string)
-    disk_size          = number
-    desired_capacity   = number
-    max_capacity       = number
-    min_capacity       = number
-    security_group_ids = list(string)
-    labels             = map(string)
-    capacity_type      = string
-    ami_type           = string
-    taints             = optional(any, {})
+    subnets                     = list(string)
+    instance_type                = optional(list(string))
+    disk_size                    = optional(number)
+    desired_capacity              = number
+    max_capacity                  = number
+    min_capacity                  = number
+    security_group_ids            = list(string)
+    labels                         = map(string)
+    capacity_type                  = string
+    ami_type                       = string
+    taints                         = optional(any, {})
+    launch_template_id             = string
+    node_role_arn                  = optional(string)
+    iam_node_group_role_name       = string
   }))
   default = {}
 }
 
-variable "launch_template_id" {
-  description = "Launch template ID"
-  type        = string
-  default     = null
-}
-
-variable "node_group_managed_policies" {
-  description = "List of AWS managed policy ARNs to attach to node group role"
-  type        = list(string)
-  default = [
-    "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy",
-    "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy",
-    "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
-  ]
-}
-
 variable "node_group_inline_policies" {
-  description = "Map of inline policy names to policy JSON documents for node group role"
-  type        = map(string)
-  default     = {}
+  type    = map(string)
+  default = {}
+}
+
+variable "cluster_role_name" {
+  description = "IAM role name for the EKS control plane"
+  type        = string
+}
+
+variable "additional_security_group_ids" {
+  type    = list(string)
+  default = []
+}
+
+variable "public_access_cidrs" {
+  type    = list(string)
+  default = ["0.0.0.0/0"]
+}
+
+variable "ip_family" {
+  type    = string
+  default = "ipv4"
+}
+
+variable "kms_key_arn" {
+  type    = string
+  default = null
+}
+
+variable "deletion_protection" {
+  type    = bool
+  default = false
+}
+
+variable "zonal_shift_enabled" {
+  type    = bool
+  default = false
+}
+
+
+variable "default_cluster_sg_rules" {
+  description = <<-EOT
+    Rules managed on the EKS-created default cluster security group.
+    Per rule set exactly one of: cidr_block, source_sg_id, self = true.
+    protocol "-1" = all traffic (ports ignored).
+  EOT
+  type = map(object({
+    type         = string
+    protocol     = string
+    from_port    = optional(number)
+    to_port      = optional(number)
+    description  = optional(string)
+    cidr_block   = optional(string)
+    source_sg_id = optional(string)
+    self         = optional(bool, false)
+  }))
+  default = {}
+
+  validation {
+    condition     = alltrue([for r in values(var.default_cluster_sg_rules) : contains(["ingress", "egress"], r.type)])
+    error_message = "default_cluster_sg_rules[*].type must be 'ingress' or 'egress'."
+  }
+
+  validation {
+    condition = alltrue([
+      for r in values(var.default_cluster_sg_rules) :
+      length([for x in [r.cidr_block != null, r.source_sg_id != null, r.self] : x if x]) == 1
+    ])
+    error_message = "Each default_cluster_sg_rules entry must set exactly one of cidr_block, source_sg_id or self = true."
+  }
+
+  validation {
+    condition = alltrue([
+      for r in values(var.default_cluster_sg_rules) :
+      r.protocol == "-1" || (r.from_port != null && r.to_port != null)
+    ])
+    error_message = "from_port and to_port are required unless protocol is \"-1\"."
+  }
+}
+
+variable "revoke_default_cluster_sg_egress" {
+  description = "Remove the EKS default allow-all egress rule from the default cluster SG (needs aws CLI where terraform runs)"
+  type        = bool
+  default     = true
+}
+
+variable "revoke_default_cluster_sg_ingress" {
+  description = "Remove the EKS default allow-all-from-self ingress rule from the default cluster SG. Control plane <-> node traffic then depends entirely on default_cluster_sg_rules."
+  type        = bool
+  default     = false
+}
+
+variable "create_cluster_sg" {
+  description = "Create the extra module-managed cluster SG (attached as an additional SG on the control plane) and apply cluster_sg_rules to it. Set false to manage only the EKS default cluster SG via default_cluster_sg_rules."
+  type        = bool
+  default     = true
 }
