@@ -64,11 +64,6 @@ variable "vpc_id" {
   type = string
 }
 
-variable "force_update_version" {
-  type    = bool
-  default = false
-}
-
 variable "cluster_sg_rules" {
   description = "Map of security group rules for the EKS cluster SG. Set exactly one of cidr_blocks / source_sg_id per rule."
   type = map(object({
@@ -191,21 +186,22 @@ variable "access_entries" {
 variable "node_groups" {
   description = "Parameters required for creating node groups"
   type = map(object({
-    subnets                     = list(string)
-    instance_type               = optional(list(string))
-    disk_size                   = optional(number)
-    desired_capacity            = number
-    max_capacity                = number
-    min_capacity                = number
-    security_group_ids          = list(string)
-    labels                      = map(string)
-    capacity_type               = string
-    ami_type                    = string
-    taints                      = optional(any, {})
-    launch_template_id          = string
-    node_role_arn               = optional(string)
-    iam_node_group_role_name    = string
-    tags                        = optional(map(string), {}) # node-group level tags (merged with cluster common_tags)
+    subnets                  = list(string)
+    instance_type            = optional(list(string))
+    disk_size                = optional(number)
+    desired_capacity         = number
+    max_capacity             = number
+    min_capacity             = number
+    security_group_ids       = list(string)
+    labels                   = map(string)
+    capacity_type            = string
+    ami_type                 = string
+    taints                   = optional(any, {})
+    launch_template_id       = string
+    node_role_arn            = optional(string)
+    iam_node_group_role_name = string
+    tags                     = optional(map(string), {})   # node-group level tags (merged with cluster common_tags)
+    force_update_version     = optional(bool, false)       # true = rolling update existing nodes to new LT version on next apply
   }))
   default = {}
 }
