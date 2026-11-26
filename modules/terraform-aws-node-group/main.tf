@@ -13,7 +13,9 @@ resource "aws_eks_node_group" "node_groups" {
 
   labels               = each.value.labels
   capacity_type        = each.value.capacity_type
-  force_update_version = var.force_update_version
+  force_update_version = each.value.force_update_version
+
+  tags = each.value.tags
 
   scaling_config {
     desired_size = each.value.desired_capacity

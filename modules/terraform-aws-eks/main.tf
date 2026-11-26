@@ -15,7 +15,8 @@ resource "aws_eks_cluster" "eks_cluster" {
   deletion_protection       = var.deletion_protection
 
   access_config {
-    authentication_mode = var.access_mode
+    authentication_mode                         = var.access_mode
+    bootstrap_cluster_creator_admin_permissions = var.bootstrap_cluster_admin_access
   }
 
   upgrade_policy {
@@ -65,6 +66,7 @@ module "node_group" {
   node_groups = {
     for ng_key, ng in var.node_groups : ng_key => merge(ng, {
       node_role_arn = data.aws_iam_role.node_group_role[ng_key].arn
+      tags          = merge(local.common_tags, ng.tags)
     })
   }
 

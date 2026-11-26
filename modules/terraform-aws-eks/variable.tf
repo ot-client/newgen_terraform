@@ -113,6 +113,16 @@ variable "access_mode" {
   type = string
 }
 
+variable "bootstrap_cluster_admin_access" {
+  description = <<-EOT
+    Bootstrap cluster administrator access for the IAM principal creating the cluster.
+    true  = Allow cluster administrator access (AWS console: "Allow cluster administrator access").
+    false = Disallow cluster administrator access.
+  EOT
+  type    = bool
+  default = true
+}
+
 variable "aws_sso_role_arn" {
   type    = string
   default = null
@@ -182,19 +192,20 @@ variable "node_groups" {
   description = "Parameters required for creating node groups"
   type = map(object({
     subnets                     = list(string)
-    instance_type                = optional(list(string))
-    disk_size                    = optional(number)
-    desired_capacity              = number
-    max_capacity                  = number
-    min_capacity                  = number
-    security_group_ids            = list(string)
-    labels                         = map(string)
-    capacity_type                  = string
-    ami_type                       = string
-    taints                         = optional(any, {})
-    launch_template_id             = string
-    node_role_arn                  = optional(string)
-    iam_node_group_role_name       = string
+    instance_type               = optional(list(string))
+    disk_size                   = optional(number)
+    desired_capacity            = number
+    max_capacity                = number
+    min_capacity                = number
+    security_group_ids          = list(string)
+    labels                      = map(string)
+    capacity_type               = string
+    ami_type                    = string
+    taints                      = optional(any, {})
+    launch_template_id          = string
+    node_role_arn               = optional(string)
+    iam_node_group_role_name    = string
+    tags                        = optional(map(string), {}) # node-group level tags (merged with cluster common_tags)
   }))
   default = {}
 }
